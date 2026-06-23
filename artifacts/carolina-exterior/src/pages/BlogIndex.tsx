@@ -53,7 +53,7 @@ export default function BlogIndex() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map(post => (
             <Link key={post.slug} href={`/blog/${post.slug}`}>
-              <Card className="h-full hover:border-primary transition-colors cursor-pointer group flex flex-col overflow-hidden">
+              <Card className="h-full hover:border-muted-foreground/40 transition-colors cursor-pointer group flex flex-col overflow-hidden">
                 <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                   <img
                     src={getBlogImage(post.image)}
