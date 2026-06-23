@@ -1,0 +1,68 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "DlF2tyhcJ_66YS_uG3SMl"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-home.png"
+type = "image"
+title = "Lawn maintenance professional landscape"
+
+[[generated]]
+id = "brz0ahtbWs8rNweb9rqc_"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-commercial.png"
+type = "image"
+title = "Commercial landscape property"
+
+[[generated]]
+id = "tC9CuNqyZX2IRCcARW3Op"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-hardscape.png"
+type = "image"
+title = "Hardscape patio retaining wall"
+
+[[generated]]
+id = "H-siQCSG1_cwp_RQBs_xp"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-mulch.png"
+type = "image"
+title = "Mulch and planting beds"
+
+[[generated]]
+id = "ryavtApCJLJfNFTeKwd9U"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-drainage.png"
+type = "image"
+title = "Drainage solutions installation"
+
+[[generated]]
+id = "-T_vY-q33A2HL4VOaexdX"
+uri = "file://artifacts/carolina-exterior/src/assets/gallery-res-1.png"
+type = "image"
+title = "Residential landscape design"
+
+[[generated]]
+id = "GIdij0SzLpj9-kAPi2Wqe"
+uri = "file://artifacts/carolina-exterior/src/assets/gallery-res-2.png"
+type = "image"
+title = "Striped residential lawn"
+
+[[generated]]
+id = "g3wfe5Bo-mIB5Lvni6Kk0"
+uri = "file://artifacts/carolina-exterior/src/assets/gallery-res-3.png"
+type = "image"
+title = "Natural stone patio outdoor"
+
+[[generated]]
+id = "WYpIXDQqMXCSnwBDH5-HG"
+uri = "file://artifacts/carolina-exterior/src/assets/gallery-com-1.png"
+type = "image"
+title = "Corporate office landscaping"
+
+[[generated]]
+id = "qPRUaDZWegD_GiJF3jl3T"
+uri = "file://artifacts/carolina-exterior/src/assets/gallery-com-2.png"
+type = "image"
+title = "HOA community entrance"
+
+[[generated]]
+id = "TPY15fzGP4TWZUvpuvsfP"
+uri = "file://artifacts/carolina-exterior/src/assets/gallery-com-3.png"
+type = "image"
+title = "Commercial property hardscape"

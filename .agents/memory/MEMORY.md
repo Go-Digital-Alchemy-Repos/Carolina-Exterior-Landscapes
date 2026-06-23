@@ -1,0 +1,1 @@
+- [Tailwind v4 font imports](tailwind-v4-font-import.md) — in a Tailwind v4 app, put Google Fonts `<link>` in index.html, not `@import` in index.css (Tailwind inlines its own import and breaks CSS @import ordering).
