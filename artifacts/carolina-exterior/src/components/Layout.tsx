@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES, SERVICE_AREAS } from "@/content/site";
-import logoIcon from "@/assets/logo-icon.png";
+import logoFull from "@/assets/logo-full.png";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -52,16 +52,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3 group z-50">
-            <img src={logoIcon} alt={BRAND.name} className="h-10 w-auto group-hover:scale-105 transition-transform" />
-            <div className="flex flex-col">
-              <span className="font-extrabold text-foreground leading-none tracking-tight text-lg md:text-xl">
-                CAROLINA EXTERIOR
-              </span>
-              <span className="font-extrabold text-primary leading-none tracking-widest text-[0.65rem] md:text-xs">
-                LANDSCAPES
-              </span>
-            </div>
+          <Link href="/" className="flex items-center group z-50">
+            <img src={logoFull} alt={BRAND.name} className="h-9 md:h-11 w-auto group-hover:scale-105 transition-transform" />
           </Link>
 
           {/* Desktop Nav */}
@@ -185,12 +177,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             
             <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <img src={logoIcon} alt={BRAND.name} className="h-10 w-auto brightness-0 invert" />
-                <div className="flex flex-col">
-                  <span className="font-extrabold leading-none tracking-tight text-lg">CAROLINA EXTERIOR</span>
-                  <span className="font-extrabold text-primary leading-none tracking-widest text-[0.65rem]">LANDSCAPES</span>
-                </div>
+              <div className="flex items-center">
+                <img src={logoFull} alt={BRAND.name} className="h-10 w-auto brightness-0 invert" />
               </div>
               <p className="text-muted/80 text-sm leading-relaxed font-medium">
                 {BRAND.tagline} {BRAND.subTagline}.<br/>
