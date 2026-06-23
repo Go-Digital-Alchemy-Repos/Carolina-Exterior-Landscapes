@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "DlF2tyhcJ_66YS_uG3SMl"
@@ -174,3 +173,9 @@ id = "7QprJRFGfHMQF8N8Ax32W"
 uri = "file://src/assets/blog/blog-18.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "N-ZyWgL5_TDBvPVDsatvI"
+uri = "file://carolina-exterior-landscapes.zip"
+type = "unspecified"
+title = "Carolina Exterior Landscapes — Project Source"
