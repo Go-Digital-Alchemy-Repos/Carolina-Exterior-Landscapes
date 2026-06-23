@@ -1,4 +1,4 @@
-import { getBlogPosts } from "@/content";
+import { getBlogPosts, getBlogImage } from "@/content";
 import { Seo } from "@/components/Seo";
 import { Link } from "wouter";
 import { useState } from "react";
@@ -53,7 +53,15 @@ export default function BlogIndex() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map(post => (
             <Link key={post.slug} href={`/blog/${post.slug}`}>
-              <Card className="h-full hover:border-primary transition-colors cursor-pointer group flex flex-col">
+              <Card className="h-full hover:border-primary transition-colors cursor-pointer group flex flex-col overflow-hidden">
+                <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+                  <img
+                    src={getBlogImage(post.image)}
+                    alt={post.h1}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
                 <CardHeader>
                   <div className="mb-4">
                     <Badge variant={post.category === 'commercial' ? "secondary" : "default"} className="uppercase tracking-widest text-[0.65rem]">

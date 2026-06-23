@@ -26,7 +26,20 @@ export type BlogPost = PageContent & {
   date: string;
   readMinutes: number;
   excerpt: string;
+  image: string;
 };
+
+const blogImages = import.meta.glob<string>("../assets/blog/*.png", {
+  eager: true,
+  import: "default",
+});
+
+export function getBlogImage(filename: string): string | undefined {
+  const entry = Object.entries(blogImages).find(([path]) =>
+    path.endsWith(`/${filename}`),
+  );
+  return entry?.[1];
+}
 
 const pages = pagesData as Record<string, PageContent>;
 const locations = locationsData as LocationContent[];
