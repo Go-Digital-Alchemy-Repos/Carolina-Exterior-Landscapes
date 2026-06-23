@@ -216,6 +216,32 @@ export default function CommercialQuote() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="currentProvider"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold">Current Landscaping Provider</FormLabel>
+                        <FormControl>
+                          <Input placeholder="If any" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="bestTimeToReach"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold">Best Time to Reach You</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Weekday mornings" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <FormField

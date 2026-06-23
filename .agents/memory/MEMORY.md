@@ -1,1 +1,4 @@
-- [Tailwind v4 font imports](tailwind-v4-font-import.md) — in a Tailwind v4 app, put Google Fonts `<link>` in index.html, not `@import` in index.css (Tailwind inlines its own import and breaks CSS @import ordering).
+- [wouter static route + useParams](wouter-static-route-params.md) — static routes give empty useParams; pass slug as a prop or use /:slug, or pages 404.
+- [Data-layer verification blind spot](content-verification-blind-spot.md) — jq/curl checks never render pages; get a real Playwright render before declaring UI correct.
+- [docx header leak in extracted content](docx-header-leak.md) — re-extracted blog/page JSON can dump the docx SEO-header label/value rows into the body blocks; strip them and repopulate metadata.
+- [Tailwind v4 font imports](tailwind-v4-font-import.md) — load Google Fonts via index.html link, not @import in index.css, or the PostCSS build throws.

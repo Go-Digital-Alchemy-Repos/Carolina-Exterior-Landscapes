@@ -26,8 +26,9 @@ const HERO_IMAGES: Record<string, string> = {
   "hoa-services": heroCommercial,
 };
 
-export default function ServicePage() {
-  const { slug } = useParams();
+export default function ServicePage({ slug: slugProp }: { slug?: string }) {
+  const params = useParams();
+  const slug = slugProp ?? params.slug;
   const page = getPage(slug || "");
 
   if (!page) {

@@ -47,7 +47,7 @@ function Router() {
         
         {contentPages.map(slug => (
           <Route key={slug} path={`/${slug}`}>
-            {() => <ServicePage />}
+            {() => <ServicePage slug={slug} />}
           </Route>
         ))}
 
