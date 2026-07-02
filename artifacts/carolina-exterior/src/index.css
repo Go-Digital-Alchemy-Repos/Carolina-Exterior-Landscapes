@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -46,7 +47,8 @@
   --color-brand-sand: hsl(var(--brand-sand));
   --color-brand-offwhite: hsl(var(--brand-offwhite));
 
-  --font-sans: "Montserrat", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
+  --font-display: "Outfit", sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
 
@@ -64,36 +66,27 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Colors from brand sheet
-     Forest Green #113B28 -> 153, 55%, 15%
-     Leaf Green #5A7F3A -> 92, 38%, 36%
-     Water Blue #406A87 -> 205, 36%, 39%
-     Stone Gray #4D4D4D -> 0, 0%, 30%
-     Sand Beige #C8B491 -> 38, 36%, 68%
-     Off White #F5F5F5 -> 0, 0%, 96%
-  */
-
   --brand-forest: 153 55% 15%;
   --brand-leaf: 92 38% 36%;
   --brand-water: 205 36% 39%;
   --brand-stone: 0 0% 30%;
   --brand-sand: 38 36% 68%;
-  --brand-offwhite: 0 0% 96%;
+  --brand-offwhite: 30 15% 97%; /* warmer off-white */
 
-  --background: 0 0% 96%; /* offwhite */
-  --foreground: 153 55% 15%; /* forest green */
+  --background: 30 15% 97%; 
+  --foreground: 153 55% 15%; 
 
-  --border: 0 0% 85%;
-  --input: 0 0% 85%;
-  --ring: 153 55% 15%;
+  --border: 153 20% 85%;
+  --input: 153 20% 85%;
+  --ring: 92 38% 36%;
 
   --card: 0 0% 100%;
   --card-foreground: 153 55% 15%;
-  --card-border: 0 0% 90%;
+  --card-border: 153 10% 90%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 153 55% 15%;
-  --popover-border: 0 0% 90%;
+  --popover-border: 153 10% 90%;
 
   --primary: 92 38% 36%; /* leaf green */
   --primary-foreground: 0 0% 100%;
@@ -101,8 +94,8 @@
   --secondary: 153 55% 15%; /* forest green */
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 90%;
-  --muted-foreground: 0 0% 40%;
+  --muted: 153 15% 93%;
+  --muted-foreground: 153 10% 45%;
 
   --accent: 38 36% 68%; /* sand beige */
   --accent-foreground: 153 55% 15%;
@@ -110,7 +103,7 @@
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
 
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
   --sidebar-primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -122,33 +115,32 @@
 }
 
 .dark {
-  /* Enforce light mode for this brand by default, unless overriden */
-  --background: 153 55% 15%;
-  --foreground: 0 0% 96%;
+  --background: 153 55% 10%;
+  --foreground: 30 15% 97%;
 
-  --border: 153 55% 25%;
-  --input: 153 55% 25%;
+  --border: 153 40% 20%;
+  --input: 153 40% 20%;
   --ring: 92 38% 36%;
 
   --card: 153 55% 12%;
-  --card-foreground: 0 0% 96%;
-  --card-border: 153 55% 20%;
+  --card-foreground: 30 15% 97%;
+  --card-border: 153 40% 18%;
 
   --popover: 153 55% 12%;
-  --popover-foreground: 0 0% 96%;
-  --popover-border: 153 55% 20%;
+  --popover-foreground: 30 15% 97%;
+  --popover-border: 153 40% 18%;
 
-  --primary: 92 38% 36%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 92 38% 46%;
+  --primary-foreground: 153 55% 10%;
 
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 153 55% 15%;
+  --secondary: 153 20% 20%;
+  --secondary-foreground: 30 15% 97%;
 
-  --muted: 153 55% 20%;
-  --muted-foreground: 0 0% 65%;
+  --muted: 153 40% 15%;
+  --muted-foreground: 153 10% 65%;
 
   --accent: 38 36% 68%;
-  --accent-foreground: 153 55% 15%;
+  --accent-foreground: 153 55% 10%;
 
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
@@ -164,6 +156,6 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-extrabold;
+    @apply font-[family-name:--font-display] font-bold tracking-tight;
   }
 }

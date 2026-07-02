@@ -4,3 +4,4 @@
 - [Tailwind v4 font imports](tailwind-v4-font-import.md) — load Google Fonts via index.html link, not @import in index.css, or the PostCSS build throws.
 - [generateImage output path](generated-image-output-path.md) — AI image outputPath resolves from monorepo root, not artifact dir; verify/mv into the app's assets.
 - [Vite JSON-driven assets](vite-json-driven-assets.md) — resolve image filenames stored in JSON via import.meta.glob with a RELATIVE pattern (not @ alias).
+- [DESIGN subagent budget exhaustion](design-subagent-continuation.md) — ended sessions can't be messaged; relaunch fresh with a "what's done / what remains" brief.

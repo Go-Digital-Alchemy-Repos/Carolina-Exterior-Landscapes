@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useParams } from "wouter";
 import NotFound from "@/pages/not-found";
 import { BRAND } from "@/content/site";
+import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
 
 import heroHome from "@/assets/hero-home.png";
 import heroCommercial from "@/assets/hero-commercial.png";
@@ -61,7 +62,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-background">
       <Seo
         title={page.titleTag}
         description={page.metaDescription}
@@ -69,40 +70,82 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       />
       
       {/* Hero Section */}
-      <div className="relative w-full h-[50vh] min-h-[400px] flex items-center bg-foreground overflow-hidden">
+      <div className="relative w-full h-[60vh] min-h-[500px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover opacity-30 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground to-transparent"></div>
+          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover opacity-40 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-transparent"></div>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full mt-10">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full mt-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+            <div className="flex items-center gap-2 mb-6">
+              <Link href={isCommercial ? "/commercial" : "/"} className="text-primary hover:text-white transition-colors text-sm font-bold tracking-wide uppercase">
+                {isCommercial ? "Commercial Services" : "Residential Services"}
+              </Link>
+              <span className="text-white/30 text-sm">/</span>
+              <span className="text-white/60 text-sm font-bold tracking-wide uppercase">{page.h1}</span>
+            </div>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-8 leading-[1.1] tracking-tight">
               {page.h1}
             </h1>
+            <p className="text-xl md:text-2xl text-white/80 font-medium max-w-2xl leading-relaxed">
+              {page.metaDescription}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16">
-          <div className="lg:col-span-8">
-            <BlockRenderer blocks={page.blocks} />
-          </div>
-          
-          {/* Sidebar CTA */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-32 bg-muted p-8 rounded-xl border border-border">
-              <h3 className="text-2xl font-extrabold mb-4">Ready to start?</h3>
-              <p className="text-muted-foreground font-medium mb-8">
-                Contact us today for a free, no-obligation estimate for your property.
+      <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
+        <div className="lg:col-span-8">
+          <BlockRenderer blocks={page.blocks} />
+        </div>
+        
+        {/* Sidebar CTA */}
+        <div className="lg:col-span-4">
+          <div className="sticky top-32 space-y-8">
+            <div className="bg-muted/50 p-8 rounded-3xl border border-border shadow-sm">
+              <h3 className="text-2xl font-extrabold mb-4 tracking-tight">Ready to start?</h3>
+              <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
+                Contact us today for a free, no-obligation estimate for your property in {BRAND.region}.
               </p>
-              <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"}>
-                <Button size="lg" className="w-full font-bold h-12">
+              <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"} className="block mb-4">
+                <Button size="lg" className="w-full font-bold h-14 rounded-full shadow-md shadow-primary/10 group">
                   REQUEST A QUOTE
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
+              <a href={`tel:${BRAND.phoneTel}`} className="block">
+                <Button variant="outline" size="lg" className="w-full font-bold h-14 rounded-full bg-background group">
+                  <Phone className="mr-2 h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+                  {BRAND.phoneDisplay}
+                </Button>
+              </a>
+            </div>
+
+            <div className="bg-primary/5 border border-primary/20 p-8 rounded-3xl">
+              <h4 className="font-bold text-lg mb-6 flex items-center gap-2 text-foreground">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                The Carolina Difference
+              </h4>
+              <ul className="space-y-4 text-sm font-medium text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                  Locally owned & operated in Monroe, NC
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                  Fully licensed and insured
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                  Reliable scheduling and communication
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                  Premium materials and craftsmanship
+                </li>
+              </ul>
             </div>
           </div>
         </div>
