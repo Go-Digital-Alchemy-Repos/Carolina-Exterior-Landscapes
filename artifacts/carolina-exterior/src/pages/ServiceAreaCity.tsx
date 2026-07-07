@@ -10,16 +10,16 @@ import res2 from "@/assets/gallery-res-2.png";
 import res3 from "@/assets/gallery-res-3.png";
 import communityAerial from "@/assets/community-aerial.png";
 import matthewsHero from "@/assets/matthews-nc-hero.png";
-import matthewsAerial from "@/assets/matthews-nc-aerial.png";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
-import { BRAND } from "@/content/site";
+import { BRAND, SERVICE_AREAS } from "@/content/site";
+import { CityMiniMap } from "@/components/CityMiniMap";
 
 const CITY_IMAGES = [heroImg, res1, res2, res3, communityAerial];
 
-// City-specific imagery overrides. Cities not listed fall back to the shared
-// deterministic pool (hero) and the default community aerial (sidebar).
-const CITY_IMAGE_OVERRIDES: Record<string, { hero: string; aerial: string }> = {
-  "matthews-nc": { hero: matthewsHero, aerial: matthewsAerial },
+// City-specific hero imagery overrides. Cities not listed fall back to the
+// shared deterministic pool.
+const CITY_IMAGE_OVERRIDES: Record<string, { hero: string }> = {
+  "matthews-nc": { hero: matthewsHero },
 };
 
 function pickCityImage(slug: string): string {
@@ -39,7 +39,7 @@ export default function ServiceAreaCity() {
   }
 
   const heroImage = pickCityImage(slug || "");
-  const aerialImage = CITY_IMAGE_OVERRIDES[slug || ""]?.aerial ?? communityAerial;
+  const serviceArea = SERVICE_AREAS.find((a) => a.slug === slug);
 
   return (
     <div className="w-full bg-background pb-24">
@@ -75,11 +75,14 @@ export default function ServiceAreaCity() {
         
         <div className="lg:col-span-4">
           <div className="sticky top-32 space-y-8">
-          <div className="rounded-3xl overflow-hidden border border-border shadow-sm relative aspect-[4/3]">
-            <img src={aerialImage} alt={`Neighborhoods across ${location.city}, ${location.state}`} loading="lazy" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
-            <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">{location.city}, {location.state}</span>
-          </div>
+          {serviceArea && (
+            <CityMiniMap
+              lat={serviceArea.lat}
+              lng={serviceArea.lng}
+              city={location.city}
+              state={location.state}
+            />
+          )}
           <div className="bg-muted/50 p-8 rounded-3xl border border-border shadow-sm">
             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-6">
               <MapPin className="h-6 w-6" />
