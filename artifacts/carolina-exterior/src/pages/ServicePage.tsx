@@ -80,13 +80,6 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full mt-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-6">
-              <Link href={isCommercial ? "/commercial" : "/"} className="text-primary hover:text-white transition-colors text-sm font-bold tracking-wide uppercase">
-                {isCommercial ? "Commercial Services" : "Residential Services"}
-              </Link>
-              <span className="text-white/30 text-sm">/</span>
-              <span className="text-white/60 text-sm font-bold tracking-wide uppercase">{page.h1}</span>
-            </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-8 leading-[1.1] tracking-tight">
               {page.h1}
             </h1>
@@ -94,6 +87,17 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
               {page.metaDescription}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Breadcrumbs */}
+      <div className="border-b border-border bg-background">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-2">
+          <Link href={isCommercial ? "/commercial" : "/"} className="text-primary hover:text-foreground transition-colors text-sm font-bold tracking-wide uppercase">
+            {isCommercial ? "Commercial Services" : "Residential Services"}
+          </Link>
+          <span className="text-muted-foreground text-sm">/</span>
+          <span className="text-muted-foreground text-sm font-bold tracking-wide uppercase">{page.h1}</span>
         </div>
       </div>
 
