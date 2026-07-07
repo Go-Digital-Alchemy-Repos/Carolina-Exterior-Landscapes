@@ -6,6 +6,7 @@ export type PropType =
   | "url"
   | "page-select"
   | "select"
+  | "gallery-select"
   | "form-select"
   | "boolean"
   | "number"
@@ -129,6 +130,132 @@ export const ALL_BLOCKS: BlockDef[] = [
     propDefs: [
       { key: "content", label: "Content", type: "richtext" },
       { key: "alignment", label: "Alignment", type: "select", options: ALIGN_OPTIONS },
+    ],
+  },
+  {
+    type: "gallery",
+    label: "Gallery",
+    iconName: "Images",
+    description: "Reusable CMS photo gallery with display controls",
+    category: "media",
+    isDynamic: true,
+    defaultProps: {
+      galleryId: "",
+      layout: "inherit",
+      columnsDesktop: 3,
+      columnsTablet: 2,
+      columnsMobile: 1,
+      spacing: "md",
+      imageRatio: "4/3",
+      cropMode: "cover",
+      borderRadius: "md",
+      hoverEffect: "zoom",
+      maxImages: 0,
+      transitionEffect: "none",
+      arrowIconColor: "",
+      arrowBackgroundColor: "",
+      showTitle: true,
+      showCaptions: true,
+      captionPosition: "below",
+      lightbox: true,
+    },
+    propDefs: [
+      { key: "galleryId", label: "Gallery", type: "gallery-select" },
+      {
+        key: "layout",
+        label: "Layout Override",
+        type: "select",
+        options: [
+          { label: "Use gallery default", value: "inherit" },
+          { label: "Grid", value: "grid" },
+          { label: "Masonry", value: "masonry" },
+          { label: "Carousel", value: "carousel" },
+          { label: "Slider", value: "slider" },
+          { label: "Featured + thumbnails", value: "featured" },
+        ],
+      },
+      { key: "columnsDesktop", label: "Desktop Columns / Shown", type: "number", min: 1, max: 6 },
+      { key: "columnsTablet", label: "Tablet Columns / Shown", type: "number", min: 1, max: 4 },
+      { key: "columnsMobile", label: "Mobile Columns / Shown", type: "number", min: 1, max: 2 },
+      {
+        key: "spacing",
+        label: "Spacing",
+        type: "select",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Small", value: "sm" },
+          { label: "Medium", value: "md" },
+          { label: "Large", value: "lg" },
+        ],
+      },
+      {
+        key: "imageRatio",
+        label: "Image Ratio",
+        type: "select",
+        options: [
+          { label: "Natural", value: "auto" },
+          { label: "Square", value: "1/1" },
+          { label: "4:3", value: "4/3" },
+          { label: "3:2", value: "3/2" },
+          { label: "16:9", value: "16/9" },
+        ],
+      },
+      {
+        key: "cropMode",
+        label: "Image Fit",
+        type: "select",
+        options: [
+          { label: "Crop to fill", value: "cover" },
+          { label: "Fit full image", value: "contain" },
+        ],
+      },
+      {
+        key: "borderRadius",
+        label: "Corner Radius",
+        type: "select",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Small", value: "sm" },
+          { label: "Medium", value: "md" },
+          { label: "Large", value: "lg" },
+        ],
+      },
+      {
+        key: "hoverEffect",
+        label: "Hover Effect",
+        type: "select",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Zoom", value: "zoom" },
+          { label: "Fade", value: "fade" },
+        ],
+      },
+      { key: "maxImages", label: "Image Limit", type: "number", min: 0, max: 200 },
+      {
+        key: "captionPosition",
+        label: "Caption Position",
+        type: "select",
+        options: [
+          { label: "Below image", value: "below" },
+          { label: "Overlay", value: "overlay" },
+        ],
+      },
+      {
+        key: "transitionEffect",
+        label: "Transition Effect",
+        type: "select",
+        options: [
+          { label: "No transition effect", value: "none" },
+          { label: "Fade", value: "fade" },
+          { label: "Slide left/right", value: "slide" },
+          { label: "Zoom", value: "zoom" },
+        ],
+      },
+      { key: "arrowIconColor", label: "Arrow Color", type: "color" },
+      { key: "arrowBackgroundColor", label: "Arrow Background", type: "color" },
+      { key: "showTitle", label: "Show Title", type: "boolean" },
+      { key: "showCaptions", label: "Show Captions", type: "boolean" },
+      { key: "lightbox", label: "Lightbox", type: "boolean" },
     ],
   },
   {

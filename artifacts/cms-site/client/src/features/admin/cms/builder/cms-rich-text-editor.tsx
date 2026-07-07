@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { EditorContent, useEditor } from "@tiptap/react";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -7,6 +8,7 @@ import {
   Code,
   Italic,
   Link as LinkIcon,
+  Images,
   List,
   ListOrdered,
   Quote,
@@ -24,12 +26,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { createCmsLinkExtension, createStarterKit } from "@/lib/tiptap";
+import type { CmsGalleryListItem } from "@shared/schema";
 
 interface CmsRichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   "data-testid"?: string;
+}
+
+export function buildGalleryShortcode(galleryId: string) {
+  return `[gallery id="${galleryId}"]`;
 }
 
 function ToolbarSep() {
@@ -75,9 +82,20 @@ export function CmsRichTextEditor({
 }: CmsRichTextEditorProps) {
   const [activeTab, setActiveTab] = useState<"visual" | "html">("visual");
   const [showLinkPanel, setShowLinkPanel] = useState(false);
+  const [showGalleryPanel, setShowGalleryPanel] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
   const [linkOpenInNewTab, setLinkOpenInNewTab] = useState(false);
+  const [selectedGalleryId, setSelectedGalleryId] = useState("");
+  const { data: galleries = [] } = useQuery<CmsGalleryListItem[]>({
+    queryKey: ["/api/admin/cms/galleries", "published"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/cms/galleries?status=published&sort=title", { credentials: "include" });
+      if (!response.ok) throw new Error("Unable to load galleries");
+      return response.json();
+    },
+    staleTime: 60_000,
+  });
 
   const editor = useEditor({
     extensions: [
@@ -150,6 +168,13 @@ export function CmsRichTextEditor({
     setLinkText("");
     setLinkOpenInNewTab(false);
     setShowLinkPanel(false);
+  };
+
+  const insertGalleryShortcode = () => {
+    if (!editor || !selectedGalleryId) return;
+    editor.chain().focus().insertContent(`<p>${buildGalleryShortcode(selectedGalleryId)}</p>`).run();
+    setSelectedGalleryId("");
+    setShowGalleryPanel(false);
   };
 
   if (!editor) return null;
@@ -226,6 +251,16 @@ export function CmsRichTextEditor({
               title="Insert or edit link"
             >
               <LinkIcon className="h-3.5 w-3.5" />
+            </ToolbarButton>
+            <ToolbarButton
+              active={showGalleryPanel}
+              onClick={() => {
+                setShowGalleryPanel((open) => !open);
+                setShowLinkPanel(false);
+              }}
+              title="Insert gallery"
+            >
+              <Images className="h-3.5 w-3.5" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
@@ -313,6 +348,46 @@ export function CmsRichTextEditor({
                       setLinkUrl("");
                       setLinkText("");
                       setLinkOpenInNewTab(false);
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showGalleryPanel && (
+            <div className="space-y-2 border-b bg-muted/20 px-3 py-3">
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div className="space-y-1">
+                  <Label className="text-xs">Gallery</Label>
+                  <select
+                    value={selectedGalleryId}
+                    onChange={(event) => setSelectedGalleryId(event.target.value)}
+                    className="h-8 w-full rounded-md border border-input bg-background px-3 text-xs"
+                    data-testid={`${testId}-gallery-select`}
+                  >
+                    <option value="">Select published gallery...</option>
+                    {galleries.map((gallery) => (
+                      <option key={gallery.id} value={gallery.id}>
+                        {gallery.title} ({gallery.imageCount})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button type="button" size="sm" className="h-8 text-xs" onClick={insertGalleryShortcode} disabled={!selectedGalleryId}>
+                    Insert Gallery
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => {
+                      setShowGalleryPanel(false);
+                      setSelectedGalleryId("");
                     }}
                   >
                     <X className="h-3.5 w-3.5" />

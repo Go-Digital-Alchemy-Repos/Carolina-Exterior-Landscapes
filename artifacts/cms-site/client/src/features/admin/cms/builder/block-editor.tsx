@@ -20,7 +20,7 @@ import { CmsImageUpload } from "../components/cms-image-upload";
 import { ImagePositionPicker } from "../components/image-position-picker";
 import { CmsRichTextEditor } from "./cms-rich-text-editor";
 import { shouldUseRichTextEditor, stripHtmlForPlainText } from "./block-content-normalization";
-import type { CmsForm, CmsPage } from "@shared/schema";
+import type { CmsForm, CmsGalleryListItem, CmsPage } from "@shared/schema";
 
 interface BlockEditorProps {
   blockDef: BlockDef;
@@ -494,7 +494,6 @@ function ArrayItemsField({
     staleTime: 60_000,
     enabled: schema.some((field) => field.type === "url" && isButtonLinkFieldKey(field.key)),
   });
-
   const addItem = () => {
     const blank: Record<string, unknown> = {};
     schema.forEach((s) => {
@@ -713,6 +712,16 @@ function PropField({
     staleTime: 60_000,
     enabled: propDef.type === "url" && isButtonLinkFieldKey(propDef.key),
   });
+  const { data: galleries = [] } = useQuery<CmsGalleryListItem[]>({
+    queryKey: ["/api/admin/cms/galleries", "published"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/cms/galleries?status=published&sort=title", { credentials: "include" });
+      if (!response.ok) throw new Error("Unable to load galleries");
+      return response.json();
+    },
+    staleTime: 60_000,
+    enabled: propDef.type === "gallery-select",
+  });
   const strVal = String(value ?? "");
   const useRichTextEditor = shouldUseRichTextEditor(propDef);
   const shouldUsePlainTextValue = !useRichTextEditor && (propDef.type === "text" || propDef.type === "textarea");
@@ -808,6 +817,7 @@ function PropField({
         />
       );
     case "select":
+    case "gallery-select":
     case "form-select":
       return (
         <Select
@@ -819,7 +829,9 @@ function PropField({
             <SelectValue placeholder="Select…" />
           </SelectTrigger>
           <SelectContent>
-            {(propDef.type === "form-select"
+            {(propDef.type === "gallery-select"
+              ? galleries.map((gallery) => ({ label: `${gallery.title} (${gallery.imageCount})`, value: gallery.id }))
+              : propDef.type === "form-select"
               ? forms.map((form) => ({ label: form.name, value: form.slug }))
               : propDef.options ?? []
             ).map((opt) => (

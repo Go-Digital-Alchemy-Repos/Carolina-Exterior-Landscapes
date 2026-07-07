@@ -8,6 +8,18 @@ import { verifyCmsPreviewToken } from "../utils/cms-preview-token";
 const router = Router();
 
 router.get(
+  "/galleries/:id",
+  asyncHandler(async (req, res) => {
+    const id = paramString(req.params.id);
+    const gallery = await storage.cmsGalleries.getPublishedByIdOrSlug(id);
+    if (!gallery) {
+      return res.status(404).json({ error: "Gallery not found" });
+    }
+    res.json(gallery);
+  }),
+);
+
+router.get(
   "/landscape/pages",
   asyncHandler(async (_req, res) => {
     const pages = await storage.cmsPages.getAllPages();

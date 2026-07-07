@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Image, Search, CheckCircle2, FileText } from "lucide-react";
@@ -15,17 +18,22 @@ interface MediaPickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (url: string, asset: CmsMediaLibraryAsset) => void;
+  onSelectMany?: (assets: CmsMediaLibraryAsset[]) => void;
   typeFilter?: "images" | "documents" | "all";
+  multiple?: boolean;
 }
 
 export function MediaPickerDialog({
   open,
   onOpenChange,
   onSelect,
+  onSelectMany,
   typeFilter = "images",
+  multiple = false,
 }: MediaPickerDialogProps) {
   const [search, setSearch] = useState("");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: assets = [], isLoading } = useQuery<CmsMediaLibraryAsset[]>({
     queryKey: ["/api/admin/cms/media"],
@@ -55,6 +63,26 @@ export function MediaPickerDialog({
 
   const libraryLabel =
     typeFilter === "all" ? "media items" : typeFilter === "documents" ? "documents" : "images";
+  const selectedAssets = assets.filter((asset) => selectedIds.has(asset.id));
+
+  const toggleSelection = (asset: CmsMediaLibraryAsset) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(asset.id)) {
+        next.delete(asset.id);
+      } else {
+        next.add(asset.id);
+      }
+      return next;
+    });
+  };
+
+  const addSelected = () => {
+    if (selectedAssets.length === 0) return;
+    onSelectMany?.(selectedAssets);
+    setSelectedIds(new Set());
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,6 +92,9 @@ export function MediaPickerDialog({
             <Image className="h-5 w-5 text-violet-500" />
             Media Library
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Search and select media assets from the CMS library.
+          </DialogDescription>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -89,11 +120,17 @@ export function MediaPickerDialog({
             </div>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {filtered.map((asset) => (
+              {filtered.map((asset) => {
+                const selected = selectedIds.has(asset.id);
+                return (
                 <button
                   key={asset.id}
-                  className="relative group rounded-lg border-2 overflow-hidden aspect-square transition-all hover:border-violet-400 focus:outline-none focus:border-violet-500 border-transparent bg-muted/30"
+                  className={`relative group rounded-lg border-2 overflow-hidden aspect-square transition-all hover:border-violet-400 focus:outline-none focus:border-violet-500 bg-muted/30 ${selected ? "border-violet-500 ring-2 ring-violet-200" : "border-transparent"}`}
                   onClick={() => {
+                    if (multiple) {
+                      toggleSelection(asset);
+                      return;
+                    }
                     onSelect(asset.url, asset);
                     onOpenChange(false);
                   }}
@@ -119,6 +156,11 @@ export function MediaPickerDialog({
                       </span>
                     </div>
                   )}
+                  {selected ? (
+                    <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-white shadow">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                  ) : null}
                   {hoveredId === asset.id && (
                     <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1 p-2">
                       <CheckCircle2 className="h-6 w-6 text-white" />
@@ -129,15 +171,32 @@ export function MediaPickerDialog({
                     </div>
                   )}
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        <div className="px-6 py-3 border-t bg-muted/20 text-xs text-muted-foreground">
-          {filtered.length} {typeFilter === "all" ? "item" : typeFilter === "documents" ? "document" : "image"}{filtered.length !== 1 ? "s" : ""}
-          {search ? " matching search" : " in library"}
-        </div>
+        {multiple ? (
+          <DialogFooter className="border-t bg-muted/20 px-6 py-3 sm:items-center sm:justify-between sm:space-x-0">
+            <p className="text-xs text-muted-foreground">
+              {selectedIds.size} selected · {filtered.length} {typeFilter === "all" ? "item" : typeFilter === "documents" ? "document" : "image"}{filtered.length !== 1 ? "s" : ""}
+            </p>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={addSelected} disabled={selectedIds.size === 0}>
+                Add {selectedIds.size} Image{selectedIds.size !== 1 ? "s" : ""}
+              </Button>
+            </div>
+          </DialogFooter>
+        ) : (
+          <div className="px-6 py-3 border-t bg-muted/20 text-xs text-muted-foreground">
+            {filtered.length} {typeFilter === "all" ? "item" : typeFilter === "documents" ? "document" : "image"}{filtered.length !== 1 ? "s" : ""}
+            {search ? " matching search" : " in library"}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

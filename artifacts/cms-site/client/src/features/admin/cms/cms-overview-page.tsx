@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Blocks, FileCode, Globe, Image, Plus, SearchIcon, SquarePen } from "lucide-react";
+import { Blocks, FileCode, Globe, Image, Images, Plus, SearchIcon, SquarePen } from "lucide-react";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,7 @@ export default function CmsOverviewPage() {
   const quickLinks = [
     { title: "Pages", description: "Create and manage public website pages", icon: FileCode, href: "/admin/cms/pages" },
     { title: "Forms", description: "Manage generic public forms and submissions", icon: SquarePen, href: "/admin/forms" },
+    { title: "Galleries", description: "Create reusable photo galleries", icon: Images, href: "/admin/cms/galleries" },
     { title: "Media Library", description: "Upload and manage files", icon: Image, href: "/admin/cms/media" },
     { title: "Sections", description: "Save and reuse block groups", icon: Blocks, href: "/admin/cms/sections" },
     { title: "SEO Settings", description: "Configure global SEO, robots, and sitemap settings", icon: SearchIcon, href: "/admin/cms/seo" },

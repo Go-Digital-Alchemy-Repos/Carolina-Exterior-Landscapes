@@ -18,6 +18,25 @@ export {
   type CmsMediaUsageReference,
   type CmsMediaLibraryAsset,
 } from "./cms-media";
+export {
+  cmsGalleries,
+  cmsGalleryItems,
+  gallerySettingsSchema,
+  insertCmsGallerySchema,
+  insertCmsGalleryItemSchema,
+  DEFAULT_GALLERY_SETTINGS,
+  GALLERY_LAYOUTS,
+  GALLERY_STATUSES,
+  type CmsGallery,
+  type CmsGalleryItem,
+  type CmsGalleryListItem,
+  type CmsGalleryWithItems,
+  type GalleryLayout,
+  type GallerySettings,
+  type GalleryStatus,
+  type InsertCmsGallery,
+  type InsertCmsGalleryItem,
+} from "./cms-galleries";
 export { cmsSections, insertCmsSectionSchema, type InsertCmsSection, type CmsSection } from "./cms-sections";
 export {
   editorLocks,

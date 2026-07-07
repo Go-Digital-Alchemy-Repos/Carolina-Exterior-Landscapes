@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useBranding } from "@/components/shared/branding-provider";
+import { GalleryRenderer } from "@/components/shared/gallery-renderer";
 import { PublicFormRenderer } from "@/components/forms/public-form-renderer";
 import type { BlockInstance } from "@/features/admin/cms/builder/block-registry";
 import {
@@ -244,6 +245,28 @@ function sectionBackgroundClass(value: unknown) {
   if (background === "off-white") return "bg-[#F8F6F2]";
   if (background === "dark") return "bg-[#2C2C2C] text-white";
   return "bg-background";
+}
+
+function renderRichTextWithGalleries(html: string) {
+  const parts = html.split(/(\[gallery\s+id=["']?([^"'\]\s]+)["']?\])/gi);
+  const nodes = [];
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index];
+    if (!part) continue;
+    const shortcode = part.match(/^\[gallery\s+id=["']?([^"'\]\s]+)["']?\]$/i);
+    if (shortcode) {
+      nodes.push(
+        <div key={`gallery-${index}`} className="not-prose my-8">
+          <GalleryRenderer galleryId={shortcode[1]} />
+        </div>,
+      );
+      index += 1;
+      continue;
+    }
+    if (part.startsWith("[gallery")) continue;
+    nodes.push(<div key={`html-${index}`} dangerouslySetInnerHTML={{ __html: part }} />);
+  }
+  return nodes;
 }
 
 function Icon({ name, className }: { name: unknown; className?: string }) {
@@ -503,7 +526,39 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-rich-text">
         <div className={`mx-auto max-w-4xl px-4 py-8 sm:px-6 ${alignmentClass(props.alignment)}`}>
-          <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: str(props.content, "<p></p>") }} />
+          <div className="prose prose-slate max-w-none">{renderRichTextWithGalleries(str(props.content, "<p></p>"))}</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (block.type === "gallery") {
+    const layout = str(props.layout, "inherit");
+    return (
+      <section className={sectionBackgroundClass(props.background)} data-testid="block-gallery">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <GalleryRenderer
+            galleryId={str(props.galleryId)}
+            overrides={{
+              layout: layout === "inherit" ? "inherit" : layout as any,
+              columnsDesktop: Number(props.columnsDesktop) || 3,
+              columnsTablet: Number(props.columnsTablet) || 2,
+              columnsMobile: Number(props.columnsMobile) || 1,
+              spacing: str(props.spacing, "md") as any,
+              imageRatio: str(props.imageRatio, "4/3") as any,
+              cropMode: str(props.cropMode, "cover") as any,
+              borderRadius: str(props.borderRadius, "md") as any,
+              hoverEffect: str(props.hoverEffect, "zoom") as any,
+              maxImages: Number(props.maxImages) || 0,
+              transitionEffect: str(props.transitionEffect, "none") as any,
+              arrowIconColor: str(props.arrowIconColor) || undefined,
+              arrowBackgroundColor: str(props.arrowBackgroundColor) || undefined,
+              showTitle: optionalBool(props.showTitle, true),
+              showCaptions: optionalBool(props.showCaptions, true),
+              captionPosition: str(props.captionPosition, "below") as any,
+              lightbox: optionalBool(props.lightbox, true),
+            }}
+          />
         </div>
       </section>
     );
