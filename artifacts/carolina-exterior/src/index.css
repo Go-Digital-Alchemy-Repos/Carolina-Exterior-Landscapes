@@ -75,11 +75,11 @@
 
   /* Light earthtone surface washes (solid, for terrain-style bands) */
   --surface-sand: 36 44% 94%;
-  --surface-stone: 32 12% 94%;
+  --surface-stone: 35 32% 94%;
   --surface-mist: 153 22% 95%;
   --surface-clay: 24 34% 93%;
 
-  --background: 30 15% 97%; 
+  --background: 36 40% 96%; 
   --foreground: 153 55% 15%; 
 
   --border: 153 20% 85%;
