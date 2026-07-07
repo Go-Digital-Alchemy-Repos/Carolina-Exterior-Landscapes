@@ -53,6 +53,9 @@ const updateMediaSchema = z.object({
   ogTitle: z.string().trim().max(255).optional(),
   ogDescription: z.string().trim().max(320).optional(),
 });
+const bulkDeleteMediaSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(200),
+});
 
 const cmsUpload = multer({
   storage: multer.memoryStorage(),
@@ -114,6 +117,18 @@ function buildUniqueDisplayName(
   }
 
   return candidate;
+}
+
+async function deleteMediaAssetFiles(asset: { r2Key: string | null; url: string }) {
+  if (asset.r2Key) {
+    await r2Service.deleteFile(asset.r2Key);
+    return;
+  }
+
+  if (asset.url.startsWith("/uploads/cms/")) {
+    const localPath = path.resolve(process.cwd(), asset.url.slice(1));
+    if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+  }
 }
 
 router.post(
@@ -187,6 +202,34 @@ router.get(
       }))
     );
     res.json(await buildCmsMediaLibraryAssets(normalizedAssets));
+  })
+);
+
+router.post(
+  "/media/bulk-delete",
+  asyncHandler(async (req, res) => {
+    const parsed = bulkDeleteMediaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Select at least one media item to delete" });
+    }
+
+    const uniqueIds = Array.from(new Set(parsed.data.ids));
+    const deletedIds: string[] = [];
+    const missingIds: string[] = [];
+
+    for (const id of uniqueIds) {
+      const asset = await storage.cmsMedia.getMedia(id);
+      if (!asset) {
+        missingIds.push(id);
+        continue;
+      }
+
+      await deleteMediaAssetFiles(asset);
+      await storage.cmsMedia.deleteMedia(id);
+      deletedIds.push(id);
+    }
+
+    res.json({ success: true, deletedIds, missingIds });
   })
 );
 
@@ -340,12 +383,7 @@ router.delete(
     const asset = await storage.cmsMedia.getMedia(id);
     if (!asset) return res.status(404).json({ error: "Media not found" });
 
-    if (asset.r2Key) {
-      await r2Service.deleteFile(asset.r2Key);
-    } else if (asset.url.startsWith("/uploads/cms/")) {
-      const localPath = path.resolve(process.cwd(), asset.url.slice(1));
-      if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
-    }
+    await deleteMediaAssetFiles(asset);
 
     await storage.cmsMedia.deleteMedia(id);
     res.json({ success: true });

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,6 +69,8 @@ export default function CmsMediaPage() {
   const [typeFilter, setTypeFilter] = useState<"all" | "images" | "documents">("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name-asc" | "name-desc" | "largest" | "smallest" | "most-used" | "least-used">("newest");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedAsset, setSelectedAsset] = useState<CmsMediaLibraryAsset | null>(null);
   const [metadataForm, setMetadataForm] = useState<MediaMetadataForm>(buildMetadataForm(null));
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -101,6 +104,21 @@ export default function CmsMediaPage() {
       setSelectedAsset((current) => (current?.id === deletedId ? null : current));
     },
     onError: () => toast({ title: "Failed to delete media item", variant: "destructive" }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const response = await apiRequest("POST", "/api/admin/cms/media/bulk-delete", { ids });
+      return response.json() as Promise<{ deletedIds: string[]; missingIds: string[] }>;
+    },
+    onSuccess: ({ deletedIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/media"] });
+      toast({ title: `${deletedIds.length} media item${deletedIds.length !== 1 ? "s" : ""} deleted` });
+      setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
+      setSelectedAsset((current) => (current && deletedIds.includes(current.id) ? null : current));
+    },
+    onError: () => toast({ title: "Failed to delete selected media", variant: "destructive" }),
   });
 
   const metadataMutation = useMutation({
@@ -215,6 +233,34 @@ export default function CmsMediaPage() {
     });
   };
 
+  const selectedAssets = useMemo(
+    () => assets.filter((asset) => selectedIds.has(asset.id)),
+    [assets, selectedIds],
+  );
+  const selectedVisibleCount = filteredAssets.filter((asset) => selectedIds.has(asset.id)).length;
+  const allVisibleSelected = filteredAssets.length > 0 && selectedVisibleCount === filteredAssets.length;
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allVisibleSelected) {
+        filteredAssets.forEach((asset) => next.delete(asset.id));
+      } else {
+        filteredAssets.forEach((asset) => next.add(asset.id));
+      }
+      return next;
+    });
+  };
+
   const updateMetadataField = (key: keyof MediaMetadataForm, value: string) => {
     setMetadataForm((current) => ({ ...current, [key]: value }));
   };
@@ -321,6 +367,46 @@ export default function CmsMediaPage() {
           </select>
         </div>
 
+        {filteredAssets.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={allVisibleSelected}
+                onCheckedChange={toggleSelectAllVisible}
+                data-testid="checkbox-select-all-media"
+              />
+              Select all shown
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedIds.size} selected
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+                disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
+                data-testid="button-clear-media-selection"
+              >
+                Clear
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setBulkDeleteOpen(true)}
+                disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
+                data-testid="button-bulk-delete-media"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete Selected
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {[...Array(10)].map((_, i) => (
@@ -357,12 +443,33 @@ export default function CmsMediaPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {filteredAssets.map((asset) => (
-              <button
+              <div
                 key={asset.id}
-                className="group relative aspect-square rounded-xl border bg-muted/20 overflow-hidden transition-all hover:border-violet-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-400"
+                role="button"
+                tabIndex={0}
+                className={`group relative aspect-square rounded-xl border bg-muted/20 overflow-hidden transition-all hover:border-violet-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-400 ${selectedIds.has(asset.id) ? "border-violet-500 ring-2 ring-violet-200" : ""}`}
                 onClick={() => setSelectedAsset(asset)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedAsset(asset);
+                  }
+                }}
                 data-testid={`media-asset-${asset.id}`}
               >
+                <span
+                  className="absolute left-2 top-2 z-10 rounded-md bg-background/95 p-1 shadow-sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                >
+                  <Checkbox
+                    checked={selectedIds.has(asset.id)}
+                    onCheckedChange={() => toggleSelected(asset.id)}
+                    aria-label={`Select ${asset.originalName}`}
+                    data-testid={`checkbox-select-media-${asset.id}`}
+                  />
+                </span>
                 {asset.assetKind === "image" ? (
                   <img
                     src={asset.url}
@@ -383,7 +490,7 @@ export default function CmsMediaPage() {
                 )}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors rounded-xl" />
                 <div
-                  className="absolute left-2 top-2 rounded-full bg-background/90 p-1 shadow-sm"
+                  className="absolute left-2 top-11 rounded-full bg-background/90 p-1 shadow-sm"
                   title={
                     asset.isInUse
                       ? `In use on ${asset.liveUsageCount} live page${asset.liveUsageCount !== 1 ? "s" : ""}`
@@ -409,7 +516,7 @@ export default function CmsMediaPage() {
                     {formatBytes(asset.fileSize)} · {asset.isInUse ? `${asset.liveUsageCount} live use` : asset.usageCount > 0 ? `${asset.usageCount} draft/private ref` : "unused"}
                   </p>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
@@ -742,6 +849,30 @@ export default function CmsMediaPage() {
               data-testid="button-confirm-delete"
             >
               Delete File
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected media?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove {selectedIds.size} selected file{selectedIds.size !== 1 ? "s" : ""} from your media library and storage.
+              Any pages or blocks that reference these URLs will show broken file links or missing images.
+              {selectedAssets.some((asset) => asset.usageCount > 0) ? " Some selected files are currently referenced by CMS content." : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={bulkDeleteMutation.isPending}
+              data-testid="button-confirm-bulk-delete"
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
