@@ -342,6 +342,78 @@ uri = "file://artifacts/carolina-exterior/src/assets/matthews-nc-aerial.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "LmPMGIJG5EnJgYhh4UTjK"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-seasonal-color.png"
+type = "image"
+title = "commercial seasonal color"
+
+[[generated]]
+id = "i3O_0NJOtNMlpbhlXhH_F"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-sod.png"
+type = "image"
+title = "commercial sod install"
+
+[[generated]]
+id = "7kf0opY39ubVgWICpFMQt"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-plant-shrub.png"
+type = "image"
+title = "commercial plant shrub"
+
+[[generated]]
+id = "mHMuiXaIZDO95KTmbzP8c"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-mulch.png"
+type = "image"
+title = "commercial mulch beds"
+
+[[generated]]
+id = "coQD1ERYH0JWdZKz57Mc3"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-garden-beds.png"
+type = "image"
+title = "commercial garden beds"
+
+[[generated]]
+id = "37em0pdb-ebyUmzGD0JQU"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-walkway.png"
+type = "image"
+title = "commercial walkway"
+
+[[generated]]
+id = "BxjN7djjrMYjrEJTYF3pp"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-retaining-wall.png"
+type = "image"
+title = "commercial retaining wall"
+
+[[generated]]
+id = "2jUvq5vHMKnH1cxuJ2hu_"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-steps.png"
+type = "image"
+title = "commercial entry steps"
+
+[[generated]]
+id = "tEUBioeuCs0Dg_KsGI46p"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-french-drain.png"
+type = "image"
+title = "commercial french drain"
+
+[[generated]]
+id = "ljC1hvURT3kMl8NBRLOkQ"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-catch-basin.png"
+type = "image"
+title = "commercial catch basin"
+
+[[generated]]
+id = "vRmy6J6_-9668xsi8dfkU"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-regrading.png"
+type = "image"
+title = "commercial site regrading"
+
+[[generated]]
+id = "U8laCMVUooG7wt9uuGyxC"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-downspout.png"
+type = "image"
+title = "commercial downspout drainage"
+
 [[outputs]]
 id = "N-ZyWgL5_TDBvPVDsatvI"
 uri = "file://carolina-exterior-landscapes.zip"
