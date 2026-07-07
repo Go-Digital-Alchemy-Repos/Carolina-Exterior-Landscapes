@@ -9,12 +9,22 @@ import res1 from "@/assets/gallery-res-1.png";
 import res2 from "@/assets/gallery-res-2.png";
 import res3 from "@/assets/gallery-res-3.png";
 import communityAerial from "@/assets/community-aerial.png";
+import matthewsHero from "@/assets/matthews-nc-hero.png";
+import matthewsAerial from "@/assets/matthews-nc-aerial.png";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 import { BRAND } from "@/content/site";
 
 const CITY_IMAGES = [heroImg, res1, res2, res3, communityAerial];
 
+// City-specific imagery overrides. Cities not listed fall back to the shared
+// deterministic pool (hero) and the default community aerial (sidebar).
+const CITY_IMAGE_OVERRIDES: Record<string, { hero: string; aerial: string }> = {
+  "matthews-nc": { hero: matthewsHero, aerial: matthewsAerial },
+};
+
 function pickCityImage(slug: string): string {
+  const override = CITY_IMAGE_OVERRIDES[slug];
+  if (override) return override.hero;
   let sum = 0;
   for (let i = 0; i < slug.length; i++) sum += slug.charCodeAt(i);
   return CITY_IMAGES[sum % CITY_IMAGES.length];
@@ -29,6 +39,7 @@ export default function ServiceAreaCity() {
   }
 
   const heroImage = pickCityImage(slug || "");
+  const aerialImage = CITY_IMAGE_OVERRIDES[slug || ""]?.aerial ?? communityAerial;
 
   return (
     <div className="w-full bg-background pb-24">
@@ -65,7 +76,7 @@ export default function ServiceAreaCity() {
         <div className="lg:col-span-4">
           <div className="sticky top-32 space-y-8">
           <div className="rounded-3xl overflow-hidden border border-border shadow-sm relative aspect-[4/3]">
-            <img src={communityAerial} alt={`Neighborhoods across ${location.city}, ${location.state}`} loading="lazy" className="w-full h-full object-cover" />
+            <img src={aerialImage} alt={`Neighborhoods across ${location.city}, ${location.state}`} loading="lazy" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
             <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">{location.city}, {location.state}</span>
           </div>

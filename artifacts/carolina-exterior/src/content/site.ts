@@ -118,6 +118,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
   { slug: "lancaster-sc", city: "Lancaster", state: "SC", lat: 34.7204, lng: -80.7712 },
   { slug: "mineral-springs-nc", city: "Mineral Springs", state: "NC", lat: 34.9346, lng: -80.6673 },
   { slug: "weddington-nc", city: "Weddington", state: "NC", lat: 35.0227, lng: -80.7581 },
+  { slug: "matthews-nc", city: "Matthews", state: "NC", lat: 35.1168, lng: -80.7231 },
 ];
 
 export const VALUE_PROPS = [

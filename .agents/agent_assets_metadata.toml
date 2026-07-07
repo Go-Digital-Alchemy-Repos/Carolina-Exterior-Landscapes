@@ -330,6 +330,18 @@ uri = "file://artifacts/carolina-exterior/src/assets/blog/blog-12.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "7bDa9l0gLap1l3qUXkf-v"
+uri = "file://artifacts/carolina-exterior/src/assets/matthews-nc-hero.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "6-oraJjNXYASEhhOz9Now"
+uri = "file://artifacts/carolina-exterior/src/assets/matthews-nc-aerial.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "N-ZyWgL5_TDBvPVDsatvI"
 uri = "file://carolina-exterior-landscapes.zip"
