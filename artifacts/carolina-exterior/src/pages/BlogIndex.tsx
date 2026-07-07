@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 
 export default function BlogIndex() {
   const posts = getBlogPosts();
@@ -19,11 +20,16 @@ export default function BlogIndex() {
         description="Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region." 
       />
       
-      <div className="bg-foreground py-20 px-4 text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">The Landscape Journal</h1>
-        <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
-          Expert insights, seasonal tips, and guides for properties in the Carolina Piedmont.
-        </p>
+      <div className="bg-foreground py-20 px-4 text-center mb-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15 scale-x-[-1]" />
+        <div className="relative z-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">The Landscape Journal</h1>
+          <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
+            Expert insights, seasonal tips, and guides for properties in the Carolina Piedmont.
+          </p>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4">
@@ -53,7 +59,7 @@ export default function BlogIndex() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map(post => (
             <Link key={post.slug} href={`/blog/${post.slug}`}>
-              <Card className="h-full hover:border-muted-foreground/40 transition-colors cursor-pointer group flex flex-col overflow-hidden">
+              <Card className="h-full shadow-natural hover:shadow-natural-lg hover:-translate-y-1 hover:border-muted-foreground/40 transition-all duration-500 cursor-pointer group flex flex-col overflow-hidden">
                 <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                   <img
                     src={getBlogImage(post.image)}

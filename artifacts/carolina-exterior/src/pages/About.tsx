@@ -5,6 +5,8 @@ import { VALUE_PROPS, BRAND } from "@/content/site";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight } from "lucide-react";
+import { SectionDivider } from "@/components/nature/SectionDivider";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 import heroImg from "@/assets/about-story.png";
 
 export default function About() {
@@ -19,8 +21,11 @@ export default function About() {
         <div className="absolute inset-0 z-0">
           <img src={heroImg} alt="About Carolina Exterior" className="w-full h-full object-cover opacity-85" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
-        
+
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-6 border border-primary/30 uppercase backdrop-blur-sm">
@@ -32,15 +37,16 @@ export default function About() {
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+      <div className="relative surface-stone bg-paper overflow-hidden">
+        <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
+        <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
         <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={page.blocks} />
         </div>
         
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-muted/50 p-8 rounded-3xl border border-border shadow-sm sticky top-32">
+          <div className="surface-sand bg-paper p-8 rounded-3xl border border-border shadow-natural sticky top-32">
             <h3 className="text-2xl font-extrabold mb-8 tracking-tight text-foreground">Our Values</h3>
             <ul className="space-y-8">
               {VALUE_PROPS.map((v, i) => (
@@ -73,8 +79,11 @@ export default function About() {
       </div>
       
       {/* Simple CTA */}
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--accent))" />
       <div className="bg-accent text-accent-foreground py-32 text-center px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-contours opacity-60 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary rounded-full blur-3xl opacity-10"></div>
+        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-20 top-1/2 -translate-y-1/2 h-72 w-auto text-brand-forest/10" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight">Experience the difference.</h2>
           <p className="text-xl font-medium opacity-90 mb-10 leading-relaxed">Let us show you what reliable, premium landscaping looks like.</p>

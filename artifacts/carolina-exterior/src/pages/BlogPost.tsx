@@ -111,26 +111,29 @@ export default function BlogPost() {
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-24 space-y-8">
               {/* CTA */}
-              <div className="rounded-xl bg-foreground p-6 text-white">
-                <h3 className="text-lg font-extrabold mb-2">
-                  Get a Free Estimate
-                </h3>
-                <p className="text-sm text-white/80 font-medium mb-5">
-                  Serving Monroe, Union County, and the greater Charlotte region
-                  with residential and commercial landscaping.
-                </p>
-                <Link
-                  href="/get-a-quote"
-                  className="block w-full text-center bg-primary text-white font-bold text-sm py-3 rounded-md hover:opacity-90 transition-opacity mb-3"
-                >
-                  Request a Quote
-                </Link>
-                <a
-                  href={`tel:${BRAND.phoneTel}`}
-                  className="flex items-center justify-center gap-2 w-full text-center bg-white/10 text-white font-bold text-sm py-3 rounded-md hover:bg-white/20 transition-colors"
-                >
-                  <Phone className="h-4 w-4" /> {BRAND.phoneDisplay}
-                </a>
+              <div className="rounded-xl bg-foreground p-6 text-white shadow-natural relative overflow-hidden">
+                <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+                <div className="relative">
+                  <h3 className="text-lg font-extrabold mb-2">
+                    Get a Free Estimate
+                  </h3>
+                  <p className="text-sm text-white/80 font-medium mb-5">
+                    Serving Monroe, Union County, and the greater Charlotte region
+                    with residential and commercial landscaping.
+                  </p>
+                  <Link
+                    href="/get-a-quote"
+                    className="block w-full text-center bg-primary text-white font-bold text-sm py-3 rounded-md hover:opacity-90 transition-opacity mb-3"
+                  >
+                    Request a Quote
+                  </Link>
+                  <a
+                    href={`tel:${BRAND.phoneTel}`}
+                    className="flex items-center justify-center gap-2 w-full text-center bg-white/10 text-white font-bold text-sm py-3 rounded-md hover:bg-white/20 transition-colors"
+                  >
+                    <Phone className="h-4 w-4" /> {BRAND.phoneDisplay}
+                  </a>
+                </div>
               </div>
 
               {/* Related articles */}

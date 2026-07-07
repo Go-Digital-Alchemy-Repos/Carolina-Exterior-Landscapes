@@ -5,6 +5,8 @@ import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES, VALUE_PROPS } from "@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Leaf, Shield, Clock, MapPin } from "lucide-react";
+import { SectionDivider } from "@/components/nature/SectionDivider";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 
 import heroImg from "@/assets/hero-home.png";
 import res1 from "@/assets/gallery-res-1.png";
@@ -29,8 +31,11 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <img src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover opacity-75" />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/55 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-60 mix-blend-overlay pointer-events-none"></div>
         </div>
-        
+
+        <BotanicalAccent variant="fern" className="hidden md:block absolute right-10 lg:right-24 top-1/2 -translate-y-1/2 h-[26rem] w-auto text-primary/25 z-10" />
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16">
           <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
             <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-8 border border-primary/30 uppercase backdrop-blur-sm">
@@ -68,20 +73,28 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-sand))" />
       </section>
 
       {/* Services Overview */}
-      <section className="py-24 bg-muted/30 relative overflow-hidden">
-        <div className="absolute inset-0 bg-dots opacity-40 pointer-events-none"></div>
+      <section className="py-24 surface-sand bg-paper relative overflow-hidden">
+        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-topo opacity-70 pointer-events-none"></div>
+        <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-6 top-16 h-64 w-auto text-brand-leaf/15 -rotate-12" />
+        <BotanicalAccent variant="sprig" className="hidden lg:block absolute -right-6 bottom-16 h-64 w-auto text-brand-leaf/15 rotate-12 scale-x-[-1]" />
         <div className="max-w-7xl mx-auto px-4 relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-brand-leaf/10 text-brand-leaf font-bold tracking-widest text-xs mb-6 border border-brand-leaf/20 uppercase">
+              <Leaf className="h-3 w-3" /> Field Notes
+            </span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-6">Expertise for Every Property</h2>
             <p className="text-xl text-muted-foreground font-medium">Comprehensive landscaping services tailored to the Piedmont Carolina climate.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
             {/* Residential Card */}
-            <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-xl transition-all duration-500">
+            <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
                 <img src={res1} alt="Residential Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent"></div>
@@ -108,7 +121,7 @@ export default function Home() {
             </div>
 
             {/* Commercial Card */}
-            <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-sm hover:shadow-xl transition-all duration-500">
+            <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
                 <img src={com1} alt="Commercial Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent"></div>
@@ -138,8 +151,8 @@ export default function Home() {
       </section>
 
       {/* Gallery Preview */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4">
+      <section className="py-24 bg-background bg-paper relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 relative">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="max-w-2xl">
               <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-3">Proof In The Work</p>
@@ -157,7 +170,7 @@ export default function Home() {
               { src: res3, alt: "Natural stone patio and outdoor living space", label: "Stone Patio" },
               { src: comHoa, alt: "HOA community entrance landscaping", label: "HOA Entrance" },
             ].map((img, i) => (
-              <Link key={i} href="/gallery" className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-500 block">
+              <Link key={i} href="/gallery" className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 block hover:-translate-y-1">
                 <img src={img.src} alt={img.alt} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent"></div>
                 <span className="absolute bottom-5 left-5 text-white font-extrabold text-lg">{img.label}</span>
@@ -168,8 +181,11 @@ export default function Home() {
       </section>
 
       {/* Value Props */}
-      <section className="py-24 bg-foreground text-background">
-        <div className="max-w-7xl mx-auto px-4">
+      <SectionDivider variant="hills" bgColor="hsl(var(--background))" fillColor="hsl(var(--foreground))" />
+      <section className="py-24 bg-foreground text-background relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-70 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-10 h-72 w-auto text-primary/15" />
+        <div className="max-w-7xl mx-auto px-4 relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             <div className="lg:col-span-1">
               <h2 className="text-3xl md:text-4xl font-extrabold mb-6 tracking-tight text-white">Why Carolina Exterior?</h2>
@@ -203,6 +219,7 @@ export default function Home() {
           <img src={aboutStory} alt="Carolina Exterior crew installing a natural stone patio" className="w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/40"></div>
         </div>
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="max-w-2xl">
             <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-4">One Company. Complete Care.</p>
@@ -218,22 +235,27 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <SectionDivider variant="leaf" overlay fillColor="hsl(var(--surface-mist))" />
       </section>
 
       {/* SEO Content Blocks */}
-      <section className="py-24 bg-background border-b border-border/50 relative overflow-hidden">
-        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+      <section className="py-24 surface-mist bg-paper relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
+        <BotanicalAccent variant="leaf" className="hidden lg:block absolute right-6 top-24 h-72 w-auto text-brand-leaf/10" />
         <div className="max-w-7xl mx-auto px-4 relative">
           <BlockRenderer blocks={page.blocks} />
         </div>
       </section>
-      
+
       {/* CTA Section */}
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-mist))" fillColor="hsl(var(--accent))" />
       <section className="py-32 bg-accent relative overflow-hidden text-accent-foreground">
         <div className="absolute inset-0 bg-contours opacity-70 pointer-events-none"></div>
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white rounded-full blur-3xl opacity-40"></div>
-        
+        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-16 top-1/2 -translate-y-1/2 h-80 w-auto text-brand-forest/10" />
+
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <span className="inline-block py-1.5 px-4 rounded-full bg-white/40 text-foreground font-bold tracking-widest text-xs mb-8 uppercase backdrop-blur-md border border-white/50">
             Start Your Project

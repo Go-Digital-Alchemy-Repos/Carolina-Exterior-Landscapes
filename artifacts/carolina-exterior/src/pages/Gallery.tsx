@@ -4,6 +4,8 @@ import { Seo } from "@/components/Seo";
 import { BRAND } from "@/content/site";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { SectionDivider } from "@/components/nature/SectionDivider";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 
 import res1 from "@/assets/gallery-res-1.png";
 import res2 from "@/assets/gallery-res-2.png";
@@ -157,7 +159,10 @@ export default function Gallery() {
 
       {/* Hero */}
       <div className="bg-foreground py-20 md:py-24 px-4 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15 scale-x-[-1]" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-4">Our Work</p>
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-5">Project Gallery</h1>
@@ -194,7 +199,7 @@ export default function Gallery() {
             <button
               key={project.src + project.title}
               onClick={() => setLightboxIndex(i)}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-500 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg hover:-translate-y-1 transition-all duration-500 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={`View larger photo: ${project.title}`}
             >
               <img
@@ -221,8 +226,11 @@ export default function Gallery() {
       </div>
 
       {/* CTA */}
-      <section className="bg-muted/40 py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
+      <SectionDivider variant="hills" bgColor="hsl(var(--background))" fillColor="hsl(var(--surface-sand))" />
+      <section className="surface-sand bg-paper py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
+        <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-4 bottom-6 h-64 w-auto text-brand-leaf/10 -rotate-12" />
+        <div className="max-w-3xl mx-auto text-center relative">
           <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-5">Want results like these on your property?</h2>
           <p className="text-lg text-muted-foreground font-medium mb-8">
             Tell us about your project and we'll put together a free, no-pressure quote — usually within one business day.

@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 
 const formSchema = z.object({
   contactName: z.string().min(1, "Contact name is required"),
@@ -72,15 +73,20 @@ export default function CommercialQuote() {
     <div className="w-full bg-background min-h-screen pb-24">
       <Seo title={page.titleTag} description={page.metaDescription} />
       
-      <div className="bg-foreground py-20 px-4 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">{page.h1}</h1>
-        <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
-          {page.blocks.find(b => b.type === 'p')?.text || "Request a commercial proposal."}
-        </p>
+      <div className="bg-foreground py-20 px-4 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15 scale-x-[-1]" />
+        <div className="relative z-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">{page.h1}</h1>
+          <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
+            {page.blocks.find(b => b.type === 'p')?.text || "Request a commercial proposal."}
+          </p>
+        </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 -mt-10">
-        <div className="bg-card p-8 md:p-12 rounded-xl shadow-xl border border-border relative z-10">
+        <div className="bg-card bg-paper p-8 md:p-12 rounded-xl shadow-natural-lg border border-border relative z-10">
           {success ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6">

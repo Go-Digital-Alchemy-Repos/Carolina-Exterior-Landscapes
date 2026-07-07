@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import { BRAND } from "@/content/site";
 import { getServiceImages } from "@/lib/serviceImages";
 import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
+import { SectionDivider } from "@/components/nature/SectionDivider";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 
 import heroHome from "@/assets/hero-home.png";
 import heroCommercial from "@/assets/hero-commercial.png";
@@ -77,8 +79,11 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
         <div className="absolute inset-0 z-0">
           <img src={heroImage} alt={page.h1} className="w-full h-full object-cover opacity-75" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
-        
+
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-10 top-1/2 -translate-y-1/2 h-72 w-auto text-primary/20 z-10" />
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
@@ -103,8 +108,9 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       </div>
 
       {/* Main Content */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+      <div className="relative surface-stone bg-paper overflow-hidden">
+        <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
+        <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
         <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={page.blocks} serviceImages={getServiceImages(slug || "")} />
@@ -113,7 +119,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
         {/* Sidebar CTA */}
         <div className="lg:col-span-4">
           <div className="sticky top-32 space-y-8">
-            <div className="bg-muted/50 p-8 rounded-3xl border border-border shadow-sm">
+            <div className="surface-sand bg-paper p-8 rounded-3xl border border-border shadow-natural">
               <h3 className="text-2xl font-extrabold mb-4 tracking-tight">Ready to start?</h3>
               <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
                 Contact us today for a free, no-obligation estimate for your property in {BRAND.region}.
@@ -157,7 +163,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
               </ul>
             </div>
 
-            <div className="rounded-3xl overflow-hidden border border-border shadow-sm relative aspect-[4/3]">
+            <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
               <img src={isCommercial ? galleryCom : galleryRes} alt={`${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
@@ -168,9 +174,11 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       </div>
 
       {/* Bottom CTA */}
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--primary))" />
       <div className="relative bg-primary text-primary-foreground py-24 overflow-hidden">
         <div className="absolute inset-0 bg-contours opacity-40 pointer-events-none"></div>
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-16 top-1/2 -translate-y-1/2 h-72 w-auto text-white/10" />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-extrabold mb-6 tracking-tight">Ready to get started?</h2>
           <p className="text-lg md:text-xl font-medium opacity-90 mb-10 max-w-2xl mx-auto leading-relaxed">

@@ -13,6 +13,8 @@ import matthewsHero from "@/assets/matthews-nc-hero.png";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 import { BRAND, SERVICE_AREAS } from "@/content/site";
 import { CityMiniMap } from "@/components/CityMiniMap";
+import { SectionDivider } from "@/components/nature/SectionDivider";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 
 const CITY_IMAGES = [heroImg, res1, res2, res3, communityAerial];
 
@@ -49,8 +51,11 @@ export default function ServiceAreaCity() {
         <div className="absolute inset-0 z-0">
           <img src={heroImage} alt={`${location.city} Landscaping`} className="w-full h-full object-cover opacity-75" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
-        
+
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-6 border border-primary/30 uppercase backdrop-blur-sm">
@@ -66,8 +71,9 @@ export default function ServiceAreaCity() {
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+      <div className="relative surface-stone bg-paper overflow-hidden">
+        <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
+        <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
         <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={location.blocks} excludeSlug={location.slug} />
@@ -83,7 +89,7 @@ export default function ServiceAreaCity() {
               state={location.state}
             />
           )}
-          <div className="bg-muted/50 p-8 rounded-3xl border border-border shadow-sm">
+          <div className="surface-sand bg-paper p-8 rounded-3xl border border-border shadow-natural">
             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-6">
               <MapPin className="h-6 w-6" />
             </div>

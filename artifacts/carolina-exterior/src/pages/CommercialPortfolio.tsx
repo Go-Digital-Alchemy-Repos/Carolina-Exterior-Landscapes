@@ -1,5 +1,6 @@
 import { Seo } from "@/components/Seo";
 import { BRAND } from "@/content/site";
+import { BotanicalAccent } from "@/components/nature/BotanicalAccent";
 import com1 from "@/assets/gallery-com-1.png";
 import com2 from "@/assets/gallery-com-2.png";
 import com3 from "@/assets/gallery-com-3.png";
@@ -20,17 +21,22 @@ export default function CommercialPortfolio() {
         description={`View our recent commercial landscaping, grounds maintenance, and site work projects across ${BRAND.region}.`} 
       />
       
-      <div className="bg-foreground py-20 px-4 text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Commercial Portfolio</h1>
-        <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
-          Professional grounds maintenance, landscape design, and hardscape for businesses and HOAs.
-        </p>
+      <div className="bg-foreground py-20 px-4 text-center mb-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15 scale-x-[-1]" />
+        <div className="relative z-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Commercial Portfolio</h1>
+          <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
+            Professional grounds maintenance, landscape design, and hardscape for businesses and HOAs.
+          </p>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
           {images.map((img, i) => (
-            <div key={i} className="aspect-video rounded-xl overflow-hidden border border-border shadow-sm group">
+            <div key={i} className="aspect-video rounded-xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg hover:-translate-y-1 transition-all duration-500 group">
               <img 
                 src={img.src} 
                 alt={img.alt} 

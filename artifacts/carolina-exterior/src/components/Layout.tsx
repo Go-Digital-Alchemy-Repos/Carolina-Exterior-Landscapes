@@ -6,6 +6,7 @@ import logoWhite from "@assets/Primary_Logo_white_1783443034776.png";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
+import { BotanicalAccent } from "./nature/BotanicalAccent";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -191,6 +192,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <footer className="bg-foreground text-background pt-24 pb-12 relative overflow-hidden">
         {/* Decorative background element */}
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-2 bottom-8 h-64 w-auto text-primary/10" />
 
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">

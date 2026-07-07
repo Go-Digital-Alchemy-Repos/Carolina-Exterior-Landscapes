@@ -73,6 +73,12 @@
   --brand-sand: 38 36% 68%;
   --brand-offwhite: 30 15% 97%; /* warmer off-white */
 
+  /* Light earthtone surface washes (solid, for terrain-style bands) */
+  --surface-sand: 36 44% 94%;
+  --surface-stone: 32 12% 94%;
+  --surface-mist: 153 22% 95%;
+  --surface-clay: 24 34% 93%;
+
   --background: 30 15% 97%; 
   --foreground: 153 55% 15%; 
 
@@ -153,6 +159,8 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    /* Tactile paper grain across the whole surface */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23p)' opacity='0.04'/%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -161,23 +169,76 @@
 }
 
 @layer utilities {
+  /* --- Solid earthtone surface washes (terrain bands) --- */
+  .surface-sand { background-color: hsl(var(--surface-sand)); }
+  .surface-stone { background-color: hsl(var(--surface-stone)); }
+  .surface-mist { background-color: hsl(var(--surface-mist)); }
+  .surface-clay { background-color: hsl(var(--surface-clay)); }
+
+  /* --- Paper / grain texture overlays (baked-in opacity, combine with a bg color) --- */
+  .bg-paper {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='pp'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23pp)' opacity='0.06'/%3E%3C/svg%3E");
+  }
+  .bg-paper-strong {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='ps'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23ps)' opacity='0.09'/%3E%3C/svg%3E");
+  }
+
+  /* --- Botanical / field-guide dot grid --- */
   .bg-dots {
-    background-image: radial-gradient(hsl(var(--primary) / 0.10) 1.2px, transparent 1.2px);
+    background-image: radial-gradient(hsl(var(--primary) / 0.12) 1.2px, transparent 1.2px);
     background-size: 24px 24px;
   }
+
+  /* --- Topographic contour lines (field-guide terrain) --- */
   .bg-contours {
     background-image: repeating-radial-gradient(
       circle at 50% 120%,
-      hsl(var(--primary) / 0.06) 0,
-      hsl(var(--primary) / 0.06) 1.5px,
+      hsl(var(--primary) / 0.10) 0,
+      hsl(var(--primary) / 0.10) 1.5px,
       transparent 1.5px,
-      transparent 46px
+      transparent 42px
     );
   }
+  .bg-topo {
+    background-image: repeating-radial-gradient(
+      ellipse 620px 460px at 18% 8%,
+      hsl(var(--foreground) / 0.055) 0,
+      hsl(var(--foreground) / 0.055) 1.5px,
+      transparent 1.5px,
+      transparent 40px
+    );
+  }
+  .bg-topo-light {
+    background-image: repeating-radial-gradient(
+      ellipse 620px 460px at 82% 4%,
+      hsl(0 0% 100% / 0.06) 0,
+      hsl(0 0% 100% / 0.06) 1.5px,
+      transparent 1.5px,
+      transparent 40px
+    );
+  }
+
   .bg-grid-lines {
     background-image:
       linear-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
     background-size: 48px 48px;
+  }
+
+  /* --- Warm, layered field-guide shadows (green-tinted, not neutral gray) --- */
+  .shadow-natural {
+    box-shadow:
+      0 1px 2px hsl(153 40% 12% / 0.05),
+      0 10px 24px -12px hsl(153 40% 12% / 0.18);
+  }
+  .shadow-natural-lg {
+    box-shadow:
+      0 2px 4px hsl(153 40% 12% / 0.06),
+      0 18px 40px -14px hsl(153 40% 12% / 0.28);
+  }
+  .shadow-sand {
+    box-shadow:
+      0 1px 2px hsl(30 40% 25% / 0.06),
+      0 14px 32px -14px hsl(30 45% 30% / 0.28);
   }
 }
