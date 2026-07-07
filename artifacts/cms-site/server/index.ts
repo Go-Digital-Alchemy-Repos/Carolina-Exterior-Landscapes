@@ -96,7 +96,10 @@ app.use(originCheck);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use(
   "/images/landscape",
-  express.static(path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets")),
+  express.static(path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets"), {
+    immutable: true,
+    maxAge: "1y",
+  }),
 );
 
 const REDACTED_KEYS = [

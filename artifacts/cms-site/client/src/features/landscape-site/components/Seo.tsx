@@ -1,6 +1,37 @@
 import { useEffect } from "react";
 import { BRAND } from "@/features/landscape-site/content/site";
 
+const landscapeBusinessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "LandscapingBusiness",
+  name: BRAND.name,
+  description:
+    "Residential and commercial landscaping, lawn maintenance, hardscape, and drainage serving Monroe, Union County, and the greater Charlotte region.",
+  url: BRAND.domain,
+  telephone: BRAND.phoneTel,
+  email: BRAND.email,
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: BRAND.addressLocality,
+    addressRegion: BRAND.addressRegion,
+    postalCode: BRAND.postalCode,
+    addressCountry: "US",
+  },
+  areaServed: [
+    "Monroe NC",
+    "Marvin NC",
+    "Wesley Chapel NC",
+    "Waxhaw NC",
+    "Indian Trail NC",
+    "Mineral Springs NC",
+    "Weddington NC",
+    "Charlotte NC",
+    "Indian Land SC",
+    "Lancaster SC",
+  ],
+  priceRange: "$$",
+} as const;
+
 function upsertMeta(selector: string, attr: string, key: string, content: string) {
   let el = document.head.querySelector(selector);
   if (!el) {
@@ -52,19 +83,25 @@ export function Seo({
     canonical.setAttribute("href", canonicalHref);
     upsertMeta('meta[property="og:url"]', "property", "og:url", canonicalHref);
 
-    let script: HTMLScriptElement | null = null;
-    if (jsonLd) {
-      script = document.createElement("script");
+    const schemas = [
+      landscapeBusinessJsonLd,
+      ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []),
+    ];
+    const scripts = schemas.map((schema, index) => {
+      const script = document.createElement("script");
       script.type = "application/ld+json";
-      script.setAttribute("data-seo-jsonld", "true");
-      script.textContent = JSON.stringify(jsonLd);
+      script.setAttribute("data-seo-jsonld", `landscape-${index}`);
+      script.textContent = JSON.stringify(schema);
       document.head.appendChild(script);
-    }
+      return script;
+    });
 
     return () => {
-      if (script && script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
+      scripts.forEach((script) => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      });
     };
   }, [title, description, type, jsonLd]);
 
