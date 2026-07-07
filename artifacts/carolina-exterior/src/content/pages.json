@@ -142,47 +142,47 @@
         "text": "Our comprehensive annual contract covers every aspect of lawn health and curb appeal throughout the year:"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Lawn Mowing: Scheduled mowing at the proper height for your grass type, including tall fescue maintained at 3.5 to 4 inches for optimal health and drought resistance."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Edging: Crisp, clean edges along all sidewalks, driveways, and planting beds after every mowing visit."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Blowing: All hard surfaces — driveways, sidewalks, patios — cleared of clippings and debris after every service."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Pre-Emergent Weed Control (2x/year): Spring and fall applications that prevent crabgrass, poa annua, and common winter weeds before they germinate."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Tall Fescue Weed Control: Targeted post-emergent treatments for broadleaf weeds and grassy invaders common in North Carolina's fescue lawns."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Lawn Fertilization (4x/year): A science-based fertilization schedule timed to North Carolina's growing seasons — late summer, fall, late fall, and spring — for steady, healthy growth."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Insecticide Treatments (2x/year): Preventive and curative treatments targeting grubs, armyworms, and other common turf pests that damage Carolinas lawns."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Flowerbed Weed Control: Year-round management of weeds in all established planting beds, keeping them clean and professional-looking between seasonal plantings."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Lime Application (1x/year): One annual lime treatment to correct the naturally acidic pH of Piedmont clay soils and maximize fertilizer effectiveness."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Leaf Removal: Full fall and winter leaf cleanup service to protect your turf from smothering and disease over the dormant season."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Bush & Shrub Pruning (2x/year): Spring and fall shaping of all shrubs and bushes to maintain healthy form and a polished, manicured appearance."
       },
       {
@@ -190,11 +190,11 @@
         "text": "Optional Add-On Services:"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Aeration & Overseeding (Fall): Core aeration and tall fescue overseeding to thicken thin turf and improve long-term lawn density — the single most valuable fall service for Carolina lawns."
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Fungus Treatments (2x/year available): Preventive and curative fungicide applications targeting brown patch, dollar spot, and other fungal diseases that thrive in North Carolina's humid summer climate."
       },
       {
@@ -1566,27 +1566,27 @@
         "text": "Use the form on this page to submit your quote request online. The form collects the following information to get your request to the right team member quickly:"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Your Name"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Phone Number (preferred contact number)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Email Address"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "City / Service Area (Monroe, Waxhaw, Weddington, Marvin, Indian Trail, etc.)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Service Type: Annual Lawn Maintenance Contract | Landscaping | Hardscape | Mulching & Planting | Drainage Solutions | Multiple Services"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Brief Description of Your Needs: Tell us what you are looking for in a few sentences — your property situation, your goals, and any specific questions or concerns."
       },
       {
@@ -2900,35 +2900,35 @@
         "text": "Having the following information ready will help us prepare the most accurate and useful proposal for your property:"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Property address or addresses if requesting multi-site service"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Property type (office park, retail center, HOA community, industrial, medical, multi-family, other)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Approximate property size or acreage if known"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Services you are interested in (grounds maintenance, landscaping installation, hardscape, drainage, HOA program, or combination)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Number of properties if requesting a multi-site contract"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Current provider situation and any specific service issues or expectations you want to address"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Preferred contract start date or timing"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Name, title, and best contact method for the decision-maker and any additional contacts who should receive the proposal"
       },
       {
@@ -2940,43 +2940,43 @@
         "text": "When you contact Carolina Exterior for a commercial estimate, please be prepared to provide the following information:"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Full Name"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Title or Role (Property Manager, HOA Board Member, Business Owner, General Contractor, Other)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Company or Organization Name"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Property Address (or addresses for multi-site requests)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Property Type"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Number of Properties"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Services Needed"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Current Landscaping Provider (if applicable)"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Best Contact Method (phone, email, or both) and preferred contact times"
       },
       {
-        "type": "p",
+        "type": "li",
         "text": "Additional Notes or special requirements"
       },
       {
