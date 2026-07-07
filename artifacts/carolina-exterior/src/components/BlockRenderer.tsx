@@ -188,7 +188,7 @@ function processCols(count: number): string {
   return "md:grid-cols-3";
 }
 
-export function BlockRenderer({ blocks, className, excludeSlug }: { blocks: Block[], className?: string, excludeSlug?: string }) {
+export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }: { blocks: Block[], className?: string, excludeSlug?: string, serviceImages?: Record<string, string> }) {
   const groups = buildGroups(blocks);
 
   return (
@@ -242,6 +242,37 @@ export function BlockRenderer({ blocks, className, excludeSlug }: { blocks: Bloc
         }
 
         if (group.type === 'grid') {
+          const useImages = !!serviceImages && group.items.length > 0 && group.items.every((it) => serviceImages[it.title]);
+          if (useImages) {
+            return (
+              <div key={idx} className="my-16">
+                {group.title && <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-foreground tracking-tight">{group.title}</h2>}
+                <div className="mb-12 space-y-4 max-w-4xl">
+                  {group.intro.map((text, iIdx) => (
+                    <p key={iIdx} className="text-muted-foreground font-medium leading-relaxed text-lg"><LinkedText text={text} /></p>
+                  ))}
+                </div>
+                <div className="space-y-14 md:space-y-20">
+                  {group.items.map((item, gIdx) => (
+                    <div key={gIdx} className={cn("flex flex-col gap-6 md:gap-10 md:items-center", gIdx % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row")}>
+                      <div className="md:w-1/2 shrink-0">
+                        <div className="relative overflow-hidden rounded-2xl shadow-md border border-border/60 aspect-[4/3] group">
+                          <img src={serviceImages![item.title]} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                          <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl pointer-events-none"></div>
+                        </div>
+                      </div>
+                      <div className="md:w-1/2">
+                        <h3 className="text-2xl md:text-3xl font-bold mb-4 text-foreground tracking-tight">{item.title}</h3>
+                        <div className="text-muted-foreground font-medium leading-relaxed space-y-3 text-lg">
+                          <Paragraphs text={item.text} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
           return (
             <div key={idx} className="my-16">
               {group.title && <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-foreground tracking-tight">{group.title}</h2>}
