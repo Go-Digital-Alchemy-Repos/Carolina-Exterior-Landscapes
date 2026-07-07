@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { Block } from "@/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, Phone } from "lucide-react";
 import { Link } from "wouter";
 import { CityLinkProvider, LinkedText, resolveCitySlug } from "@/lib/cityLinks";
+import { BRAND } from "@/content/site";
 
 type Item = { title: string; text: string };
 
@@ -12,12 +14,14 @@ type BlockGroup =
   | { type: 'faq'; title: string; intro: string[]; items: { q: string; a: string }[] }
   | { type: 'process'; title: string; intro: string[]; items: Item[] }
   | { type: 'grid'; title?: string; intro: string[]; items: Item[] }
+  | { type: 'cta'; title: string; blocks: Block[] }
   | { type: 'prose'; blocks: Block[] };
 
 type Section = { heading?: Block; body: Block[] };
 
 const FAQ_RE = /(frequently asked|faq)/i;
 const PROCESS_RE = /(process|how it works|how we work|what to expect|steps)/i;
+const CTA_RE = /^request a quote for/i;
 
 // Matches "Short Title: rest of text" or "Short Title — rest of text"
 function splitStep(text: string): Item | null {
@@ -126,6 +130,10 @@ function buildGroups(blocks: Block[]): BlockGroup[] {
     }
 
     const headingText = section.heading.text;
+    if (CTA_RE.test(headingText)) {
+      groups.push({ type: 'cta', title: headingText, blocks: section.body });
+      continue;
+    }
     if (FAQ_RE.test(headingText)) {
       const faq = parseFaqSection(section.body);
       if (faq && faq.items.length > 0) {
@@ -267,6 +275,39 @@ export function BlockRenderer({ blocks, className, excludeSlug }: { blocks: Bloc
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          );
+        }
+
+        if (group.type === 'cta') {
+          return (
+            <div key={idx} className="my-16 max-w-4xl mx-auto">
+              <div className="bg-card border border-border/60 rounded-3xl shadow-sm p-8 md:p-12 text-center">
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-foreground tracking-tight">{group.title}</h2>
+                <div className="max-w-3xl mx-auto mb-8 space-y-4">
+                  {group.blocks
+                    .filter((b) => b.type === 'p')
+                    .map((b, bIdx) => (
+                      <p key={bIdx} className="text-muted-foreground font-medium leading-relaxed text-lg">
+                        <LinkedText text={b.text} />
+                      </p>
+                    ))}
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link href="/get-a-quote">
+                    <Button size="lg" className="font-bold h-14 rounded-full px-8 shadow-md group">
+                      REQUEST A QUOTE
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                  <a href={`tel:${BRAND.phoneTel}`}>
+                    <Button variant="outline" size="lg" className="font-bold h-14 rounded-full px-8 bg-background">
+                      <Phone className="mr-2 h-4 w-4 text-primary" />
+                      {BRAND.phoneDisplay}
+                    </Button>
+                  </a>
+                </div>
               </div>
             </div>
           );
