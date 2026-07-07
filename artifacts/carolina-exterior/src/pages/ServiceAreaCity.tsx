@@ -91,7 +91,7 @@ export default function ServiceAreaCity() {
             <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
               We provide premium residential and commercial landscaping services throughout {location.city}, {location.state}. Contact us for a free estimate.
             </p>
-            <div className="space-y-[15px]">
+            <div className="flex flex-col gap-[18px]">
               <Link href="/get-a-quote">
                 <Button size="lg" className="w-full font-bold h-14 rounded-full shadow-md group">
                   RESIDENTIAL QUOTE
