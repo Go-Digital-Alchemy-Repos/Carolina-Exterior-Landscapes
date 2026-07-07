@@ -170,4 +170,4 @@ export const PROPERTY_TYPES = [
   "Industrial",
   "Multi-family",
   "Other",
-];
+] as const;

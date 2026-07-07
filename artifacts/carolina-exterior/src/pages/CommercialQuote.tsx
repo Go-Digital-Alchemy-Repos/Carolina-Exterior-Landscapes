@@ -21,7 +21,7 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Valid phone number required"),
   propertyAddress: z.string().optional(),
-  propertyType: z.enum(PROPERTY_TYPES as [string, ...string[]]),
+  propertyType: z.enum(PROPERTY_TYPES),
   numberOfProperties: z.string().optional(),
   servicesNeeded: z.array(z.string()).optional(),
   currentProvider: z.string().optional(),
@@ -44,7 +44,7 @@ export default function CommercialQuote() {
       email: "",
       phone: "",
       propertyAddress: "",
-      propertyType: PROPERTY_TYPES[0] as any,
+      propertyType: PROPERTY_TYPES[0],
       numberOfProperties: "1",
       servicesNeeded: [],
       currentProvider: "",
@@ -57,12 +57,11 @@ export default function CommercialQuote() {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     setErrorMsg("");
-    // The generated type for propertyType expects a specific enum, we coerce it here
     createQuote.mutate(
-      { data: values as any },
+      { data: values },
       {
         onSuccess: () => setSuccess(true),
-        onError: (err) => setErrorMsg(err.error?.error || "An error occurred submitting your quote."),
+        onError: (err) => setErrorMsg(err.message || "An error occurred submitting your quote."),
       }
     );
   };

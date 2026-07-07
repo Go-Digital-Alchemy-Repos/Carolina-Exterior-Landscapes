@@ -58,7 +58,7 @@ export default function GetAQuote() {
       { data: values },
       {
         onSuccess: () => setSuccess(true),
-        onError: (err) => setErrorMsg(err.error?.error || "An error occurred submitting your quote."),
+        onError: (err) => setErrorMsg(err.message || "An error occurred submitting your quote."),
       }
     );
   };
