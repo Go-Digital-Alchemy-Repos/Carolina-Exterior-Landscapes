@@ -19,11 +19,7 @@ const CmsHybridPage = lazy(() =>
 );
 const CmsPreviewPage = lazy(() => import("@/features/public/cms-preview-page"));
 const StandaloneFormPage = lazy(() => import("@/features/public/standalone-form-page"));
-const LandscapeSite = lazy(() =>
-  import("@/features/landscape-site/landscape-router").then((module) => ({
-    default: module.LandscapeSite,
-  })),
-);
+const LandscapeSite = lazy(() => import("@/features/landscape-site/landscape-router"));
 
 const LoginPage = lazy(() => import("@/features/auth/login-page"));
 const ForgotPasswordPage = lazy(() => import("@/features/auth/forgot-password-page"));

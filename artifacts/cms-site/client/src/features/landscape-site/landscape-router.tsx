@@ -29,7 +29,7 @@ export const LANDSCAPE_CONTENT_PAGE_SLUGS = [
   "hoa-services",
 ] as const;
 
-export function LandscapeSite() {
+export default function LandscapeSite() {
   return (
     <Layout>
       <Switch>
