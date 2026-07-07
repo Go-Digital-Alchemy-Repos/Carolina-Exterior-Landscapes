@@ -414,6 +414,30 @@ uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-downspo
 type = "image"
 title = "commercial downspout drainage"
 
+[[generated]]
+id = "ZuooMAQO5rz3GoTXUyVuI"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-entryway.png"
+type = "image"
+title = "commercial entryway signage"
+
+[[generated]]
+id = "Fbg_kIVYXUCeY8G1Zhv83"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-erosion.png"
+type = "image"
+title = "commercial erosion control"
+
+[[generated]]
+id = "Shuvr_51Lrk0-9YFFguzM"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-grounds-maintenance.png"
+type = "image"
+title = "commercial grounds maintenance"
+
+[[generated]]
+id = "mhjHqCd9ecgqZwmtm5o0U"
+uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-tree-shrub-maintenance.png"
+type = "image"
+title = "commercial tree shrub maintenance"
+
 [[outputs]]
 id = "N-ZyWgL5_TDBvPVDsatvI"
 uri = "file://carolina-exterior-landscapes.zip"
