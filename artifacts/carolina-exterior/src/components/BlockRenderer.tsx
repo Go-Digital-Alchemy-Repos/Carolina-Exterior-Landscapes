@@ -1,7 +1,9 @@
 import { Block } from "@/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
+import { CityLinkProvider, LinkedText, resolveCitySlug } from "@/lib/cityLinks";
 
 type Item = { title: string; text: string };
 
@@ -153,7 +155,7 @@ function Paragraphs({ text, className }: { text: string; className?: string }) {
   return (
     <>
       {parts.map((part, idx) => (
-        <p key={idx} className={className}>{part}</p>
+        <p key={idx} className={className}><LinkedText text={part} /></p>
       ))}
     </>
   );
@@ -164,7 +166,7 @@ function IntroParagraphs({ intro }: { intro: string[] }) {
   return (
     <div className="max-w-3xl mx-auto mb-10 space-y-4">
       {intro.map((text, idx) => (
-        <p key={idx} className="text-muted-foreground font-medium leading-relaxed text-lg">{text}</p>
+        <p key={idx} className="text-muted-foreground font-medium leading-relaxed text-lg"><LinkedText text={text} /></p>
       ))}
     </div>
   );
@@ -177,10 +179,11 @@ function processCols(count: number): string {
   return "md:grid-cols-3";
 }
 
-export function BlockRenderer({ blocks, className }: { blocks: Block[], className?: string }) {
+export function BlockRenderer({ blocks, className, excludeSlug }: { blocks: Block[], className?: string, excludeSlug?: string }) {
   const groups = buildGroups(blocks);
 
   return (
+    <CityLinkProvider excludeSlug={excludeSlug}>
     <div className={cn("w-full space-y-16", className)}>
       {groups.map((group, idx) => {
         if (group.type === 'faq') {
@@ -235,25 +238,34 @@ export function BlockRenderer({ blocks, className }: { blocks: Block[], classNam
               {group.title && <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-foreground tracking-tight">{group.title}</h2>}
               <div className="mb-10 space-y-4 max-w-4xl">
                 {group.intro.map((text, iIdx) => (
-                  <p key={iIdx} className="text-muted-foreground font-medium leading-relaxed text-lg">{text}</p>
+                  <p key={iIdx} className="text-muted-foreground font-medium leading-relaxed text-lg"><LinkedText text={text} /></p>
                 ))}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {group.items.map((item, gIdx) => (
-                  <div key={gIdx} className="bg-card border border-border/60 p-8 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group">
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1 bg-primary/10 p-2 rounded-lg text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</h3>
-                        <div className="text-muted-foreground font-medium leading-relaxed space-y-3">
-                          <Paragraphs text={item.text} />
+                {group.items.map((item, gIdx) => {
+                  const citySlug = resolveCitySlug(item.title);
+                  return (
+                    <div key={gIdx} className="bg-card border border-border/60 p-8 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-1 bg-primary/10 p-2 rounded-lg text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</h3>
+                          <div className="text-muted-foreground font-medium leading-relaxed space-y-3">
+                            <Paragraphs text={item.text} />
+                          </div>
+                          {citySlug && (
+                            <Link href={`/service-areas/${citySlug}`} className="mt-4 inline-flex items-center gap-1.5 font-bold text-sm text-primary hover:gap-2.5 transition-all">
+                              Read More
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -265,7 +277,7 @@ export function BlockRenderer({ blocks, className }: { blocks: Block[], classNam
               {group.blocks.map((block, bIdx) => {
                 if (block.type === 'h2') return <h2 key={bIdx}>{block.text}</h2>;
                 if (block.type === 'h3') return <h3 key={bIdx}>{block.text}</h3>;
-                if (block.type === 'p') return <p key={bIdx}>{block.text}</p>;
+                if (block.type === 'p') return <p key={bIdx}><LinkedText text={block.text} /></p>;
                 return null;
               })}
             </div>
@@ -275,5 +287,6 @@ export function BlockRenderer({ blocks, className }: { blocks: Block[], classNam
         return null;
       })}
     </div>
+    </CityLinkProvider>
   );
 }
