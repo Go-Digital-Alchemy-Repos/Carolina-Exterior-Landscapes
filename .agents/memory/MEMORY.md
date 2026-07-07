@@ -7,3 +7,4 @@
 - [react-leaflet in monorepo](react-leaflet-monorepo.md) — install per-artifact (--filter), use L.divIcon (default icons break under bundler), import leaflet CSS in component.
 - [DESIGN subagent budget exhaustion](design-subagent-continuation.md) — ended sessions can't be messaged; relaunch fresh with a "what's done / what remains" brief.
 - [Copy-integrity test for BlockRenderer](copy-integrity-test.md) — run the artifact's vitest suite around any renderer/content change; mocks Radix accordion since collapsed panels unmount.
+- [Bullet lists vs prose](bulletize-list-vs-prose.md) — bullet only short parallel list items; keep full-sentence reason/intro/CTA paragraphs as p.
