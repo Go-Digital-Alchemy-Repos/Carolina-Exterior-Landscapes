@@ -5,7 +5,7 @@ import { Seo } from "@/features/landscape-site/components/Seo";
 import { VALUE_PROPS, BRAND } from "@/features/landscape-site/content/site";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 
@@ -62,18 +62,6 @@ export default function About() {
                 </li>
               ))}
             </ul>
-          </div>
-          
-          <div className="bg-primary text-primary-foreground p-10 rounded-3xl text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
-            <h3 className="text-2xl font-extrabold mb-4 relative z-10">Join Our Team</h3>
-            <p className="font-medium text-primary-foreground/90 mb-8 relative z-10 leading-relaxed">
-              We are always looking for hardworking individuals who share our passion for the outdoors and commitment to quality.
-            </p>
-            <Button variant="secondary" className="w-full font-bold h-14 rounded-full relative z-10 group text-primary">
-              VIEW OPENINGS
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
           </div>
         </div>
       </div>
