@@ -11,6 +11,7 @@ import cmsPublicRoutes from "./cms-public.routes";
 import r2PublicRoutes from "./r2-public.routes";
 import setupRoutes from "./setup.routes";
 import formsRoutes from "./forms.routes";
+import crmRoutes from "./crm.routes";
 import { buildRobotsTxtPayload } from "../services/robots-txt.service";
 import { storage } from "../storage/index";
 import { isLandscapePublicRoute } from "../public-landscape-routes";
@@ -32,6 +33,7 @@ export function registerApiRoutes(app: Express) {
   app.use("/api/admin", settingsRoutes);
   app.use("/api/contact", contactRoutes);
   app.use("/api/forms", formsRoutes);
+  app.use("/api/crm", crmRoutes);
   app.use("/api/admin/docs", docsRoutes);
   app.use("/api/uploads", uploadRoutes);
   app.use("/api/notifications", notificationsRoutes);

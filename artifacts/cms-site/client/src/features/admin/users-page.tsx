@@ -57,6 +57,7 @@ import {
   Shield,
   Palette,
   FolderKanban,
+  ContactRound,
 } from "lucide-react";
 
 type SafeUser = Omit<User, "password"> & { country?: string | null };
@@ -86,6 +87,12 @@ const EDITOR_PERMISSION_OPTIONS = [
     description: "Branding, typography, menus, sidebars, and reusable sections.",
     icon: Palette,
   },
+  {
+    value: AdminPermission.CRM,
+    label: "CRM",
+    description: "Pipeline, leads, notes, and follow-up tasks.",
+    icon: ContactRound,
+  },
 ] as const;
 
 const SYSTEM_ROLE_OPTIONS = [
@@ -98,7 +105,7 @@ const SYSTEM_ROLE_OPTIONS = [
   {
     value: "editor" as const,
     label: "Editor",
-    description: "Access only to the Content and Design areas you assign.",
+    description: "Access only to the Content, Design, and CRM areas you assign.",
     icon: FolderKanban,
   },
 ] as const;

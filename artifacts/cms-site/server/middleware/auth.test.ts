@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { hashPassword, comparePassword, generateToken, requireRole } from "./auth";
+import { hashPassword, comparePassword, generateToken, requireAdminPermission, requireRole } from "./auth";
 import type { Request, Response, NextFunction } from "express";
 import type { User } from "@shared/schema";
 
@@ -85,5 +85,27 @@ describe("requireRole", () => {
     requireRole("admin", "editor")(req, res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
+  });
+});
+
+describe("requireAdminPermission", () => {
+  function mockReqRes(user?: User) {
+    const req = { user } as Request;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    } as unknown as Response;
+    const next = vi.fn() as NextFunction;
+    return { req, res, next };
+  }
+
+  it("enforces CRM permission for editors", () => {
+    const denied = mockReqRes(makeUser({ role: "editor", adminPermissions: ["content"] } as Partial<User>));
+    requireAdminPermission("crm")(denied.req, denied.res, denied.next);
+    expect(denied.res.status).toHaveBeenCalledWith(403);
+
+    const allowed = mockReqRes(makeUser({ role: "editor", adminPermissions: ["crm"] } as Partial<User>));
+    requireAdminPermission("crm")(allowed.req, allowed.res, allowed.next);
+    expect(allowed.next).toHaveBeenCalled();
   });
 });

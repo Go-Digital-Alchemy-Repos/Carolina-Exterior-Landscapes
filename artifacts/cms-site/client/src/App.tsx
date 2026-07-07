@@ -33,6 +33,8 @@ const AdminSetupPage = lazy(() => import("@/features/auth/admin-setup-page"));
 const AdminDashboardPage = lazy(() => import("@/features/admin/dashboard-page"));
 const AdminUsersPage = lazy(() => import("@/features/admin/users-page"));
 const AdminFormsPage = lazy(() => import("@/features/admin/forms-page"));
+const CrmPage = lazy(() => import("@/features/admin/crm-page"));
+const CrmClientsPage = lazy(() => import("@/features/admin/crm-clients-page"));
 const DocsPage = lazy(() => import("@/features/admin/docs-page"));
 const AdminSettingsPage = lazy(() => import("@/features/admin/settings-page"));
 const AdminDesignPage = lazy(() => import("@/features/admin/design-page"));
@@ -90,6 +92,16 @@ function Router() {
         <Route path="/admin/forms">
           <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
             <AdminFormsPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/crm/clients">
+          <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["crm"]}>
+            <CrmClientsPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/crm">
+          <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["crm"]}>
+            <CrmPage />
           </ProtectedRoute>
         </Route>
         <Route path="/admin/docs">

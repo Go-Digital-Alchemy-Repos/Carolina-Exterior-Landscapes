@@ -37,6 +37,7 @@ export {
   type InsertCmsGallery,
   type InsertCmsGalleryItem,
 } from "./cms-galleries";
+export * from "./crm";
 export { cmsSections, insertCmsSectionSchema, type InsertCmsSection, type CmsSection } from "./cms-sections";
 export {
   editorLocks,

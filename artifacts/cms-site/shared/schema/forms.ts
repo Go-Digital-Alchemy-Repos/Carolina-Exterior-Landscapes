@@ -92,6 +92,7 @@ export const cmsFormSettingsSchema = z.object({
   successMessage: z.string().optional().default("Thanks! Your submission has been received."),
   notifyAdmins: z.boolean().optional().default(false),
   storeAsContactMessage: z.boolean().optional().default(false),
+  createCrmLead: z.boolean().optional().default(false),
   successRedirect: z.string().optional().default(""),
 });
 

@@ -7,6 +7,7 @@ const mockGetFormNotificationUsers = vi.fn();
 const mockGetUsersByRole = vi.fn();
 const mockSendContactFormEmail = vi.fn();
 const mockSendManagedFormSubmissionEmail = vi.fn();
+const mockCreateCrmLeadFromFormSubmission = vi.fn();
 
 vi.mock("../storage", () => ({
   storage: {
@@ -29,6 +30,10 @@ vi.mock("./email.service", () => ({
   sendManagedFormSubmissionEmail: mockSendManagedFormSubmissionEmail,
 }));
 
+vi.mock("./crm.service", () => ({
+  createCrmLeadFromFormSubmission: mockCreateCrmLeadFromFormSubmission,
+}));
+
 function contactField(key: string, label: string, type = "text", required = true) {
   return {
     id: key,
@@ -48,6 +53,7 @@ describe("submitManagedFormBySlug", () => {
     mockSendManagedFormSubmissionEmail.mockResolvedValue(undefined);
     mockCreateSubmission.mockResolvedValue({ id: "submission-1" });
     mockCreateMessage.mockResolvedValue({ id: "message-1" });
+    mockCreateCrmLeadFromFormSubmission.mockResolvedValue({ duplicate: false, lead: { id: "lead-1" } });
     mockGetFormNotificationUsers.mockResolvedValue([{ email: "editor@example.com" }]);
     mockGetUsersByRole.mockResolvedValue([{ email: "admin@example.com" }]);
   });
@@ -106,5 +112,39 @@ describe("submitManagedFormBySlug", () => {
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Property Type: Commercial");
     expect(mockGetFormNotificationUsers).not.toHaveBeenCalled();
     expect(mockGetUsersByRole).not.toHaveBeenCalled();
+  });
+
+  it("creates a CRM lead when a managed form enables CRM ingestion", async () => {
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "form-1",
+      name: "Quote Form",
+      slug: "quote",
+      fields: [contactField("name", "Name"), contactField("email", "Email", "email")],
+      settings: { createCrmLead: true },
+    });
+    const { submitManagedFormBySlug } = await import("./forms.service");
+
+    await submitManagedFormBySlug("quote", { name: "Jane", email: "jane@example.com" });
+
+    expect(mockCreateCrmLeadFromFormSubmission).toHaveBeenCalledWith({
+      formName: "Quote Form",
+      formSubmissionId: "submission-1",
+      data: { name: "Jane", email: "jane@example.com" },
+    });
+  });
+
+  it("does not create a CRM lead when CRM ingestion is disabled", async () => {
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "form-1",
+      name: "Quote Form",
+      slug: "quote",
+      fields: [contactField("name", "Name"), contactField("email", "Email", "email")],
+      settings: { createCrmLead: false },
+    });
+    const { submitManagedFormBySlug } = await import("./forms.service");
+
+    await submitManagedFormBySlug("quote", { name: "Jane", email: "jane@example.com" });
+
+    expect(mockCreateCrmLeadFromFormSubmission).not.toHaveBeenCalled();
   });
 });

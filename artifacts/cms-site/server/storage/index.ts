@@ -10,6 +10,7 @@ import { CmsPagesStorage } from "./cms-pages.storage";
 import { CmsPageRevisionsStorage } from "./cms-page-revisions.storage";
 import { CmsMediaStorage } from "./cms-media.storage";
 import { CmsGalleriesStorage } from "./cms-galleries.storage";
+import { CrmStorage } from "./crm.storage";
 import { CmsSectionsStorage } from "./cms-sections.storage";
 import { SeoSettingsStorage } from "./seo-settings.storage";
 import { RedirectsStorage } from "./redirects.storage";
@@ -31,6 +32,7 @@ export const storage = {
   cmsPageRevisions: new CmsPageRevisionsStorage(),
   cmsMedia: new CmsMediaStorage(),
   cmsGalleries: new CmsGalleriesStorage(),
+  crm: new CrmStorage(),
   cmsSections: new CmsSectionsStorage(),
   seoSettings: new SeoSettingsStorage(),
   redirects: new RedirectsStorage(),

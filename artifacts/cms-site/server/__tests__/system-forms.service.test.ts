@@ -79,7 +79,7 @@ describe("ensureSystemForms", () => {
     expect(contactUpdate[1].fields).toHaveLength(1);
     expect(contactUpdate[1].fields[0].label).toBe("How can we help?");
     expect(contactUpdate[1].settings.successMessage).toBe("Custom contact success");
-    expect(contactUpdate[1].settings.createCrmLead).toBeUndefined();
+    expect(contactUpdate[1].settings.createCrmLead).toBe(false);
   });
 
   it("creates missing system forms on a clean install", async () => {

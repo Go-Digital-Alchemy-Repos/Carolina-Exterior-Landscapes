@@ -18,14 +18,15 @@ export interface JwtPayload {
 function normalizePermissions(user: User | undefined): AdminPermissionType[] {
   if (!user) return [];
   if (user.role === "admin") {
-    return [AdminPermission.CONTENT, AdminPermission.DESIGN];
+    return [AdminPermission.CONTENT, AdminPermission.DESIGN, AdminPermission.CRM];
   }
 
   if (!Array.isArray(user.adminPermissions)) return [];
 
   return user.adminPermissions.filter((permission): permission is AdminPermissionType =>
     permission === AdminPermission.CONTENT ||
-    permission === AdminPermission.DESIGN
+    permission === AdminPermission.DESIGN ||
+    permission === AdminPermission.CRM
   );
 }
 

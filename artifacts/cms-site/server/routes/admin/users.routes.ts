@@ -17,6 +17,7 @@ const router = Router();
 const permissionSchema = z.enum([
   AdminPermission.CONTENT,
   AdminPermission.DESIGN,
+  AdminPermission.CRM,
 ]);
 
 function isSystemUserRole(role: string) {

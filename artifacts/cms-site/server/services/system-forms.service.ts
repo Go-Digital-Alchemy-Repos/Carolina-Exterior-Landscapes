@@ -34,6 +34,7 @@ function settings(overrides: Partial<CmsFormSettings>): CmsFormSettings {
     successRedirect: "",
     notifyAdmins: false,
     storeAsContactMessage: false,
+    createCrmLead: false,
     ...overrides,
   };
 }

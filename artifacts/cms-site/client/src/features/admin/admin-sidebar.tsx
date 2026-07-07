@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Database,
+  ContactRound,
   FileCode,
   FileText,
   Globe,
@@ -81,6 +82,16 @@ function buildNavGroups(
         { title: "Typography", href: "/admin/design/typography", icon: Type, iconColor: "text-sky-600" },
         { title: "Menus", href: "/admin/cms/menus", icon: MenuIcon, iconColor: "text-violet-500" },
         { title: "Sidebars & Widgets", href: "/admin/cms/sidebars", icon: PanelRight, iconColor: "text-emerald-500" },
+      ],
+    });
+  }
+
+  if (hasAdminPermission("crm")) {
+    groups.push({
+      label: "CRM",
+      items: [
+        { title: "CRM Pipeline", href: "/admin/crm", icon: ContactRound, iconColor: "text-emerald-600" },
+        { title: "Clients", href: "/admin/crm/clients", icon: Users, iconColor: "text-cyan-600" },
       ],
     });
   }
