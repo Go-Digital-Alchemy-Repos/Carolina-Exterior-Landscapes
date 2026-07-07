@@ -7,11 +7,16 @@ import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "luc
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BotanicalAccent } from "./nature/BotanicalAccent";
+import { useBranding } from "@/components/shared/branding-provider";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+  const { frontendLogoUrl, footerLogoUrl, companyName } = useBranding();
+  const headerLogo = frontendLogoUrl || headerLogoHorizontal;
+  const footerLogo = footerLogoUrl || footerLogoHorizontal;
+  const logoAlt = companyName || BRAND.name;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,7 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center group z-50">
-            <img src={headerLogoHorizontal} alt={BRAND.name} className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
+            <img src={headerLogo} alt={logoAlt} className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
           </Link>
 
           {/* Desktop Nav */}
@@ -199,7 +204,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
             
             <div className="lg:col-span-4 space-y-8">
-              <img src={footerLogoHorizontal} alt={BRAND.name} className="h-16 w-auto max-w-full" />
+              <img src={footerLogo} alt={logoAlt} className="h-16 w-auto max-w-full" />
               <p className="text-background/70 text-base leading-relaxed font-medium max-w-sm">
                 {BRAND.tagline} {BRAND.subTagline}.<br/>
                 We are proud to serve {BRAND.county} and the {BRAND.region} with premium landscaping and lawn care services.

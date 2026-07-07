@@ -23,6 +23,7 @@ import {
   fontFamilyForBrandingOption,
   type BrandingFontOption,
 } from "@/lib/branding";
+import { DEFAULT_BRANDING_VALUES, type BrandingSettingKey } from "@shared/branding-defaults";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 
@@ -74,31 +75,38 @@ const BRANDING_FIELDS: SettingField[] = [
   {
     key: "frontend_logo_url",
     label: "Header Logo",
-    placeholder: "/images/logo-full.png",
+    placeholder: DEFAULT_BRANDING_VALUES.frontend_logo_url,
     type: "asset",
-    helpText: "Drag and drop a logo, upload a new file, or pick one from the media library. SVG is recommended for crisp header display.",
+    helpText: "Drag and drop a logo, upload a new file, or pick one from the media library. This displays in the public header and email shell.",
+  },
+  {
+    key: "footer_logo_url",
+    label: "Footer Logo",
+    placeholder: DEFAULT_BRANDING_VALUES.footer_logo_url,
+    type: "asset",
+    helpText: "Use the footer-safe logo for the dark site footer.",
   },
   {
     key: "favicon_url",
     label: "Favicon / Admin Icon",
-    placeholder: "/images/symbol.svg",
+    placeholder: DEFAULT_BRANDING_VALUES.favicon_url,
     type: "asset",
     helpText: "Upload or choose a square SVG, PNG, or ICO. This feeds the browser favicon and admin icon.",
   },
   {
     key: "company_name",
     label: "Company Name",
-    placeholder: "Carolina Exterior Landscapes",
+    placeholder: DEFAULT_BRANDING_VALUES.company_name,
   },
   {
     key: "company_address",
     label: "Company Address",
-    placeholder: "Monroe, NC 28110",
+    placeholder: DEFAULT_BRANDING_VALUES.company_address,
   },
   {
     key: "company_phone_numbers",
     label: "Phone Display",
-    placeholder: "(704) 975-5867",
+    placeholder: DEFAULT_BRANDING_VALUES.company_phone_numbers,
     type: "tel",
   },
   {
@@ -110,27 +118,27 @@ const BRANDING_FIELDS: SettingField[] = [
 ];
 
 const BRAND_COLORS: ColorField[] = [
-  { key: "brand_primary_color", label: "Primary", fallback: "#E8520A" },
-  { key: "brand_secondary_color", label: "Secondary", fallback: "#2D5F3F" },
-  { key: "brand_tertiary_color", label: "Tertiary / Accent", fallback: "#2C2C2C" },
-  { key: "brand_quaternary_color", label: "Quaternary", fallback: "#406A87" },
+  { key: "brand_primary_color", label: "Primary Leaf Green", fallback: DEFAULT_BRANDING_VALUES.brand_primary_color },
+  { key: "brand_secondary_color", label: "Forest Green", fallback: DEFAULT_BRANDING_VALUES.brand_secondary_color },
+  { key: "brand_tertiary_color", label: "Sun Gold", fallback: DEFAULT_BRANDING_VALUES.brand_tertiary_color },
+  { key: "brand_quaternary_color", label: "Water Blue", fallback: DEFAULT_BRANDING_VALUES.brand_quaternary_color },
 ];
 
 const TEXT_COLORS: ColorField[] = [
-  { key: "text_h1_color", label: "H1", fallback: "#FFFFFF" },
-  { key: "text_h2_color", label: "H2", fallback: "#111827" },
-  { key: "text_h3_h6_color", label: "H3-H6", fallback: "#111827" },
-  { key: "text_body_color", label: "Body Text", fallback: "#374151" },
-  { key: "text_heading_subtext_color", label: "Heading Subtext", fallback: "#6B7280" },
-  { key: "text_supporting_copy_color", label: "Supporting Copy", fallback: "#6B7280" },
-  { key: "text_helper_text_color", label: "Helper Text", fallback: "#64748B" },
-  { key: "text_meta_color", label: "Meta Text", fallback: "#64748B" },
-  { key: "text_link_color", label: "Link", fallback: "#C94608" },
-  { key: "text_link_hover_color", label: "Link Hover", fallback: "#2D5F3F" },
-  { key: "text_inverse_color", label: "Inverse Text", fallback: "#FFFFFF" },
-  { key: "text_primary_foreground_color", label: "On Primary", fallback: "#FFFFFF" },
-  { key: "text_secondary_foreground_color", label: "On Secondary", fallback: "#FFFFFF" },
-  { key: "text_tertiary_foreground_color", label: "On Tertiary", fallback: "#FFFFFF" },
+  { key: "text_h1_color", label: "H1", fallback: DEFAULT_BRANDING_VALUES.text_h1_color },
+  { key: "text_h2_color", label: "H2", fallback: DEFAULT_BRANDING_VALUES.text_h2_color },
+  { key: "text_h3_h6_color", label: "H3-H6", fallback: DEFAULT_BRANDING_VALUES.text_h3_h6_color },
+  { key: "text_body_color", label: "Body Text", fallback: DEFAULT_BRANDING_VALUES.text_body_color },
+  { key: "text_heading_subtext_color", label: "Heading Subtext", fallback: DEFAULT_BRANDING_VALUES.text_heading_subtext_color },
+  { key: "text_supporting_copy_color", label: "Supporting Copy", fallback: DEFAULT_BRANDING_VALUES.text_supporting_copy_color },
+  { key: "text_helper_text_color", label: "Helper Text", fallback: DEFAULT_BRANDING_VALUES.text_helper_text_color },
+  { key: "text_meta_color", label: "Meta Text", fallback: DEFAULT_BRANDING_VALUES.text_meta_color },
+  { key: "text_link_color", label: "Link", fallback: DEFAULT_BRANDING_VALUES.text_link_color },
+  { key: "text_link_hover_color", label: "Link Hover", fallback: DEFAULT_BRANDING_VALUES.text_link_hover_color },
+  { key: "text_inverse_color", label: "Inverse Text", fallback: DEFAULT_BRANDING_VALUES.text_inverse_color },
+  { key: "text_primary_foreground_color", label: "On Primary", fallback: DEFAULT_BRANDING_VALUES.text_primary_foreground_color },
+  { key: "text_secondary_foreground_color", label: "On Secondary", fallback: DEFAULT_BRANDING_VALUES.text_secondary_foreground_color },
+  { key: "text_tertiary_foreground_color", label: "On Tertiary", fallback: DEFAULT_BRANDING_VALUES.text_tertiary_foreground_color },
 ];
 
 function isHexColor(value: string) {
@@ -138,7 +146,7 @@ function isHexColor(value: string) {
 }
 
 function settingValue(settings: SettingsResponse, key: string) {
-  return settings.branding?.[key]?.value ?? "";
+  return settings.branding?.[key]?.value ?? DEFAULT_BRANDING_VALUES[key as BrandingSettingKey] ?? "";
 }
 
 function fontSettingValue(settings: SettingsResponse, key: string) {
@@ -165,6 +173,7 @@ function SettingInput({
           data-testid={`design-upload-${field.key}`}
         />
         <Input
+          key={`${field.key}-url-${value}`}
           id={`design-${field.key}`}
           type="url"
           defaultValue={value}
@@ -181,6 +190,7 @@ function SettingInput({
     <div className="space-y-2">
       <Label htmlFor={`design-${field.key}`}>{field.label}</Label>
       <Input
+        key={`${field.key}-text-${value}`}
         id={`design-${field.key}`}
         type={field.type ?? "text"}
         defaultValue={value}
@@ -210,6 +220,7 @@ function ColorInput({
       <Label htmlFor={`design-${field.key}`}>{field.label}</Label>
       <div className="flex gap-2">
         <Input
+          key={`${field.key}-picker-${current}`}
           id={`design-${field.key}`}
           type="color"
           defaultValue={current}
@@ -218,6 +229,7 @@ function ColorInput({
           aria-label={`${field.label} color picker`}
         />
         <Input
+          key={`${field.key}-hex-${value}`}
           defaultValue={value}
           placeholder={field.fallback}
           className="font-mono"

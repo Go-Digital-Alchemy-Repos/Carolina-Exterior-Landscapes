@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useBranding } from "@/components/shared/branding-provider";
 import adminSymbol from "@/features/landscape-site/assets/symbol.svg";
 import type { AdminPermission } from "@shared/types";
 import type { User as AppUser } from "@shared/schema";
@@ -115,7 +116,9 @@ export function AdminSidebar({ children }: { children?: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
   const { user, logout, hasAdminPermission } = useAuth();
+  const { faviconUrl } = useBranding();
   const navGroups = buildNavGroups(user, hasAdminPermission);
+  const adminIcon = faviconUrl || adminSymbol;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -129,7 +132,7 @@ export function AdminSidebar({ children }: { children?: React.ReactNode }) {
       >
         <div className={cn("flex h-16 items-center border-b", collapsed ? "justify-center gap-1 px-2" : "justify-between px-4")}>
           <div className="flex min-w-0 items-center gap-3">
-            <img src={adminSymbol} alt="" aria-hidden="true" className={cn("shrink-0", collapsed ? "h-7 w-7" : "h-9 w-9")} />
+            <img src={adminIcon} alt="" aria-hidden="true" className={cn("shrink-0", collapsed ? "h-7 w-7" : "h-9 w-9")} />
             {!collapsed ? (
               <div className="min-w-0">
                 <p className="font-semibold leading-none">Admin</p>

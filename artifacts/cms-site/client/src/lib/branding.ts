@@ -1,5 +1,8 @@
+import { DEFAULT_BRANDING_VALUES } from "@shared/branding-defaults";
+
 export interface BrandingSettings {
   frontendLogoUrl: string | null;
+  footerLogoUrl: string | null;
   faviconUrl: string | null;
   companyName: string | null;
   companyAddress: string | null;
@@ -63,32 +66,33 @@ export const BRANDING_SANS_FONT_OPTIONS = BRANDING_FONT_OPTIONS.filter((option) 
 export const BRANDING_SERIF_FONT_OPTIONS = BRANDING_FONT_OPTIONS.filter((option) => option.category === "serif");
 
 export const DEFAULT_BRANDING_SETTINGS: BrandingSettings = {
-  frontendLogoUrl: null,
-  faviconUrl: null,
-  companyName: null,
-  companyAddress: null,
-  companyPhoneNumbers: null,
+  frontendLogoUrl: DEFAULT_BRANDING_VALUES.frontend_logo_url,
+  footerLogoUrl: DEFAULT_BRANDING_VALUES.footer_logo_url,
+  faviconUrl: DEFAULT_BRANDING_VALUES.favicon_url,
+  companyName: DEFAULT_BRANDING_VALUES.company_name,
+  companyAddress: DEFAULT_BRANDING_VALUES.company_address,
+  companyPhoneNumbers: DEFAULT_BRANDING_VALUES.company_phone_numbers,
   companyGoogleBusinessUrl: null,
   bodyFont: null,
   headingFont: null,
-  primaryColor: null,
-  secondaryColor: null,
-  tertiaryColor: null,
-  quaternaryColor: "#406A87",
-  h1Color: null,
-  h2Color: null,
-  h3ToH6Color: null,
-  bodyTextColor: null,
-  headingSubtextColor: null,
-  supportingCopyColor: null,
-  helperTextColor: null,
-  metaTextColor: null,
-  linkColor: null,
-  linkHoverColor: null,
-  inverseTextColor: null,
-  primaryTextColor: null,
-  secondaryTextColor: null,
-  tertiaryTextColor: null,
+  primaryColor: DEFAULT_BRANDING_VALUES.brand_primary_color,
+  secondaryColor: DEFAULT_BRANDING_VALUES.brand_secondary_color,
+  tertiaryColor: DEFAULT_BRANDING_VALUES.brand_tertiary_color,
+  quaternaryColor: DEFAULT_BRANDING_VALUES.brand_quaternary_color,
+  h1Color: DEFAULT_BRANDING_VALUES.text_h1_color,
+  h2Color: DEFAULT_BRANDING_VALUES.text_h2_color,
+  h3ToH6Color: DEFAULT_BRANDING_VALUES.text_h3_h6_color,
+  bodyTextColor: DEFAULT_BRANDING_VALUES.text_body_color,
+  headingSubtextColor: DEFAULT_BRANDING_VALUES.text_heading_subtext_color,
+  supportingCopyColor: DEFAULT_BRANDING_VALUES.text_supporting_copy_color,
+  helperTextColor: DEFAULT_BRANDING_VALUES.text_helper_text_color,
+  metaTextColor: DEFAULT_BRANDING_VALUES.text_meta_color,
+  linkColor: DEFAULT_BRANDING_VALUES.text_link_color,
+  linkHoverColor: DEFAULT_BRANDING_VALUES.text_link_hover_color,
+  inverseTextColor: DEFAULT_BRANDING_VALUES.text_inverse_color,
+  primaryTextColor: DEFAULT_BRANDING_VALUES.text_primary_foreground_color,
+  secondaryTextColor: DEFAULT_BRANDING_VALUES.text_secondary_foreground_color,
+  tertiaryTextColor: DEFAULT_BRANDING_VALUES.text_tertiary_foreground_color,
 };
 
 export function fontFamilyForBrandingOption(value: string | null | undefined): string | null {

@@ -28,10 +28,11 @@ describe("AdminDesignPage", () => {
 
     expect(html).toContain("Public Identity");
     expect(html).toContain("Header Logo");
+    expect(html).toContain("Footer Logo");
     expect(html).toContain("Favicon / Admin Icon");
-    expect(html).toContain("design-upload-frontend_logo_url-dropzone");
-    expect(html).toContain("design-upload-favicon_url-dropzone");
-    expect(html).toContain("PNG, JPG, WebP, GIF, SVG, ICO");
+    expect(html).toContain("/images/header-logo-horizontal.svg");
+    expect(html).toContain("/images/footer-logo-horizontal.svg");
+    expect(html).toContain("/images/symbol.svg");
   });
 
   it("renders color controls", () => {
@@ -39,7 +40,9 @@ describe("AdminDesignPage", () => {
 
     expect(html).toContain("Brand Colors");
     expect(html).toContain("Text Colors");
-    expect(html).toContain("Primary");
+    expect(html).toContain("Primary Leaf Green");
+    expect(html).toContain("#53823C");
+    expect(html).toContain("#103F27");
   });
 
   it("renders typography controls", () => {

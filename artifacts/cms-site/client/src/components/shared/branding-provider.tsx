@@ -22,6 +22,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       const payload = await response.json();
       return {
         frontendLogoUrl: payload?.frontendLogoUrl ?? null,
+        footerLogoUrl: payload?.footerLogoUrl ?? null,
         faviconUrl: payload?.faviconUrl ?? null,
         companyName: payload?.companyName ?? null,
         companyAddress: payload?.companyAddress ?? null,
@@ -248,6 +249,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     branding.companyGoogleBusinessUrl,
     branding.companyName,
     branding.companyPhoneNumbers,
+    branding.footerLogoUrl,
     branding.bodyFont,
     branding.headingFont,
     branding.primaryColor,

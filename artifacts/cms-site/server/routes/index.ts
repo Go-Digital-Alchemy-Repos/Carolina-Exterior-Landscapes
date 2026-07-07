@@ -16,6 +16,7 @@ import { buildRobotsTxtPayload } from "../services/robots-txt.service";
 import { storage } from "../storage/index";
 import { isLandscapePublicRoute } from "../public-landscape-routes";
 import { isRetiredPublicPath } from "../retired-public-routes";
+import { DEFAULT_BRANDING_VALUES } from "@shared/branding-defaults";
 
 function escapeXml(str: string): string {
   return str
@@ -44,41 +45,43 @@ export function registerApiRoutes(app: Express) {
     try {
       const branding = await storage.settings.getDecryptedCategory("branding");
       res.json({
-        frontendLogoUrl: branding.frontend_logo_url || null,
-        faviconUrl: branding.favicon_url || null,
-        companyName: branding.company_name || "Website",
-        companyAddress: branding.company_address || null,
-        companyPhoneNumbers: branding.company_phone_numbers || null,
+        frontendLogoUrl: branding.frontend_logo_url || DEFAULT_BRANDING_VALUES.frontend_logo_url,
+        footerLogoUrl: branding.footer_logo_url || DEFAULT_BRANDING_VALUES.footer_logo_url,
+        faviconUrl: branding.favicon_url || DEFAULT_BRANDING_VALUES.favicon_url,
+        companyName: branding.company_name || DEFAULT_BRANDING_VALUES.company_name,
+        companyAddress: branding.company_address || DEFAULT_BRANDING_VALUES.company_address,
+        companyPhoneNumbers: branding.company_phone_numbers || DEFAULT_BRANDING_VALUES.company_phone_numbers,
         companyGoogleBusinessUrl: branding.company_google_business_url || null,
         bodyFont: branding.frontend_body_font || null,
         headingFont: branding.frontend_heading_font || null,
-        primaryColor: branding.brand_primary_color || null,
-        secondaryColor: branding.brand_secondary_color || null,
-        tertiaryColor: branding.brand_tertiary_color || null,
-        quaternaryColor: branding.brand_quaternary_color || "#406A87",
-        h1Color: branding.text_h1_color || null,
-        h2Color: branding.text_h2_color || null,
-        h3ToH6Color: branding.text_h3_h6_color || null,
-        bodyTextColor: branding.text_body_color || null,
-        headingSubtextColor: branding.text_heading_subtext_color || branding.text_muted_color || null,
-        supportingCopyColor: branding.text_supporting_copy_color || branding.text_muted_color || null,
-        helperTextColor: branding.text_helper_text_color || branding.text_muted_color || null,
-        metaTextColor: branding.text_meta_color || null,
-        linkColor: branding.text_link_color || null,
-        linkHoverColor: branding.text_link_hover_color || null,
-        inverseTextColor: branding.text_inverse_color || null,
-        primaryTextColor: branding.text_primary_foreground_color || null,
-        secondaryTextColor: branding.text_secondary_foreground_color || null,
-        tertiaryTextColor: branding.text_tertiary_foreground_color || null,
+        primaryColor: branding.brand_primary_color || DEFAULT_BRANDING_VALUES.brand_primary_color,
+        secondaryColor: branding.brand_secondary_color || DEFAULT_BRANDING_VALUES.brand_secondary_color,
+        tertiaryColor: branding.brand_tertiary_color || DEFAULT_BRANDING_VALUES.brand_tertiary_color,
+        quaternaryColor: branding.brand_quaternary_color || DEFAULT_BRANDING_VALUES.brand_quaternary_color,
+        h1Color: branding.text_h1_color || DEFAULT_BRANDING_VALUES.text_h1_color,
+        h2Color: branding.text_h2_color || DEFAULT_BRANDING_VALUES.text_h2_color,
+        h3ToH6Color: branding.text_h3_h6_color || DEFAULT_BRANDING_VALUES.text_h3_h6_color,
+        bodyTextColor: branding.text_body_color || DEFAULT_BRANDING_VALUES.text_body_color,
+        headingSubtextColor: branding.text_heading_subtext_color || branding.text_muted_color || DEFAULT_BRANDING_VALUES.text_heading_subtext_color,
+        supportingCopyColor: branding.text_supporting_copy_color || branding.text_muted_color || DEFAULT_BRANDING_VALUES.text_supporting_copy_color,
+        helperTextColor: branding.text_helper_text_color || branding.text_muted_color || DEFAULT_BRANDING_VALUES.text_helper_text_color,
+        metaTextColor: branding.text_meta_color || DEFAULT_BRANDING_VALUES.text_meta_color,
+        linkColor: branding.text_link_color || DEFAULT_BRANDING_VALUES.text_link_color,
+        linkHoverColor: branding.text_link_hover_color || DEFAULT_BRANDING_VALUES.text_link_hover_color,
+        inverseTextColor: branding.text_inverse_color || DEFAULT_BRANDING_VALUES.text_inverse_color,
+        primaryTextColor: branding.text_primary_foreground_color || DEFAULT_BRANDING_VALUES.text_primary_foreground_color,
+        secondaryTextColor: branding.text_secondary_foreground_color || DEFAULT_BRANDING_VALUES.text_secondary_foreground_color,
+        tertiaryTextColor: branding.text_tertiary_foreground_color || DEFAULT_BRANDING_VALUES.text_tertiary_foreground_color,
       });
     } catch (err) {
       logger.app.warn("Failed to retrieve branding settings, returning defaults", {
         error: err instanceof Error ? err.message : String(err),
       });
       res.json({
-        frontendLogoUrl: null,
-        faviconUrl: null,
-        companyName: "Website",
+        frontendLogoUrl: DEFAULT_BRANDING_VALUES.frontend_logo_url,
+        footerLogoUrl: DEFAULT_BRANDING_VALUES.footer_logo_url,
+        faviconUrl: DEFAULT_BRANDING_VALUES.favicon_url,
+        companyName: DEFAULT_BRANDING_VALUES.company_name,
       });
     }
   });

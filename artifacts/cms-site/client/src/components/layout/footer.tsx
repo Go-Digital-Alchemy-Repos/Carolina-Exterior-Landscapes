@@ -34,7 +34,7 @@ function FooterLinks({ heading, items }: { heading: string; items: MenuItem[] })
 }
 
 export function Footer() {
-  const { companyName, companyAddress, companyPhoneNumbers, companyGoogleBusinessUrl } = useBranding();
+  const { companyName, companyAddress, companyPhoneNumbers, companyGoogleBusinessUrl, footerLogoUrl } = useBranding();
   const label = companyName || "Website";
   const googleBusinessUrl = companyGoogleBusinessUrl?.trim() || "";
   const { data } = useQuery<MenuMap>({
@@ -50,8 +50,12 @@ export function Footer() {
     <footer className="border-t bg-muted/30" data-testid="footer">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm text-muted-foreground sm:px-6 md:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <Link href="/" className="text-base font-semibold text-foreground">
-            {label}
+          <Link href="/" className="inline-flex items-center text-base font-semibold text-foreground">
+            {footerLogoUrl ? (
+              <img src={footerLogoUrl} alt={label} className="h-12 w-auto max-w-full" />
+            ) : (
+              label
+            )}
           </Link>
           <p className="mt-3 max-w-sm">
             Lawn care, landscaping, hardscape, mulching, and drainage services for Monroe, Union County, and the greater Charlotte region.

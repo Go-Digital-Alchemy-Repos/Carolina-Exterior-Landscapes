@@ -22,16 +22,23 @@ const router = Router();
 
 const LOCAL_BRANDING_DIR = path.resolve(process.cwd(), "uploads", "branding");
 const MAX_BRANDING_IMAGE_SIZE = 10 * 1024 * 1024;
+const BRANDING_VECTOR_MIMES = ["image/svg+xml", "image/x-icon", "image/vnd.microsoft.icon"];
+const BRANDING_VECTOR_EXTENSIONS = [".svg", ".ico"];
 
 const brandingUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_BRANDING_IMAGE_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (isImageMime(file.mimetype)) {
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (
+      isImageMime(file.mimetype) ||
+      BRANDING_VECTOR_MIMES.includes(file.mimetype) ||
+      BRANDING_VECTOR_EXTENSIONS.includes(extension)
+    ) {
       cb(null, true);
       return;
     }
-    cb(new Error("Accepted file types: PNG, JPEG, WebP, and GIF"));
+    cb(new Error("Accepted file types: PNG, JPEG, WebP, GIF, SVG, and ICO"));
   },
 });
 
@@ -47,6 +54,11 @@ function stripExtension(filename: string) {
 
 function buildSafeBrandingFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+function isVectorBrandingImage(mimeType: string, originalName: string) {
+  const extension = path.extname(originalName).toLowerCase();
+  return BRANDING_VECTOR_MIMES.includes(mimeType) || BRANDING_VECTOR_EXTENSIONS.includes(extension);
 }
 
 router.use(authenticateToken);
@@ -78,7 +90,7 @@ const upsertSettingSchema = z.object({
 });
 
 const brandingUploadSchema = z.object({
-  settingKey: z.enum(["frontend_logo_url", "favicon_url"]),
+  settingKey: z.enum(["frontend_logo_url", "footer_logo_url", "favicon_url"]),
 });
 
 router.put(
@@ -129,7 +141,14 @@ router.post(
 
     const safeName = buildSafeBrandingFilename(req.file.originalname);
     const baseName = stripExtension(safeName) || "branding-image";
-    const optimized = await optimizeImage(req.file.buffer, req.file.mimetype, BRANDING_OPTIONS);
+    const isVector = isVectorBrandingImage(req.file.mimetype, req.file.originalname);
+    const optimized = isVector
+      ? {
+          buffer: req.file.buffer,
+          mimeType: req.file.mimetype || (path.extname(safeName).toLowerCase() === ".ico" ? "image/x-icon" : "image/svg+xml"),
+          extension: path.extname(safeName).toLowerCase() || ".svg",
+        }
+      : await optimizeImage(req.file.buffer, req.file.mimetype, BRANDING_OPTIONS);
     const filename = `${Date.now()}-${baseName}${optimized.extension}`;
     const r2Key = `branding/${filename}`;
 

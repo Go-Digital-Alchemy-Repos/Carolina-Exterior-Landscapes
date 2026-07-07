@@ -1,0 +1,33 @@
+export const DEFAULT_BRANDING_VALUES = {
+  frontend_logo_url: "/images/header-logo-horizontal.svg",
+  footer_logo_url: "/images/footer-logo-horizontal.svg",
+  favicon_url: "/images/symbol.svg",
+  company_name: "Carolina Exterior Landscapes",
+  company_address: "Monroe, NC 28110",
+  company_phone_numbers: "(704) 975-5867",
+  company_google_business_url: "",
+  brand_primary_color: "#53823C",
+  brand_secondary_color: "#103F27",
+  brand_tertiary_color: "#F2B326",
+  brand_quaternary_color: "#054F79",
+  text_h1_color: "#103F27",
+  text_h2_color: "#103F27",
+  text_h3_h6_color: "#103F27",
+  text_body_color: "#545454",
+  text_heading_subtext_color: "#545454",
+  text_supporting_copy_color: "#545454",
+  text_helper_text_color: "#545454",
+  text_meta_color: "#545454",
+  text_link_color: "#53823C",
+  text_link_hover_color: "#103F27",
+  text_inverse_color: "#FFFFFF",
+  text_primary_foreground_color: "#FFFFFF",
+  text_secondary_foreground_color: "#FFFFFF",
+  text_tertiary_foreground_color: "#103F27",
+} as const;
+
+export type BrandingSettingKey = keyof typeof DEFAULT_BRANDING_VALUES;
+
+export function defaultBrandingValue(key: BrandingSettingKey): string {
+  return DEFAULT_BRANDING_VALUES[key];
+}
