@@ -103,19 +103,21 @@ export type ServiceArea = {
   slug: string;
   city: string;
   state: string;
+  lat: number;
+  lng: number;
 };
 
 export const SERVICE_AREAS: ServiceArea[] = [
-  { slug: "marvin-nc", city: "Marvin", state: "NC" },
-  { slug: "wesley-chapel-nc", city: "Wesley Chapel", state: "NC" },
-  { slug: "waxhaw-nc", city: "Waxhaw", state: "NC" },
-  { slug: "indian-land-sc", city: "Indian Land", state: "SC" },
-  { slug: "monroe-nc", city: "Monroe", state: "NC" },
-  { slug: "indian-trail-nc", city: "Indian Trail", state: "NC" },
-  { slug: "charlotte-nc", city: "Charlotte", state: "NC" },
-  { slug: "lancaster-sc", city: "Lancaster", state: "SC" },
-  { slug: "mineral-springs-nc", city: "Mineral Springs", state: "NC" },
-  { slug: "weddington-nc", city: "Weddington", state: "NC" },
+  { slug: "marvin-nc", city: "Marvin", state: "NC", lat: 34.9932, lng: -80.8137 },
+  { slug: "wesley-chapel-nc", city: "Wesley Chapel", state: "NC", lat: 34.9985, lng: -80.6862 },
+  { slug: "waxhaw-nc", city: "Waxhaw", state: "NC", lat: 34.9246, lng: -80.7434 },
+  { slug: "indian-land-sc", city: "Indian Land", state: "SC", lat: 34.8546, lng: -80.8712 },
+  { slug: "monroe-nc", city: "Monroe", state: "NC", lat: 34.9854, lng: -80.5495 },
+  { slug: "indian-trail-nc", city: "Indian Trail", state: "NC", lat: 35.0768, lng: -80.6690 },
+  { slug: "charlotte-nc", city: "Charlotte", state: "NC", lat: 35.2271, lng: -80.8431 },
+  { slug: "lancaster-sc", city: "Lancaster", state: "SC", lat: 34.7204, lng: -80.7712 },
+  { slug: "mineral-springs-nc", city: "Mineral Springs", state: "NC", lat: 34.9346, lng: -80.6673 },
+  { slug: "weddington-nc", city: "Weddington", state: "NC", lat: 35.0227, lng: -80.7581 },
 ];
 
 export const VALUE_PROPS = [

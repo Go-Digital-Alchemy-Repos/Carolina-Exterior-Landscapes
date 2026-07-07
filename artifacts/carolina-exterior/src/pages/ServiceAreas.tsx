@@ -1,9 +1,8 @@
 import { getPage } from "@/content";
-import { SERVICE_AREAS } from "@/content/site";
 import { BlockRenderer } from "@/components/BlockRenderer";
 import { Seo } from "@/components/Seo";
-import { Link } from "wouter";
-import { MapPin, ArrowRight } from "lucide-react";
+import { ServiceAreaMap } from "@/components/ServiceAreaMap";
+import { MapPin } from "lucide-react";
 import heroImg from "@/assets/community-aerial.png";
 
 export default function ServiceAreas() {
@@ -39,30 +38,15 @@ export default function ServiceAreas() {
       <div className="relative">
         <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
         <div className="max-w-5xl mx-auto px-4 py-24 relative">
-        <BlockRenderer blocks={page.blocks} className="max-w-4xl mx-auto text-center" />
-
-        <div className="mt-20">
-          <h2 className="text-3xl font-extrabold text-center mb-12 tracking-tight">Communities We Serve</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {SERVICE_AREAS.map(area => (
-              <Link key={area.slug} href={`/service-areas/${area.slug}`}>
-                <div className="group border border-border/60 bg-card p-6 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col justify-between h-full hover:-translate-y-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <MapPin className="h-4 w-4" />
-                    </div>
-                    <span className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                      {area.city}, {area.state}
-                    </span>
-                  </div>
-                  <div className="flex items-center text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors mt-auto">
-                    View Local Services <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+        <div className="mb-24">
+          <h2 className="text-3xl font-extrabold text-center mb-4 tracking-tight">Communities We Serve</h2>
+          <p className="text-center text-muted-foreground font-medium mb-12 max-w-2xl mx-auto">
+            Explore our service territory across Union County and the greater Charlotte region. Click any pin to view local services for that community.
+          </p>
+          <ServiceAreaMap />
         </div>
+
+        <BlockRenderer blocks={page.blocks} className="max-w-4xl mx-auto text-center" />
       </div>
       </div>
     </div>
