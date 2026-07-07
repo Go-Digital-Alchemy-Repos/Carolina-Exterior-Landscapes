@@ -21,16 +21,18 @@ export default function ServiceAreas() {
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full mt-16 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-6 border border-primary/30 uppercase backdrop-blur-sm mx-auto">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="max-w-3xl">
+          <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-6 border border-primary/30 uppercase backdrop-blur-sm">
             <MapPin className="h-3 w-3" /> Locations
           </span>
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 tracking-tight">
             {page.h1}
           </h1>
-          <p className="text-xl md:text-2xl text-white/80 font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-white/80 font-medium max-w-2xl leading-relaxed">
             Serving Union County and the greater Charlotte region with premium landscaping services.
           </p>
+          </div>
         </div>
       </div>
 

@@ -31,15 +31,15 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/55 to-transparent"></div>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full pt-20 pb-16">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16">
           <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
             <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-8 border border-primary/30 uppercase backdrop-blur-sm">
               <Leaf className="h-3 w-3" /> {BRAND.tagline}
             </span>
-            <h1 className="text-5xl md:text-7xl lg:text-[5rem] font-extrabold text-white mb-8 leading-[1.05] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-[1.05] tracking-tight">
               {page.h1}
             </h1>
-            <p className="text-xl md:text-2xl text-white/80 font-medium mb-12 leading-relaxed max-w-2xl">
+            <p className="text-lg md:text-xl text-white/80 font-medium mb-10 leading-relaxed max-w-2xl">
               We design, build, and maintain premium outdoor spaces for homes and businesses across {BRAND.county}. One company, complete outdoor care.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -55,7 +55,7 @@ export default function Home() {
               </Link>
             </div>
             
-            <div className="mt-20 flex flex-wrap items-center gap-8 text-white/70 text-sm font-bold tracking-wide">
+            <div className="mt-10 flex flex-wrap items-center gap-4 sm:gap-8 text-white/70 text-sm font-bold tracking-wide">
               <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10">
                 <Shield className="text-primary h-5 w-5" /> Licensed & Insured
               </div>
