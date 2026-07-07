@@ -5,3 +5,4 @@
 - [generateImage output path](generated-image-output-path.md) — AI image outputPath resolves from monorepo root, not artifact dir; verify/mv into the app's assets.
 - [Vite JSON-driven assets](vite-json-driven-assets.md) — resolve image filenames stored in JSON via import.meta.glob with a RELATIVE pattern (not @ alias).
 - [DESIGN subagent budget exhaustion](design-subagent-continuation.md) — ended sessions can't be messaged; relaunch fresh with a "what's done / what remains" brief.
+- [Copy-integrity test for BlockRenderer](copy-integrity-test.md) — run the artifact's vitest suite around any renderer/content change; mocks Radix accordion since collapsed panels unmount.
