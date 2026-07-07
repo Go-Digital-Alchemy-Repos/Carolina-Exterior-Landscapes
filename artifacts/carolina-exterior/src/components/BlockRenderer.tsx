@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Block } from "@/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
@@ -272,14 +273,34 @@ export function BlockRenderer({ blocks, className, excludeSlug }: { blocks: Bloc
         }
 
         if (group.type === 'prose') {
+          const elements: ReactNode[] = [];
+          let liBuffer: Block[] = [];
+          const flushList = () => {
+            if (liBuffer.length === 0) return;
+            const items = liBuffer;
+            elements.push(
+              <ul key={`ul-${elements.length}`}>
+                {items.map((li, liIdx) => (
+                  <li key={liIdx}><LinkedText text={li.text} /></li>
+                ))}
+              </ul>
+            );
+            liBuffer = [];
+          };
+          group.blocks.forEach((block, bIdx) => {
+            if (block.type === 'li') {
+              liBuffer.push(block);
+              return;
+            }
+            flushList();
+            if (block.type === 'h2') elements.push(<h2 key={bIdx}>{block.text}</h2>);
+            else if (block.type === 'h3') elements.push(<h3 key={bIdx}>{block.text}</h3>);
+            else if (block.type === 'p') elements.push(<p key={bIdx}><LinkedText text={block.text} /></p>);
+          });
+          flushList();
           return (
             <div key={idx} className="prose prose-stone lg:prose-lg max-w-4xl mx-auto prose-headings:font-extrabold prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h2:tracking-tight prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-p:font-medium prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:font-medium prose-li:text-muted-foreground prose-strong:text-foreground">
-              {group.blocks.map((block, bIdx) => {
-                if (block.type === 'h2') return <h2 key={bIdx}>{block.text}</h2>;
-                if (block.type === 'h3') return <h3 key={bIdx}>{block.text}</h3>;
-                if (block.type === 'p') return <p key={bIdx}><LinkedText text={block.text} /></p>;
-                return null;
-              })}
+              {elements}
             </div>
           );
         }

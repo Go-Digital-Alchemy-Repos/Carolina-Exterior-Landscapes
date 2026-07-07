@@ -2,7 +2,7 @@ import pagesData from "./pages.json";
 import locationsData from "./locations.json";
 import blogData from "./blog.json";
 
-export type Block = { type: "h2" | "h3" | "p"; text: string };
+export type Block = { type: "h2" | "h3" | "p" | "li"; text: string };
 
 export type PageContent = {
   slug: string;
