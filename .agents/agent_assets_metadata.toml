@@ -324,6 +324,12 @@ uri = "file://artifacts/carolina-exterior/src/assets/services/steps.png"
 type = "image"
 title = "steps"
 
+[[generated]]
+id = "23gZyu3J8-CZaa2FZure4"
+uri = "file://artifacts/carolina-exterior/src/assets/blog/blog-12.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "N-ZyWgL5_TDBvPVDsatvI"
 uri = "file://carolina-exterior-landscapes.zip"
