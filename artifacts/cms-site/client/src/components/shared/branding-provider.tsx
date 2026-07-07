@@ -86,6 +86,10 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       if (isAdminRoute) {
         root.style.removeProperty("--font-sans");
         root.style.removeProperty("--font-serif");
+        root.style.removeProperty("--public-brand-primary");
+        root.style.removeProperty("--public-brand-secondary");
+        root.style.removeProperty("--public-brand-tertiary");
+        root.style.removeProperty("--public-brand-quaternary");
         root.style.removeProperty("--primary");
         root.style.removeProperty("--secondary");
         root.style.removeProperty("--accent");
@@ -106,6 +110,9 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         root.style.removeProperty("--public-text-link");
         root.style.removeProperty("--public-text-link-hover");
         root.style.removeProperty("--public-text-inverse");
+        root.style.removeProperty("--public-primary-foreground");
+        root.style.removeProperty("--public-secondary-foreground");
+        root.style.removeProperty("--public-tertiary-foreground");
         root.style.removeProperty("--primary-foreground");
         root.style.removeProperty("--secondary-foreground");
         root.style.removeProperty("--accent-foreground");
@@ -125,28 +132,36 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (primaryColor) {
+        root.style.setProperty("--public-brand-primary", primaryColor);
         root.style.setProperty("--primary", primaryColor);
       } else {
+        root.style.removeProperty("--public-brand-primary");
         root.style.removeProperty("--primary");
       }
 
       if (secondaryColor) {
+        root.style.setProperty("--public-brand-secondary", secondaryColor);
         root.style.setProperty("--secondary", secondaryColor);
       } else {
+        root.style.removeProperty("--public-brand-secondary");
         root.style.removeProperty("--secondary");
       }
 
       if (tertiaryColor) {
+        root.style.setProperty("--public-brand-tertiary", tertiaryColor);
         root.style.setProperty("--accent", tertiaryColor);
         root.style.setProperty("--ring", tertiaryColor);
       } else {
+        root.style.removeProperty("--public-brand-tertiary");
         root.style.removeProperty("--accent");
         root.style.removeProperty("--ring");
       }
 
       if (quaternaryColor) {
+        root.style.setProperty("--public-brand-quaternary", quaternaryColor);
         root.style.setProperty("--quaternary", quaternaryColor);
       } else {
+        root.style.removeProperty("--public-brand-quaternary");
         root.style.removeProperty("--quaternary");
       }
 
@@ -225,20 +240,26 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (primaryTextColor) {
+        root.style.setProperty("--public-primary-foreground", primaryTextColor);
         root.style.setProperty("--primary-foreground", primaryTextColor);
       } else {
+        root.style.removeProperty("--public-primary-foreground");
         root.style.removeProperty("--primary-foreground");
       }
 
       if (secondaryTextColor) {
+        root.style.setProperty("--public-secondary-foreground", secondaryTextColor);
         root.style.setProperty("--secondary-foreground", secondaryTextColor);
       } else {
+        root.style.removeProperty("--public-secondary-foreground");
         root.style.removeProperty("--secondary-foreground");
       }
 
       if (tertiaryTextColor) {
+        root.style.setProperty("--public-tertiary-foreground", tertiaryTextColor);
         root.style.setProperty("--accent-foreground", tertiaryTextColor);
       } else {
+        root.style.removeProperty("--public-tertiary-foreground");
         root.style.removeProperty("--accent-foreground");
       }
     });

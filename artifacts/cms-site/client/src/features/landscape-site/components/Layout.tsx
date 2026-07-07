@@ -7,14 +7,25 @@ import { Button } from "@/components/ui/button";
 import { BotanicalAccent } from "./nature/BotanicalAccent";
 import { useBranding } from "@/components/shared/branding-provider";
 
+function phoneHref(phoneDisplay: string | null | undefined) {
+  const digits = (phoneDisplay ?? "").replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return BRAND.phoneTel;
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
-  const { frontendLogoUrl, footerLogoUrl, companyName } = useBranding();
+  const { frontendLogoUrl, footerLogoUrl, companyName, companyAddress, companyPhoneNumbers } = useBranding();
   const headerLogo = frontendLogoUrl || `${LANDSCAPE_IMAGE_BASE}/header-logo-horizontal.svg`;
   const footerLogo = footerLogoUrl || `${LANDSCAPE_IMAGE_BASE}/footer-logo-horizontal.svg`;
   const logoAlt = companyName || BRAND.name;
+  const displayName = companyName || BRAND.name;
+  const displayAddress = companyAddress || `${BRAND.city}, ${BRAND.state}`;
+  const displayPhone = companyPhoneNumbers || BRAND.phoneDisplay;
+  const telHref = phoneHref(displayPhone);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -119,9 +130,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden lg:flex items-center gap-6">
-            <a href={`tel:${BRAND.phoneTel}`} className="flex items-center gap-2 font-extrabold text-foreground hover:text-primary transition-colors">
+            <a href={`tel:${telHref}`} className="flex items-center gap-2 font-extrabold text-foreground hover:text-primary transition-colors">
               <Phone className="h-5 w-5 text-primary" />
-              {BRAND.phoneDisplay}
+              {displayPhone}
             </a>
             <Link href="/get-a-quote">
               <Button className="font-extrabold tracking-wide rounded-full px-6 h-11 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">
@@ -174,9 +185,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
 
             <div className="mt-8 flex flex-col gap-4">
-              <a href={`tel:${BRAND.phoneTel}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
+              <a href={`tel:${telHref}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
                 <Phone className="h-6 w-6 text-primary" />
-                {BRAND.phoneDisplay}
+                {displayPhone}
               </a>
               <Link href="/get-a-quote">
                 <Button size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">GET A QUOTE</Button>
@@ -208,9 +219,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 We are proud to serve {BRAND.county} and the {BRAND.region} with premium landscaping and lawn care services.
               </p>
               <div className="space-y-4 font-bold text-sm">
-                <a href={`tel:${BRAND.phoneTel}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
+                <a href={`tel:${telHref}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Phone className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{BRAND.phoneDisplay}</span>
+                  <span className="text-base tracking-wide">{displayPhone}</span>
                 </a>
                 <a href={`mailto:${BRAND.email}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Mail className="h-4 w-4" /></div>
@@ -218,7 +229,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </a>
                 <div className="flex items-center gap-4 group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background"><MapPin className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{BRAND.city}, {BRAND.state}</span>
+                  <span className="text-base tracking-wide whitespace-pre-line">{displayAddress}</span>
                 </div>
               </div>
             </div>
@@ -274,7 +285,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm font-medium text-background/50">
-            <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} {displayName}. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-6">
               <span className="flex items-center gap-2"><Leaf className="h-3 w-3" /> {BRAND.founded}</span>
               <Link href="/about" className="hover:text-white transition-colors">About Us</Link>

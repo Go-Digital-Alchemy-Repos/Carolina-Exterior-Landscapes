@@ -11,33 +11,33 @@
 }
 
 .landscape-site {
-  --brand-forest: 153 55% 15%;
-  --brand-leaf: 92 38% 36%;
-  --brand-water: 205 36% 39%;
+  --brand-forest: var(--public-brand-secondary, 153 55% 15%);
+  --brand-leaf: var(--public-brand-primary, 92 38% 36%);
+  --brand-water: var(--public-brand-quaternary, 205 36% 39%);
   --brand-stone: 0 0% 30%;
-  --brand-sand: 38 36% 68%;
+  --brand-sand: var(--public-brand-tertiary, 38 36% 68%);
   --brand-offwhite: 30 15% 97%;
   --surface-sand: 36 44% 94%;
   --surface-stone: 32 12% 94%;
   --surface-mist: 153 22% 95%;
   --surface-clay: 24 34% 93%;
   --background: 30 15% 97%;
-  --foreground: 153 55% 15%;
+  --foreground: var(--public-text-body, 153 55% 15%);
   --border: 153 20% 85%;
   --input: 153 20% 85%;
-  --ring: 92 38% 36%;
+  --ring: var(--public-brand-primary, 92 38% 36%);
   --card: 0 0% 100%;
-  --card-foreground: 153 55% 15%;
+  --card-foreground: var(--public-text-body, 153 55% 15%);
   --popover: 0 0% 100%;
-  --popover-foreground: 153 55% 15%;
-  --primary: 92 38% 36%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 153 55% 15%;
-  --secondary-foreground: 0 0% 100%;
+  --popover-foreground: var(--public-text-body, 153 55% 15%);
+  --primary: var(--public-brand-primary, 92 38% 36%);
+  --primary-foreground: var(--public-primary-foreground, 0 0% 100%);
+  --secondary: var(--public-brand-secondary, 153 55% 15%);
+  --secondary-foreground: var(--public-secondary-foreground, 0 0% 100%);
   --muted: 153 15% 93%;
-  --muted-foreground: 153 10% 45%;
-  --accent: 38 36% 68%;
-  --accent-foreground: 153 55% 15%;
+  --muted-foreground: var(--public-text-helper, 153 10% 45%);
+  --accent: var(--public-brand-tertiary, 38 36% 68%);
+  --accent-foreground: var(--public-tertiary-foreground, 153 55% 15%);
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
   --radius: 0.75rem;
