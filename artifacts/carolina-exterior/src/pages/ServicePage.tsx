@@ -176,7 +176,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             Contact {BRAND.name} for a free, no-obligation estimate for your property in {BRAND.county}.
           </p>
           <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"}>
-            <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-bold rounded-full text-primary hover:-translate-y-1 transition-transform">
+            <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-bold rounded-full hover:-translate-y-1 transition-transform text-background">
               REQUEST A QUOTE
             </Button>
           </Link>
