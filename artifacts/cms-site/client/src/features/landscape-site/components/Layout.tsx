@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES } from "@/features/landscape-site/content/site";
 import headerLogoHorizontal from "@/features/landscape-site/assets/header-logo-horizontal.svg";
 import footerLogoHorizontal from "@/features/landscape-site/assets/footer-logo-horizontal.svg";
+import digitalAlchemyLogo from "@/features/landscape-site/assets/da-logo.svg";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -286,7 +287,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-background/40 hover:text-background/70 transition-colors"
             >
-              <span className="text-xs font-medium tracking-wide">Site by Digital Alchemy</span>
+              <span className="text-xs font-medium tracking-wide">Site by</span>
+              <img src={digitalAlchemyLogo} alt="Digital Alchemy" className="h-4 w-auto" />
             </a>
           </div>
         </div>
