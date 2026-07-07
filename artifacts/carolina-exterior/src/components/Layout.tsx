@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES, SERVICE_AREAS } from "@/content/site";
 import logoFull from "@/assets/logo-full.png";
 import daLogo from "@assets/da-logo_1783441369547.svg";
+import logoWhite from "@assets/Primary_Logo_white_1783443034776.png";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -194,9 +195,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
             
             <div className="lg:col-span-4 space-y-8">
-              <div className="bg-white p-6 rounded-2xl inline-block shadow-lg">
-                <img src={logoFull} alt={BRAND.name} className="h-12 w-auto" />
-              </div>
+              <img src={logoWhite} alt={BRAND.name} className="h-14 w-auto" />
               <p className="text-background/70 text-base leading-relaxed font-medium max-w-sm">
                 {BRAND.tagline} {BRAND.subTagline}.<br/>
                 We are proud to serve {BRAND.county} and the {BRAND.region} with premium landscaping and lawn care services.
