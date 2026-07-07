@@ -51,7 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main Header */}
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
-          isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm py-3 border-border/50" : "bg-background py-5 border-transparent"
+          isScrolled ? "bg-white/95 backdrop-blur-md shadow-sm py-3 border-border/50" : "bg-white py-5 border-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
@@ -67,7 +67,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <button className="flex items-center gap-1 hover:text-primary transition-colors py-2">
                 Residential <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
               </button>
-              <div className="absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
+              <div className="absolute top-full left-0 w-72 bg-white border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
                 <div className="p-3 flex flex-col gap-1">
                   {RESIDENTIAL_SERVICES.map(s => (
                     <Link key={s.slug} href={`/${s.slug}`} className="p-3 hover:bg-muted/50 rounded-lg transition-colors text-sm group/link flex items-center justify-between">
@@ -88,7 +88,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <button className="flex items-center gap-1 hover:text-primary transition-colors py-2">
                 Commercial <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
               </button>
-              <div className="absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
+              <div className="absolute top-full left-0 w-72 bg-white border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
                 <div className="p-3 flex flex-col gap-1">
                   <Link href="/commercial" className="p-3 bg-muted/30 hover:bg-muted/80 rounded-lg transition-colors text-sm font-extrabold flex items-center justify-between group/link">
                     Commercial Hub
@@ -137,7 +137,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Mobile Nav Overlay */}
-        <div className={`fixed inset-0 bg-background/98 backdrop-blur-xl z-40 transition-transform duration-300 pt-28 px-6 overflow-y-auto ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <div className={`fixed inset-0 bg-white/98 backdrop-blur-xl z-40 transition-transform duration-300 pt-28 px-6 overflow-y-auto ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
           <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
