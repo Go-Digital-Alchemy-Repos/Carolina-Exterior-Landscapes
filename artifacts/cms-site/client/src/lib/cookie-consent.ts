@@ -1,8 +1,8 @@
-export const COOKIE_CONSENT_STORAGE_KEY = "website_cookie_consent";
-export const COOKIE_CONSENT_COOKIE_NAME = "website_cookie_consent";
+export const COOKIE_CONSENT_STORAGE_KEY = "corePlatform_cookie_consent";
+export const COOKIE_CONSENT_COOKIE_NAME = "corePlatform_cookie_consent";
 export const COOKIE_CONSENT_DURATION_DAYS = 60;
 export const COOKIE_CONSENT_VERSION = 1;
-export const COOKIE_CONSENT_CHANGED_EVENT = "website:cookie-consent-changed";
+export const COOKIE_CONSENT_CHANGED_EVENT = "corePlatform:cookie-consent-changed";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
@@ -79,14 +79,39 @@ export function parseCookieConsentRecord(value: string | null | undefined): Cook
 
 export function isCookieConsentRecordActive(record: CookieConsentRecord | null, now = new Date()): boolean {
   if (!record) return false;
+  if (record.version !== COOKIE_CONSENT_VERSION) return false;
   const expiresAt = Date.parse(record.expiresAt);
   if (Number.isNaN(expiresAt)) return false;
   return expiresAt > now.getTime();
 }
 
+function getCookieValue(name: string): string | null {
+  if (typeof document === "undefined" || !document.cookie) return null;
+  const cookies = document.cookie.split("; ");
+  for (const cookie of cookies) {
+    const separatorIndex = cookie.indexOf("=");
+    const cookieName = separatorIndex >= 0 ? cookie.slice(0, separatorIndex) : cookie;
+    if (cookieName !== name) continue;
+    const value = separatorIndex >= 0 ? cookie.slice(separatorIndex + 1) : "";
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return null;
+}
+
 export function readCookieConsentRecord(): CookieConsentRecord | null {
-  if (typeof window === "undefined") return null;
-  return parseCookieConsentRecord(window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY));
+  const storedValue =
+    typeof window === "undefined" ? null : window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+  const storedRecord = parseCookieConsentRecord(storedValue);
+  if (isCookieConsentRecordActive(storedRecord)) return storedRecord;
+
+  const cookieRecord = parseCookieConsentRecord(getCookieValue(COOKIE_CONSENT_COOKIE_NAME));
+  if (isCookieConsentRecordActive(cookieRecord)) return cookieRecord;
+
+  return null;
 }
 
 export function getCookieConsentPreferences(): CookieConsentPreferences {
@@ -111,12 +136,21 @@ function dispatchCookieConsentChanged(record: CookieConsentRecord) {
 export function writeCookieConsentRecord(record: CookieConsentRecord) {
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
-  const serialized = JSON.stringify(record);
+  const normalizedRecord: CookieConsentRecord = {
+    ...record,
+    version: COOKIE_CONSENT_VERSION,
+    preferences: {
+      ...DEFAULT_COOKIE_CONSENT_PREFERENCES,
+      ...record.preferences,
+      essential: true,
+    },
+  };
+  const serialized = JSON.stringify(normalizedRecord);
   window.localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, serialized);
 
   const maxAge = COOKIE_CONSENT_DURATION_DAYS * 24 * 60 * 60;
   document.cookie = `${COOKIE_CONSENT_COOKIE_NAME}=${encodeURIComponent(serialized)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  dispatchCookieConsentChanged(record);
+  dispatchCookieConsentChanged(normalizedRecord);
 }
 
 export function subscribeToCookieConsent(listener: (record: CookieConsentRecord) => void) {

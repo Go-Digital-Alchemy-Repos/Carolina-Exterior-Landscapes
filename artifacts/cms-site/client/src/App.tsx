@@ -6,7 +6,10 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrandingProvider } from "@/components/shared/branding-provider";
+import { CookieConsentBanner } from "@/components/shared/cookie-consent-banner";
 import { ProtectedRoute } from "@/components/shared/protected-route";
+import { loadGa4IfConsented } from "@/lib/analytics-runtime";
+import { subscribeToCookieConsent } from "@/lib/cookie-consent";
 import NotFound from "@/pages/not-found";
 
 const CmsHybridPage = lazy(() =>
@@ -277,6 +280,15 @@ function RouteAdminModeManager() {
 }
 
 function App() {
+  useEffect(() => {
+    void loadGa4IfConsented();
+    return subscribeToCookieConsent((record) => {
+      if (record.preferences.analytics) {
+        void loadGa4IfConsented();
+      }
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrandingProvider>
@@ -286,6 +298,7 @@ function App() {
             <RouteAdminModeManager />
             <RouteScrollManager />
             <Router />
+            <CookieConsentBanner />
           </SetupGuard>
         </TooltipProvider>
       </BrandingProvider>

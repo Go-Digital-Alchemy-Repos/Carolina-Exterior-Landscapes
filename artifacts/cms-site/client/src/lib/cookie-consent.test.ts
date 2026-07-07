@@ -1,11 +1,16 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   COOKIE_CONSENT_CHANGED_EVENT,
+  COOKIE_CONSENT_COOKIE_NAME,
   COOKIE_CONSENT_DURATION_DAYS,
+  COOKIE_CONSENT_STORAGE_KEY,
   DEFAULT_COOKIE_CONSENT_PREFERENCES,
   buildCookieConsentRecord,
   getCookieConsentPreferences,
   hasCookieConsent,
+  isCookieConsentRecordActive,
+  parseCookieConsentRecord,
+  readCookieConsentRecord,
   subscribeToCookieConsent,
   writeCookieConsentRecord,
 } from "@/lib/cookie-consent";
@@ -79,9 +84,12 @@ describe("cookie consent utilities", () => {
 
     writeCookieConsentRecord(record);
 
+    expect(window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY)).toBe(JSON.stringify(record));
+    expect(readCookieConsentRecord()).toEqual(record);
     expect(getCookieConsentPreferences()).toEqual(record.preferences);
     expect(hasCookieConsent("analytics")).toBe(true);
     expect(hasCookieConsent("marketing")).toBe(false);
+    expect(document.cookie).toContain(`${COOKIE_CONSENT_COOKIE_NAME}=`);
     expect(document.cookie).toContain(`max-age=${COOKIE_CONSENT_DURATION_DAYS * 24 * 60 * 60}`);
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener.mock.calls[0][0]).toEqual(record);
@@ -89,5 +97,54 @@ describe("cookie consent utilities", () => {
     unsubscribe();
     window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_CHANGED_EVENT, { detail: record }));
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats expired records as inactive", () => {
+    const record = buildCookieConsentRecord(
+      { analytics: true },
+      new Date("2026-01-01T00:00:00.000Z"),
+    );
+
+    expect(isCookieConsentRecordActive(record, new Date("2026-02-15T00:00:00.000Z"))).toBe(true);
+    expect(isCookieConsentRecordActive(record, new Date("2026-03-15T00:00:00.001Z"))).toBe(false);
+  });
+
+  it("ignores wrong-version and malformed records", () => {
+    const wrongVersion = JSON.stringify({
+      ...buildCookieConsentRecord({ analytics: true }),
+      version: 999,
+    });
+
+    expect(parseCookieConsentRecord(wrongVersion)).toBeNull();
+    expect(parseCookieConsentRecord("{not-json")).toBeNull();
+
+    window.localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, wrongVersion);
+    expect(readCookieConsentRecord()).toBeNull();
+    expect(getCookieConsentPreferences()).toEqual(DEFAULT_COOKIE_CONSENT_PREFERENCES);
+  });
+
+  it("keeps essential enabled when callers try to turn it off", () => {
+    const record = buildCookieConsentRecord({
+      essential: false as true,
+      analytics: true,
+    });
+
+    expect(record.preferences.essential).toBe(true);
+
+    const listener = vi.fn();
+    subscribeToCookieConsent(listener);
+
+    writeCookieConsentRecord({
+      ...record,
+      preferences: {
+        ...record.preferences,
+        essential: false as true,
+      },
+    });
+
+    const stored = readCookieConsentRecord();
+    expect(stored?.preferences.essential).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].preferences.essential).toBe(true);
   });
 });
