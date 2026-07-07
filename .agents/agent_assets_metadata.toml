@@ -438,6 +438,36 @@ uri = "file://artifacts/carolina-exterior/src/assets/services/commercial-tree-sh
 type = "image"
 title = "commercial tree shrub maintenance"
 
+[[generated]]
+id = "OD8gJELsCc-bsTDNCYhGM"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-commercial-grounds.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "kkJnTKY3nqBbCSoeqXlzz"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-commercial-landscaping.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "BHXVHX8wS9_P82pS3SMWd"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-commercial-hardscape.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "eLKR8ieMdUNpqXbfqx_pJ"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-commercial-drainage.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jrcXV5oYBr95yQ6DK6JdJ"
+uri = "file://artifacts/carolina-exterior/src/assets/hero-hoa.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "N-ZyWgL5_TDBvPVDsatvI"
 uri = "file://carolina-exterior-landscapes.zip"

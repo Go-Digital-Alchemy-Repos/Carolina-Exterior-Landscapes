@@ -15,6 +15,11 @@ import heroCommercial from "@/assets/hero-commercial.png";
 import heroHardscape from "@/assets/hero-hardscape.png";
 import heroMulch from "@/assets/hero-mulch.png";
 import heroDrainage from "@/assets/hero-drainage.png";
+import heroCommercialGrounds from "@/assets/hero-commercial-grounds.png";
+import heroCommercialLandscaping from "@/assets/hero-commercial-landscaping.png";
+import heroCommercialHardscape from "@/assets/hero-commercial-hardscape.png";
+import heroCommercialDrainage from "@/assets/hero-commercial-drainage.png";
+import heroHoa from "@/assets/hero-hoa.png";
 import galleryRes from "@/assets/gallery-res-1.png";
 import galleryCom from "@/assets/gallery-com-1.png";
 
@@ -25,11 +30,11 @@ const HERO_IMAGES: Record<string, string> = {
   "mulching-and-planting": heroMulch,
   "drainage-solutions": heroDrainage,
   "commercial": heroCommercial,
-  "commercial-grounds-maintenance": heroCommercial,
-  "commercial-landscaping": heroCommercial,
-  "commercial-hardscape": heroHardscape,
-  "commercial-drainage": heroDrainage,
-  "hoa-services": heroCommercial,
+  "commercial-grounds-maintenance": heroCommercialGrounds,
+  "commercial-landscaping": heroCommercialLandscaping,
+  "commercial-hardscape": heroCommercialHardscape,
+  "commercial-drainage": heroCommercialDrainage,
+  "hoa-services": heroHoa,
 };
 
 export default function ServicePage({ slug: slugProp }: { slug?: string }) {
