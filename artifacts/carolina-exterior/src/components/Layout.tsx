@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES, SERVICE_AREAS } from "@/content/site";
 import logoFull from "@/assets/logo-full.png";
+import daLogo from "@assets/da-logo_1783441369547.svg";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -274,6 +275,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/service-areas" className="hover:text-white transition-colors">Service Areas</Link>
               <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
             </div>
+          </div>
+
+          <div className="mt-6 flex justify-center md:justify-end">
+            <a
+              href="https://godigitalalchemy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-background/40 hover:text-background/70 transition-colors"
+            >
+              <span className="text-xs font-medium tracking-wide">Site by</span>
+              <img src={daLogo} alt="Digital Alchemy" className="h-4 w-auto" />
+            </a>
           </div>
         </div>
       </footer>
