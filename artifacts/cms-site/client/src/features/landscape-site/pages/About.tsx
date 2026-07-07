@@ -1,4 +1,4 @@
-import { getPage } from "@/features/landscape-site/content";
+import { getPage, LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import heroImg from "@/features/landscape-site/assets/about-story.png";
 
 export default function About() {
   const page = useLandscapeCmsPage("about", getPage("about"));
   if (!page) return null;
+  const heroImg = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/about-story.png`;
 
   return (
     <div className="w-full bg-background">

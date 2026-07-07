@@ -4,6 +4,7 @@ import path from "node:path";
 import type { InsertCmsMedia } from "@shared/schema";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "client/public");
+const LANDSCAPE_ASSETS_DIR = path.resolve(process.cwd(), "client/src/features/landscape-site/assets");
 const IMAGE_EXTENSIONS = new Set([".avif", ".gif", ".jpg", ".jpeg", ".png", ".svg", ".webp"]);
 
 const MIME_TYPES: Record<string, string> = {
@@ -50,25 +51,40 @@ async function findStaticImageFiles(dir: string): Promise<string[]> {
   return files.flat().sort((a, b) => a.localeCompare(b));
 }
 
-export async function buildStaticCmsMediaAssets(publicDir = PUBLIC_DIR): Promise<InsertCmsMedia[]> {
-  const files = await findStaticImageFiles(publicDir);
+export async function buildStaticCmsMediaAssets(
+  publicDir = PUBLIC_DIR,
+  landscapeAssetsDir: string | null = LANDSCAPE_ASSETS_DIR,
+): Promise<InsertCmsMedia[]> {
+  const publicFiles = await findStaticImageFiles(publicDir);
+  const landscapeFiles = landscapeAssetsDir ? await findStaticImageFiles(landscapeAssetsDir) : [];
+
+  const publicAssets = publicFiles.map((filePath) => ({
+    filePath,
+    urlPath: `/${path.relative(publicDir, filePath).split(path.sep).join("/")}`,
+    isLandscapeAsset: false,
+  }));
+  const landscapeAssets = landscapeFiles.map((filePath) => ({
+    filePath,
+    urlPath: `/images/landscape/${path.relative(landscapeAssetsDir!, filePath).split(path.sep).join("/")}`,
+    isLandscapeAsset: true,
+  }));
 
   return Promise.all(
-    files.map(async (filePath) => {
-      const relativePath = path.relative(publicDir, filePath).split(path.sep).join("/");
+    [...publicAssets, ...landscapeAssets].map(async ({ filePath, urlPath, isLandscapeAsset }) => {
       const filename = path.basename(filePath);
       const extension = path.extname(filename).toLowerCase();
       const stat = await fs.stat(filePath);
+      const title = titleFromFilename(filename);
 
       return {
         filename,
         originalName: filename,
-        title: titleFromFilename(filename),
-        url: `/${relativePath}`,
+        title,
+        url: urlPath,
         mimeType: MIME_TYPES[extension] ?? "application/octet-stream",
         fileSize: stat.size,
         r2Key: null,
-        alt: "",
+        alt: isLandscapeAsset ? title : "",
         uploadedBy: null,
       };
     }),

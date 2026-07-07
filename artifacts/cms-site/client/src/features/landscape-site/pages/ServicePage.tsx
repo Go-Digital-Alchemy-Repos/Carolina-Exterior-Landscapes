@@ -1,4 +1,4 @@
-import { getPage } from "@/features/landscape-site/content";
+import { getPage, LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -11,31 +11,18 @@ import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 
-import heroHome from "@/features/landscape-site/assets/hero-home.png";
-import heroCommercial from "@/features/landscape-site/assets/hero-commercial.png";
-import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.png";
-import heroMulch from "@/features/landscape-site/assets/hero-mulch.png";
-import heroDrainage from "@/features/landscape-site/assets/hero-drainage.png";
-import heroCommercialGrounds from "@/features/landscape-site/assets/hero-commercial-grounds.png";
-import heroCommercialLandscaping from "@/features/landscape-site/assets/hero-commercial-landscaping.png";
-import heroCommercialHardscape from "@/features/landscape-site/assets/hero-commercial-hardscape.png";
-import heroCommercialDrainage from "@/features/landscape-site/assets/hero-commercial-drainage.png";
-import heroHoa from "@/features/landscape-site/assets/hero-hoa.png";
-import galleryRes from "@/features/landscape-site/assets/gallery-res-1.png";
-import galleryCom from "@/features/landscape-site/assets/gallery-com-1.png";
-
 const HERO_IMAGES: Record<string, string> = {
-  "residential-lawn-maintenance": heroHome,
-  "residential-landscaping": heroHome,
-  "residential-hardscape": heroHardscape,
-  "mulching-and-planting": heroMulch,
-  "drainage-solutions": heroDrainage,
-  "commercial": heroCommercial,
-  "commercial-grounds-maintenance": heroCommercialGrounds,
-  "commercial-landscaping": heroCommercialLandscaping,
-  "commercial-hardscape": heroCommercialHardscape,
-  "commercial-drainage": heroCommercialDrainage,
-  "hoa-services": heroHoa,
+  "residential-lawn-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
+  "residential-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
+  "residential-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-hardscape.png`,
+  "mulching-and-planting": `${LANDSCAPE_IMAGE_BASE}/hero-mulch.png`,
+  "drainage-solutions": `${LANDSCAPE_IMAGE_BASE}/hero-drainage.png`,
+  "commercial": `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
+  "commercial-grounds-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-grounds.png`,
+  "commercial-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-landscaping.png`,
+  "commercial-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-hardscape.png`,
+  "commercial-drainage": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-drainage.png`,
+  "hoa-services": `${LANDSCAPE_IMAGE_BASE}/hero-hoa.png`,
 };
 
 export default function ServicePage({ slug: slugProp }: { slug?: string }) {
@@ -48,7 +35,8 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
   }
 
   const isCommercial = slug?.includes("commercial") || slug === "hoa-services";
-  const heroImage = HERO_IMAGES[slug || ""] || heroHome;
+  const heroImage = page.media?.heroImageUrl ?? HERO_IMAGES[slug || ""] ?? `${LANDSCAPE_IMAGE_BASE}/hero-home.png`;
+  const sidebarImage = page.media?.sidebarImageUrl ?? (isCommercial ? `${LANDSCAPE_IMAGE_BASE}/gallery-com-1.png` : `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`);
 
   const serviceJsonLd = {
     "@context": "https://schema.org",
@@ -119,7 +107,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
         <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
-          <BlockRenderer blocks={page.blocks} serviceImages={getServiceImages(slug || "")} />
+          <BlockRenderer blocks={page.blocks} serviceImages={page.media?.serviceImages ?? getServiceImages(slug || "")} />
         </div>
         
         {/* Sidebar CTA */}
@@ -170,7 +158,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             </div>
 
             <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
-              <img src={isCommercial ? galleryCom : galleryRes} alt={`${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
+              <img src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
             </div>

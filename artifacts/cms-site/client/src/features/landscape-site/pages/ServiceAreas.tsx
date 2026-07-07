@@ -1,4 +1,4 @@
-import { getPage } from "@/features/landscape-site/content";
+import { getPage, LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -6,12 +6,12 @@ import { ServiceAreaMap } from "@/features/landscape-site/components/ServiceArea
 import { MapPin } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import heroImg from "@/features/landscape-site/assets/community-aerial.png";
 
 export default function ServiceAreas() {
   const page = useLandscapeCmsPage("service-areas", getPage("service-areas"));
 
   if (!page) return null;
+  const heroImg = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/community-aerial.png`;
 
   return (
     <div className="w-full bg-background pb-24">

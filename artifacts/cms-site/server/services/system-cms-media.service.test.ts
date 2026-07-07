@@ -37,7 +37,7 @@ describe("buildStaticCmsMediaAssets", () => {
     await fs.writeFile(path.join(tempDir, "images", "nested", "logo.svg"), "<svg />");
     await fs.writeFile(path.join(tempDir, "robots.txt"), "User-agent: *");
 
-    const assets = await buildStaticCmsMediaAssets(tempDir);
+    const assets = await buildStaticCmsMediaAssets(tempDir, null);
 
     expect(assets).toEqual([
       expect.objectContaining({
@@ -74,5 +74,6 @@ describe("ensureSystemCmsMedia", () => {
     const createdUrls = mockStorage.cmsMedia.createMedia.mock.calls.map(([asset]) => asset.url);
     expect(createdUrls).not.toContain("/images/cca-logo-color.svg");
     expect(createdUrls).toContain("/images/cca-hero-homepage.webp");
+    expect(createdUrls).toContain("/images/landscape/hero-home.png");
   });
 });

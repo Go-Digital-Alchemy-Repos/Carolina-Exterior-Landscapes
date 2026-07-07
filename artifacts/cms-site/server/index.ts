@@ -94,6 +94,10 @@ app.use("/api", apiLimiter);
 app.use(originCheck);
 
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+app.use(
+  "/images/landscape",
+  express.static(path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets")),
+);
 
 const REDACTED_KEYS = [
   "password", "currentPassword", "newPassword",

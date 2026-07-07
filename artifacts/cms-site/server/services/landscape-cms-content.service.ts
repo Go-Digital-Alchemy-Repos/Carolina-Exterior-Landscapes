@@ -5,6 +5,25 @@ import { storage } from "../storage";
 
 type LandscapeBlock = { type: "h2" | "h3" | "p" | "li"; text: string };
 
+type LandscapeMedia = {
+  heroImageUrl?: string;
+  heroImageAlt?: string;
+  sidebarImageUrl?: string;
+  sidebarImageAlt?: string;
+  serviceImages?: Record<string, string>;
+  featureCards?: { title: string; imageUrl: string; imageAlt: string }[];
+  galleryPreview?: { src: string; alt: string; label: string }[];
+  projects?: {
+    src: string;
+    alt: string;
+    title: string;
+    location: string;
+    category: "residential" | "commercial";
+    tag: string;
+  }[];
+  images?: { src: string; alt: string }[];
+};
+
 type LandscapePage = {
   slug: string;
   h1: string;
@@ -15,6 +34,7 @@ type LandscapePage = {
   schemaType: string;
   wordCountTarget: string;
   blocks: LandscapeBlock[];
+  media?: LandscapeMedia;
 };
 
 type LandscapeLocation = LandscapePage & {
@@ -28,11 +48,13 @@ type LandscapeBlogPost = LandscapePage & {
   readMinutes: number;
   excerpt: string;
   image: string;
+  imageUrl?: string;
 };
 
 type LandscapeCmsKind = "page" | "location" | "blog" | "virtual";
 
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
+const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 
 const SECURITY_LOW_VOLTAGE_PATTERNS = [
   "low voltage",
@@ -64,6 +86,261 @@ function canonicalFor(pathname: string) {
   return `https://carolinaexteriorlandscapes.com${pathname === "/" ? "" : pathname}`;
 }
 
+function imageUrl(filename: string) {
+  return `${LANDSCAPE_IMAGE_BASE}/${filename}`;
+}
+
+function serviceImageUrl(filename: string) {
+  return `${LANDSCAPE_IMAGE_BASE}/services/${filename}.png`;
+}
+
+const SERVICE_IMAGE_CONCEPTS: Record<string, Record<string, string>> = {
+  "residential-landscaping": {
+    "Custom Landscape Design": "landscape-design",
+    "Plant & Shrub Installation": "plant-shrub",
+    "Sod Installation": "sod",
+    "Seasonal Color Programs": "seasonal-color",
+    "Bed Creation & Renovation": "garden-beds",
+  },
+  "residential-hardscape": {
+    "Patio Installation": "patio",
+    "Walkways & Pathways": "walkway",
+    "Retaining Walls": "retaining-wall",
+    "Decorative Borders & Edging": "edging",
+    "Steps & Stairs": "steps",
+  },
+  "drainage-solutions": {
+    "French Drain Installation": "french-drain",
+    "Yard Regrading & Grading": "regrading",
+    "Catch Basin Installation": "catch-basin",
+    "Downspout Extensions & Management": "downspout",
+    Swales: "swale",
+  },
+  "mulching-and-planting": {
+    "Types of Mulch We Install": "mulch",
+    "Benefits of Professional Mulching": "mulched-landscape",
+    "How Much Mulch Do You Need?": "mulch-delivery",
+    "Seasonal Flower Planting": "seasonal-color",
+    "Shrub & Ornamental Grass Installation": "ornamental-grass",
+    "Bed Preparation & Cleanup": "garden-beds",
+  },
+  "commercial-landscaping": {
+    "Entryway & Signage Landscaping": "commercial-entryway",
+    "Seasonal Color Programs": "commercial-seasonal-color",
+    "Commercial Sod Installation": "commercial-sod",
+    "Tree & Shrub Planting": "commercial-plant-shrub",
+    "Mulch Installation for Commercial Properties": "commercial-mulch",
+    "Bed Creation & Renovation": "commercial-garden-beds",
+  },
+  "commercial-hardscape": {
+    "Parking Lot Islands & Borders": "parking-island",
+    "Commercial Walkways & Paths": "commercial-walkway",
+    "Retaining Walls for Commercial Sites": "commercial-retaining-wall",
+    "Dumpster Enclosures": "dumpster-enclosure",
+    "Outdoor Seating Areas & Plazas": "plaza",
+    "Steps, Ramps & Entry Features": "commercial-steps",
+  },
+  "commercial-drainage": {
+    "French Drain Systems for Commercial Sites": "commercial-french-drain",
+    "Catch Basin Installation & Maintenance": "commercial-catch-basin",
+    "Site Regrading & Grading": "commercial-regrading",
+    "Stormwater Management Solutions": "stormwater",
+    "Downspout & Roof Drainage Management": "commercial-downspout",
+    "Erosion Control & Stabilization": "commercial-erosion",
+  },
+  "hoa-services": {
+    "Common Area Grounds Maintenance": "commercial-grounds-maintenance",
+    "Entrance & Signage Landscaping": "commercial-entryway",
+    "Seasonal Color & Planting Programs": "commercial-seasonal-color",
+    "Community-Wide Mulch Programs": "commercial-mulch",
+    "Tree & Shrub Maintenance": "commercial-tree-shrub-maintenance",
+    "Drainage Management for HOA Properties": "commercial-french-drain",
+    "Common Area Hardscape Maintenance": "plaza",
+  },
+};
+
+function serviceImagesForPage(slug: string) {
+  const concepts = SERVICE_IMAGE_CONCEPTS[slug];
+  if (!concepts) return undefined;
+  return Object.fromEntries(Object.entries(concepts).map(([title, concept]) => [title, serviceImageUrl(concept)]));
+}
+
+const HERO_IMAGES: Record<string, string> = {
+  home: imageUrl("hero-home.png"),
+  about: imageUrl("about-story.png"),
+  "service-areas": imageUrl("community-aerial.png"),
+  "residential-lawn-maintenance": imageUrl("hero-home.png"),
+  "residential-landscaping": imageUrl("hero-home.png"),
+  "residential-hardscape": imageUrl("hero-hardscape.png"),
+  "mulching-and-planting": imageUrl("hero-mulch.png"),
+  "drainage-solutions": imageUrl("hero-drainage.png"),
+  commercial: imageUrl("hero-commercial.png"),
+  "commercial-grounds-maintenance": imageUrl("hero-commercial-grounds.png"),
+  "commercial-landscaping": imageUrl("hero-commercial-landscaping.png"),
+  "commercial-hardscape": imageUrl("hero-commercial-hardscape.png"),
+  "commercial-drainage": imageUrl("hero-commercial-drainage.png"),
+  "hoa-services": imageUrl("hero-hoa.png"),
+};
+
+const GALLERY_PROJECTS: NonNullable<LandscapeMedia["projects"]> = [
+  {
+    src: imageUrl("gallery-res-1.png"),
+    alt: "Landscape design with natural stone retaining wall and layered plantings",
+    title: "Retaining Wall & Landscape Design",
+    location: "Waxhaw, NC",
+    category: "residential",
+    tag: "Landscaping",
+  },
+  {
+    src: imageUrl("gallery-res-2.png"),
+    alt: "Striped residential lawn with vibrant flower beds and clean edging",
+    title: "Full Lawn Renovation & Beds",
+    location: "Rock Hill, SC",
+    category: "residential",
+    tag: "Lawn Care",
+  },
+  {
+    src: imageUrl("gallery-res-3.png"),
+    alt: "Natural stone patio and outdoor living space with seating area",
+    title: "Stone Patio & Outdoor Living",
+    location: "Tega Cay, SC",
+    category: "residential",
+    tag: "Hardscape",
+  },
+  {
+    src: imageUrl("hero-hardscape.png"),
+    alt: "Custom paver patio hardscape installation",
+    title: "Custom Paver Patio",
+    location: "Indian Land, SC",
+    category: "residential",
+    tag: "Hardscape",
+  },
+  {
+    src: imageUrl("hero-mulch.png"),
+    alt: "Freshly mulched garden beds with seasonal plantings",
+    title: "Mulch Refresh & Seasonal Planting",
+    location: "York, SC",
+    category: "residential",
+    tag: "Mulch & Planting",
+  },
+  {
+    src: imageUrl("hero-drainage.png"),
+    alt: "French drain and drainage solution installation in a residential yard",
+    title: "Drainage Correction",
+    location: "Clover, SC",
+    category: "residential",
+    tag: "Drainage",
+  },
+  {
+    src: imageUrl("gallery-com-1.png"),
+    alt: "Corporate office park with manicured grounds and entry landscaping",
+    title: "Office Park Grounds Program",
+    location: "Rock Hill, SC",
+    category: "commercial",
+    tag: "Grounds Maintenance",
+  },
+  {
+    src: imageUrl("gallery-com-2.png"),
+    alt: "HOA community entrance with signage landscaping and seasonal color",
+    title: "HOA Entrance Enhancement",
+    location: "Marvin, NC",
+    category: "commercial",
+    tag: "HOA Services",
+  },
+  {
+    src: imageUrl("gallery-com-3.png"),
+    alt: "Commercial property hardscape walkways and plaza landscaping",
+    title: "Commercial Walkways & Plaza",
+    location: "Charlotte, NC",
+    category: "commercial",
+    tag: "Hardscape",
+  },
+  {
+    src: imageUrl("hero-commercial.png"),
+    alt: "Pristine commercial property grounds with maintained turf and beds",
+    title: "Retail Center Maintenance",
+    location: "Pineville, NC",
+    category: "commercial",
+    tag: "Grounds Maintenance",
+  },
+];
+
+function cityHeroImage(slug: string) {
+  if (slug === "matthews-nc") return imageUrl("matthews-nc-hero.png");
+  const pool = [
+    imageUrl("hero-home.png"),
+    imageUrl("gallery-res-1.png"),
+    imageUrl("gallery-res-2.png"),
+    imageUrl("gallery-res-3.png"),
+    imageUrl("community-aerial.png"),
+  ];
+  let sum = 0;
+  for (let i = 0; i < slug.length; i++) sum += slug.charCodeAt(i);
+  return pool[sum % pool.length];
+}
+
+function mediaForPage(page: LandscapePage | LandscapeLocation | LandscapeBlogPost | Record<string, unknown>, slug: string): LandscapeMedia | undefined {
+  if (slug === "home") {
+    return {
+      heroImageUrl: HERO_IMAGES.home,
+      heroImageAlt: "Carolina beautiful lawn",
+      sidebarImageUrl: imageUrl("about-story.png"),
+      sidebarImageAlt: "Carolina Exterior crew installing a natural stone patio",
+      featureCards: [
+        { title: "Residential", imageUrl: imageUrl("gallery-res-1.png"), imageAlt: "Residential landscaping" },
+        { title: "Commercial", imageUrl: imageUrl("hero-commercial.png"), imageAlt: "Commercial landscaping" },
+      ],
+      galleryPreview: [
+        { src: imageUrl("gallery-res-2.png"), alt: "Striped residential lawn with vibrant flower beds", label: "Lawn Renovation" },
+        { src: imageUrl("gallery-res-3.png"), alt: "Natural stone patio and outdoor living space", label: "Stone Patio" },
+        { src: imageUrl("gallery-com-2.png"), alt: "HOA community entrance landscaping", label: "HOA Entrance" },
+      ],
+    };
+  }
+  if (slug === "gallery") return { projects: GALLERY_PROJECTS };
+  if (slug === "commercial-portfolio") {
+    return {
+      images: GALLERY_PROJECTS.filter((project) => project.category === "commercial")
+        .slice(0, 4)
+        .map(({ src, alt }) => ({ src, alt })),
+    };
+  }
+  if ("city" in page && typeof (page as LandscapeLocation).city === "string") {
+    return {
+      heroImageUrl: cityHeroImage(slug),
+      heroImageAlt: `${(page as LandscapeLocation).city} landscaping service area`,
+    };
+  }
+  if ("image" in page && typeof (page as LandscapeBlogPost).image === "string") {
+    return {
+      heroImageUrl: `${LANDSCAPE_IMAGE_BASE}/blog/${(page as LandscapeBlogPost).image}`,
+      heroImageAlt: (page as LandscapeBlogPost).h1,
+    };
+  }
+  const heroImageUrl = HERO_IMAGES[slug];
+  const serviceImages = serviceImagesForPage(slug);
+  if (heroImageUrl || serviceImages) {
+    return {
+      heroImageUrl,
+      heroImageAlt: "h1" in page && typeof page.h1 === "string" ? page.h1 : "Carolina Exterior Landscapes",
+      sidebarImageUrl: slug.includes("commercial") || slug === "hoa-services" ? imageUrl("gallery-com-1.png") : imageUrl("gallery-res-1.png"),
+      sidebarImageAlt: "Recent landscape project by Carolina Exterior Landscapes",
+      serviceImages,
+    };
+  }
+  return undefined;
+}
+
+function withMedia<T extends LandscapePage | LandscapeLocation | LandscapeBlogPost | Record<string, unknown>>(data: T, slug: string): T {
+  const media = mediaForPage(data, slug);
+  if (!media) return data;
+  const next = { ...data, media };
+  if ("image" in next && typeof next.image === "string") {
+    return { ...next, imageUrl: `${LANDSCAPE_IMAGE_BASE}/blog/${next.image}` } as T;
+  }
+  return next as T;
+}
+
 function pageRecord(
   data: LandscapePage | LandscapeLocation | LandscapeBlogPost | Record<string, unknown>,
   options: {
@@ -90,13 +367,13 @@ function pageRecord(
       landscape: {
         kind: options.kind,
         path: options.path,
-        data,
+        data: withMedia(data, options.slug),
       },
     },
     seoTitle: options.seoTitle,
     seoDescription: options.seoDescription,
     seoKeywords: options.seoKeywords ?? "",
-    ogImageUrl: options.ogImageUrl ?? "/assets/logo-full-Bi8L3m5F.png",
+    ogImageUrl: options.ogImageUrl ?? mediaForPage(data, options.slug)?.heroImageUrl ?? imageUrl("logo-full.png"),
     canonicalUrl: canonicalFor(options.path),
     noindex: false,
     publishedAt: new Date(),

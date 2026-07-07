@@ -4,6 +4,25 @@ import blogData from "./blog.json";
 
 export type Block = { type: "h2" | "h3" | "p" | "li"; text: string };
 
+export type LandscapeMedia = {
+  heroImageUrl?: string;
+  heroImageAlt?: string;
+  sidebarImageUrl?: string;
+  sidebarImageAlt?: string;
+  serviceImages?: Record<string, string>;
+  featureCards?: { title: string; imageUrl: string; imageAlt: string }[];
+  galleryPreview?: { src: string; alt: string; label: string }[];
+  projects?: {
+    src: string;
+    alt: string;
+    title: string;
+    location: string;
+    category: "residential" | "commercial";
+    tag: string;
+  }[];
+  images?: { src: string; alt: string }[];
+};
+
 export type PageContent = {
   slug: string;
   h1: string;
@@ -14,6 +33,7 @@ export type PageContent = {
   schemaType: string;
   wordCountTarget: string;
   blocks: Block[];
+  media?: LandscapeMedia;
 };
 
 export type LocationContent = PageContent & {
@@ -27,18 +47,13 @@ export type BlogPost = PageContent & {
   readMinutes: number;
   excerpt: string;
   image: string;
+  imageUrl?: string;
 };
 
-const blogImages = import.meta.glob<string>("../assets/blog/*.png", {
-  eager: true,
-  import: "default",
-});
+export const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 
 export function getBlogImage(filename: string): string | undefined {
-  const entry = Object.entries(blogImages).find(([path]) =>
-    path.endsWith(`/${filename}`),
-  );
-  return entry?.[1];
+  return filename ? `${LANDSCAPE_IMAGE_BASE}/blog/${filename}` : undefined;
 }
 
 const pages = pagesData as Record<string, PageContent>;

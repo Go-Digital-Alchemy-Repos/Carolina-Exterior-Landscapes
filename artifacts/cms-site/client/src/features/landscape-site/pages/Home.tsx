@@ -8,19 +8,22 @@ import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Leaf, Shield, Clock, MapPin } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-
-import heroImg from "@/features/landscape-site/assets/hero-home.png";
-import res1 from "@/features/landscape-site/assets/gallery-res-1.png";
-import res2 from "@/features/landscape-site/assets/gallery-res-2.png";
-import res3 from "@/features/landscape-site/assets/gallery-res-3.png";
-import com1 from "@/features/landscape-site/assets/hero-commercial.png";
-import comHoa from "@/features/landscape-site/assets/gallery-com-2.png";
-import aboutStory from "@/features/landscape-site/assets/about-story.png";
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
 
 export default function Home() {
   const page = useLandscapeCmsPage("home", getPage("home"));
 
   if (!page) return null;
+
+  const heroImg = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/hero-home.png`;
+  const aboutStory = page.media?.sidebarImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/about-story.png`;
+  const residentialCardImage = page.media?.featureCards?.find((card) => card.title === "Residential")?.imageUrl ?? `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`;
+  const commercialCardImage = page.media?.featureCards?.find((card) => card.title === "Commercial")?.imageUrl ?? `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`;
+  const galleryPreview = page.media?.galleryPreview ?? [
+    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-2.png`, alt: "Striped residential lawn with vibrant flower beds", label: "Lawn Renovation" },
+    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-3.png`, alt: "Natural stone patio and outdoor living space", label: "Stone Patio" },
+    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`, alt: "HOA community entrance landscaping", label: "HOA Entrance" },
+  ];
 
   return (
     <div className="w-full">
@@ -96,7 +99,7 @@ export default function Home() {
             {/* Residential Card */}
             <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
-                <img src={res1} alt="Residential Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <img src={residentialCardImage} alt="Residential Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent"></div>
                 <h3 className="absolute bottom-6 left-8 text-3xl font-extrabold text-white">Residential</h3>
               </div>
@@ -123,7 +126,7 @@ export default function Home() {
             {/* Commercial Card */}
             <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
-                <img src={com1} alt="Commercial Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <img src={commercialCardImage} alt="Commercial Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent"></div>
                 <h3 className="absolute bottom-6 left-8 text-3xl font-extrabold text-white">Commercial</h3>
               </div>
@@ -165,11 +168,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { src: res2, alt: "Striped residential lawn with vibrant flower beds", label: "Lawn Renovation" },
-              { src: res3, alt: "Natural stone patio and outdoor living space", label: "Stone Patio" },
-              { src: comHoa, alt: "HOA community entrance landscaping", label: "HOA Entrance" },
-            ].map((img, i) => (
+            {galleryPreview.map((img, i) => (
               <Link key={i} href="/gallery" className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 block hover:-translate-y-1">
                 <img src={img.src} alt={img.alt} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent"></div>

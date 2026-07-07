@@ -1,22 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
+import { useLandscapeCmsData } from "@/features/landscape-site/use-landscape-cms";
+import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-
-import res1 from "@/features/landscape-site/assets/gallery-res-1.png";
-import res2 from "@/features/landscape-site/assets/gallery-res-2.png";
-import res3 from "@/features/landscape-site/assets/gallery-res-3.png";
-import com1 from "@/features/landscape-site/assets/gallery-com-1.png";
-import com2 from "@/features/landscape-site/assets/gallery-com-2.png";
-import com3 from "@/features/landscape-site/assets/gallery-com-3.png";
-import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.png";
-import heroMulch from "@/features/landscape-site/assets/hero-mulch.png";
-import heroDrainage from "@/features/landscape-site/assets/hero-drainage.png";
-import heroCommercial from "@/features/landscape-site/assets/hero-commercial.png";
 
 type Category = "residential" | "commercial";
 type Filter = "all" | Category;
@@ -32,7 +23,7 @@ interface Project {
 
 const PROJECTS: Project[] = [
   {
-    src: res1,
+    src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`,
     alt: "Landscape design with natural stone retaining wall and layered plantings",
     title: "Retaining Wall & Landscape Design",
     location: "Waxhaw, NC",
@@ -40,7 +31,7 @@ const PROJECTS: Project[] = [
     tag: "Landscaping",
   },
   {
-    src: res2,
+    src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-2.png`,
     alt: "Striped residential lawn with vibrant flower beds and clean edging",
     title: "Full Lawn Renovation & Beds",
     location: "Rock Hill, SC",
@@ -48,7 +39,7 @@ const PROJECTS: Project[] = [
     tag: "Lawn Care",
   },
   {
-    src: res3,
+    src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-3.png`,
     alt: "Natural stone patio and outdoor living space with seating area",
     title: "Stone Patio & Outdoor Living",
     location: "Tega Cay, SC",
@@ -56,7 +47,7 @@ const PROJECTS: Project[] = [
     tag: "Hardscape",
   },
   {
-    src: heroHardscape,
+    src: `${LANDSCAPE_IMAGE_BASE}/hero-hardscape.png`,
     alt: "Custom paver patio hardscape installation",
     title: "Custom Paver Patio",
     location: "Indian Land, SC",
@@ -64,7 +55,7 @@ const PROJECTS: Project[] = [
     tag: "Hardscape",
   },
   {
-    src: heroMulch,
+    src: `${LANDSCAPE_IMAGE_BASE}/hero-mulch.png`,
     alt: "Freshly mulched garden beds with seasonal plantings",
     title: "Mulch Refresh & Seasonal Planting",
     location: "York, SC",
@@ -72,7 +63,7 @@ const PROJECTS: Project[] = [
     tag: "Mulch & Planting",
   },
   {
-    src: heroDrainage,
+    src: `${LANDSCAPE_IMAGE_BASE}/hero-drainage.png`,
     alt: "French drain and drainage solution installation in a residential yard",
     title: "Drainage Correction",
     location: "Clover, SC",
@@ -80,7 +71,7 @@ const PROJECTS: Project[] = [
     tag: "Drainage",
   },
   {
-    src: com1,
+    src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-1.png`,
     alt: "Corporate office park with manicured grounds and entry landscaping",
     title: "Office Park Grounds Program",
     location: "Rock Hill, SC",
@@ -88,7 +79,7 @@ const PROJECTS: Project[] = [
     tag: "Grounds Maintenance",
   },
   {
-    src: com2,
+    src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`,
     alt: "HOA community entrance with signage landscaping and seasonal color",
     title: "HOA Entrance Enhancement",
     location: "Marvin, NC",
@@ -96,7 +87,7 @@ const PROJECTS: Project[] = [
     tag: "HOA Services",
   },
   {
-    src: com3,
+    src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-3.png`,
     alt: "Commercial property hardscape walkways and plaza landscaping",
     title: "Commercial Walkways & Plaza",
     location: "Charlotte, NC",
@@ -104,7 +95,7 @@ const PROJECTS: Project[] = [
     tag: "Hardscape",
   },
   {
-    src: heroCommercial,
+    src: `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
     alt: "Pristine commercial property grounds with maintained turf and beds",
     title: "Retail Center Maintenance",
     location: "Pineville, NC",
@@ -120,10 +111,12 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 export default function Gallery() {
+  const cmsPage = useLandscapeCmsData<{ media?: LandscapeMedia }>("gallery", { media: { projects: PROJECTS } });
   const [filter, setFilter] = useState<Filter>("all");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const visible = filter === "all" ? PROJECTS : PROJECTS.filter(p => p.category === filter);
+  const projects = cmsPage.media?.projects ?? PROJECTS;
+  const visible = filter === "all" ? projects : projects.filter(p => p.category === filter);
 
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
   const showPrev = useCallback(() => {

@@ -21,7 +21,7 @@ export default function BlogPost() {
   const relatedPosts = allPosts
     .filter((p) => p.slug !== post.slug && p.category === post.category)
     .slice(0, 4);
-  const heroImage = getBlogImage(post.image);
+  const heroImage = post.imageUrl ?? post.media?.heroImageUrl ?? getBlogImage(post.image);
 
   const blogJsonLd = {
     "@context": "https://schema.org",
@@ -152,7 +152,7 @@ export default function BlogPost() {
                       >
                         <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                           <img
-                            src={getBlogImage(p.image)}
+                            src={p.imageUrl ?? p.media?.heroImageUrl ?? getBlogImage(p.image)}
                             alt={p.h1}
                             loading="lazy"
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"

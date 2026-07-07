@@ -13,6 +13,8 @@ const LOREM_LONG =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 const LOREM_RICHTEXT = `<p>${LOREM_BODY}</p><p>${LOREM_LONG}</p>`;
 const STARTER_LIBRARY_BLOCKS = ALL_BLOCKS.filter((block) => !block.isDynamic);
+const CAROLINA_SECTION_NAME_PREFIX = "Carolina - ";
+const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 
 function mapBlockToSectionCategory(block: BlockDef): string {
   if (block.type.includes("hero")) return "hero";
@@ -122,6 +124,151 @@ function buildStarterSectionRecord(block: BlockDef) {
   };
 }
 
+function block(type: string, props: Record<string, unknown>): BlockInstance {
+  const instance = createBlock(type);
+  return {
+    ...instance,
+    props: {
+      ...instance.props,
+      ...props,
+    },
+  };
+}
+
+function buildCarolinaLandscapeSections() {
+  return [
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Homepage Hero`,
+      description: "Primary Carolina Exterior Landscapes homepage hero with real brand copy and media-library hero image.",
+      category: "hero",
+      blocks: [
+        block("hero", {
+          eyebrow: "Complete Outdoor Care",
+          heading: "Landscaping, Lawn Care, Hardscape & Drainage Services",
+          subheading:
+            "Design, build, and maintenance services for premium residential and commercial outdoor spaces across Union County and the Charlotte region.",
+          ctaText: "Request a Quote",
+          ctaLink: "/get-a-quote",
+          backgroundImageUrl: `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
+          backgroundImageOpacity: 75,
+          overlayOpacity: 55,
+          gradientEnabled: true,
+          alignment: "left",
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Residential And Commercial Services`,
+      description: "Two-column services overview for residential and commercial landscaping paths.",
+      category: "features",
+      blocks: [
+        block("section-header", {
+          eyebrow: "Field Notes",
+          title: "Expertise for Every Property",
+          subtitle: "Comprehensive landscaping services tailored to the Piedmont Carolina climate.",
+          alignment: "center",
+        }),
+        block("cards-grid", {
+          title: "",
+          subtitle: "",
+          columns: "2",
+          cards: [
+            {
+              title: "Residential Landscaping",
+              description: "Lawn maintenance, planting, mulch, hardscape, and drainage for homes and estates.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`,
+              linkText: "Explore Residential Services",
+              linkPath: "/residential-landscaping",
+            },
+            {
+              title: "Commercial Landscaping",
+              description: "Grounds maintenance, HOA programs, commercial planting, hardscape, and drainage.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
+              linkText: "Explore Commercial Services",
+              linkPath: "/commercial",
+            },
+          ],
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Recent Finished Projects`,
+      description: "Reusable gallery teaser section using representative residential and commercial project images.",
+      category: "media",
+      blocks: [
+        block("section-header", {
+          eyebrow: "Proof In The Work",
+          title: "Recent Finished Projects",
+          subtitle: "A quick look at lawn renovations, hardscapes, and HOA landscape improvements.",
+          alignment: "left",
+        }),
+        block("cards-grid", {
+          title: "",
+          subtitle: "",
+          columns: "3",
+          cards: [
+            {
+              title: "Lawn Renovation",
+              description: "Clean turf, crisp edging, and refreshed planting beds.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-res-2.png`,
+              linkText: "View Gallery",
+              linkPath: "/gallery",
+            },
+            {
+              title: "Stone Patio",
+              description: "Outdoor living spaces with durable natural textures.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-res-3.png`,
+              linkText: "View Gallery",
+              linkPath: "/gallery",
+            },
+            {
+              title: "HOA Entrance",
+              description: "Community entrances with seasonal color and maintained beds.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`,
+              linkText: "View Gallery",
+              linkPath: "/gallery",
+            },
+          ],
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Service Page Sidebar CTA`,
+      description: "Reusable quote sidebar callout for service pages.",
+      category: "cta",
+      blocks: [
+        block("cta", {
+          heading: "Ready to start?",
+          subheading: "Contact us today for a free, no-obligation estimate for your property in the Carolina Piedmont.",
+          primaryText: "Request a Quote",
+          primaryLink: "/get-a-quote",
+        }),
+        block("trust-bar", {
+          items: [
+            { icon: "MapPin", label: "Locally owned in Monroe, NC", sublabel: "" },
+            { icon: "Shield", label: "Licensed and insured", sublabel: "" },
+            { icon: "Clock", label: "Reliable scheduling and communication", sublabel: "" },
+            { icon: "Leaf", label: "Premium materials and craftsmanship", sublabel: "" },
+          ],
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Primary Quote CTA`,
+      description: "Full-width quote conversion section for page bottoms.",
+      category: "cta",
+      blocks: [
+        block("cta", {
+          heading: "Ready to get started?",
+          subheading: "Tell Carolina Exterior Landscapes what your property needs and we will follow up with the right next step.",
+          primaryText: "Request a Quote",
+          primaryLink: "/get-a-quote",
+        }),
+      ],
+    },
+  ];
+}
+
 export async function ensureSystemCmsSections(options?: { refreshExisting?: boolean }) {
   const refreshExisting = options?.refreshExisting ?? false;
   const existingSections = await storage.cmsSections.getAllSections();
@@ -167,6 +314,29 @@ export async function ensureSystemCmsSections(options?: { refreshExisting?: bool
     }
   }
 
+  for (const section of buildCarolinaLandscapeSections()) {
+    const existing = existingByName.get(section.name);
+
+    if (!existing) {
+      await storage.cmsSections.createSection({
+        ...section,
+        blocks: section.blocks as any,
+      });
+      created += 1;
+      continue;
+    }
+
+    if (refreshExisting) {
+      await storage.cmsSections.updateSection(existing.id, {
+        name: section.name,
+        description: section.description,
+        category: section.category,
+        blocks: section.blocks as any,
+      });
+      updated += 1;
+    }
+  }
+
   logger.cms.info("Ensured system CMS reusable sections", {
     created,
     updated,
@@ -178,6 +348,6 @@ export async function ensureSystemCmsSections(options?: { refreshExisting?: bool
     created,
     updated,
     deleted,
-    total: STARTER_LIBRARY_BLOCKS.length,
+    total: STARTER_LIBRARY_BLOCKS.length + buildCarolinaLandscapeSections().length,
   };
 }

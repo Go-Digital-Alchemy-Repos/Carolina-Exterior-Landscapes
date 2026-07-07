@@ -1,28 +1,28 @@
-import { getLocation } from "@/features/landscape-site/content";
+import { getLocation, LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
 import { useLandscapeCmsLocation } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { useParams, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import NotFound from "@/features/landscape-site/pages/not-found";
-import heroImg from "@/features/landscape-site/assets/hero-home.png";
-import res1 from "@/features/landscape-site/assets/gallery-res-1.png";
-import res2 from "@/features/landscape-site/assets/gallery-res-2.png";
-import res3 from "@/features/landscape-site/assets/gallery-res-3.png";
-import communityAerial from "@/features/landscape-site/assets/community-aerial.png";
-import matthewsHero from "@/features/landscape-site/assets/matthews-nc-hero.png";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 import { BRAND, SERVICE_AREAS } from "@/features/landscape-site/content/site";
 import { CityMiniMap } from "@/features/landscape-site/components/CityMiniMap";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 
-const CITY_IMAGES = [heroImg, res1, res2, res3, communityAerial];
+const CITY_IMAGES = [
+  `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
+  `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`,
+  `${LANDSCAPE_IMAGE_BASE}/gallery-res-2.png`,
+  `${LANDSCAPE_IMAGE_BASE}/gallery-res-3.png`,
+  `${LANDSCAPE_IMAGE_BASE}/community-aerial.png`,
+];
 
 // City-specific hero imagery overrides. Cities not listed fall back to the
 // shared deterministic pool.
 const CITY_IMAGE_OVERRIDES: Record<string, { hero: string }> = {
-  "matthews-nc": { hero: matthewsHero },
+  "matthews-nc": { hero: `${LANDSCAPE_IMAGE_BASE}/matthews-nc-hero.png` },
 };
 
 function pickCityImage(slug: string): string {
@@ -41,7 +41,7 @@ export default function ServiceAreaCity() {
     return <NotFound />;
   }
 
-  const heroImage = pickCityImage(slug || "");
+  const heroImage = location.media?.heroImageUrl ?? pickCityImage(slug || "");
   const serviceArea = SERVICE_AREAS.find((a) => a.slug === slug);
 
   return (

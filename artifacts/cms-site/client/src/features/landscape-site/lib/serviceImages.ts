@@ -1,14 +1,7 @@
-// Maps each service page's core "services" grid items to a representative
-// generated image. Only grids whose every item has an entry here are rendered
-// as alternating image/text sections; all other grids stay as cards.
-const modules = import.meta.glob("../assets/services/*.png", {
-  eager: true,
-  import: "default",
-}) as Record<string, string>;
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
 
 function url(concept: string): string {
-  const key = Object.keys(modules).find((k) => k.endsWith(`/${concept}.png`));
-  return key ? modules[key] : "";
+  return `${LANDSCAPE_IMAGE_BASE}/services/${concept}.png`;
 }
 
 // slug -> (service item title -> image concept filename, without extension)

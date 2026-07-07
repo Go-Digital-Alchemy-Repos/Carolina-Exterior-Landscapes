@@ -63,7 +63,7 @@ export default function BlogIndex() {
               <Card className="h-full shadow-natural hover:shadow-natural-lg hover:-translate-y-1 hover:border-muted-foreground/40 transition-all duration-500 cursor-pointer group flex flex-col overflow-hidden">
                 <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                   <img
-                    src={getBlogImage(post.image)}
+                    src={post.imageUrl ?? post.media?.heroImageUrl ?? getBlogImage(post.image)}
                     alt={post.h1}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

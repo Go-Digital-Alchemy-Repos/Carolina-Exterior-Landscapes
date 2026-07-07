@@ -1,18 +1,18 @@
 import { Seo } from "@/features/landscape-site/components/Seo";
+import { useLandscapeCmsData } from "@/features/landscape-site/use-landscape-cms";
+import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import com1 from "@/features/landscape-site/assets/gallery-com-1.png";
-import com2 from "@/features/landscape-site/assets/gallery-com-2.png";
-import com3 from "@/features/landscape-site/assets/gallery-com-3.png";
-import heroCommercial from "@/features/landscape-site/assets/hero-commercial.png";
 
 export default function CommercialPortfolio() {
-  const images = [
-    { src: com1, alt: "Corporate office park landscaping" },
-    { src: com2, alt: "HOA community entrance landscaping" },
-    { src: com3, alt: "Commercial property hardscape and walkways" },
-    { src: heroCommercial, alt: "Pristine commercial property grounds" },
+  const fallbackImages = [
+    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-1.png`, alt: "Corporate office park landscaping" },
+    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`, alt: "HOA community entrance landscaping" },
+    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-3.png`, alt: "Commercial property hardscape and walkways" },
+    { src: `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`, alt: "Pristine commercial property grounds" },
   ];
+  const page = useLandscapeCmsData<{ media?: LandscapeMedia }>("commercial-portfolio", { media: { images: fallbackImages } });
+  const images = page.media?.images ?? fallbackImages;
 
   return (
     <div className="w-full bg-background min-h-screen pb-24">
