@@ -36,6 +36,7 @@ minimumReleaseAgeExclude:
 
 packages:
   - artifacts/*
+  - '!artifacts/cms-site'
   - lib/*
   - lib/integrations/*
   - scripts
