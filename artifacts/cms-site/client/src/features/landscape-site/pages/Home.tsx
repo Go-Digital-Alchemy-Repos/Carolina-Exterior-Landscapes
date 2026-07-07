@@ -38,7 +38,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16">
           <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-8 border border-primary/30 uppercase backdrop-blur-sm">
+            <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-white font-bold tracking-widest text-xs mb-8 border border-white/30 uppercase backdrop-blur-sm [&_svg]:text-white">
               <Leaf className="h-3 w-3" /> {BRAND.tagline}
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-[1.05] tracking-tight">
@@ -155,7 +155,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 relative">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="max-w-2xl">
-              <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-3">Proof In The Work</p>
+              <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-3">Proof In The Work</p>
               <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">Recent Finished Projects</h2>
             </div>
             <Link href="/gallery">
@@ -222,7 +222,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="max-w-2xl">
-            <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-4">One Company. Complete Care.</p>
+            <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-4">One Company. Complete Care.</p>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-8 leading-tight">
               We design it, build it, and keep it thriving.
             </h2>

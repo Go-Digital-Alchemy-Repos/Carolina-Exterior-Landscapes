@@ -164,7 +164,7 @@ export default function Gallery() {
         <BotanicalAccent variant="fern" className="hidden lg:block absolute left-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15" />
         <BotanicalAccent variant="fern" className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15 scale-x-[-1]" />
         <div className="relative z-10 max-w-3xl mx-auto">
-          <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-4">Our Work</p>
+          <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-4">Our Work</p>
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-5">Project Gallery</h1>
           <p className="text-lg text-white/80 font-medium">
             Real results from finished projects across the {BRAND.region} — from backyard patios and lawn renovations to commercial grounds programs.

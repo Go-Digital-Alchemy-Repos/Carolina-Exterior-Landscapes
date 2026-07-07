@@ -53,7 +53,7 @@ export function SectionHeading({
   return (
     <div className={cn("flex flex-col gap-2", itemsAlign, textAlign, className)}>
       {eyebrow && (
-        <span className="text-xs font-semibold uppercase tracking-widest text-accent">
+        <span className="text-xs font-semibold uppercase tracking-widest text-white [&_svg]:text-white">
           {eyebrow}
         </span>
       )}

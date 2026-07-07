@@ -409,7 +409,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <div className={`relative mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 sm:px-6 ${heroPaddingClass} ${heroContainerClass(forceServiceHeroDesktopLeft)}`}>
           <div className={`max-w-5xl ${heroContentClass(textAlignment, forceServiceHeroDesktopLeft)}`} data-testid="hero-content">
             {eyebrow ? (
-              <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-white" data-testid="hero-eyebrow">
+              <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white" data-testid="hero-eyebrow">
                 {eyebrow}
               </p>
             ) : null}
@@ -440,7 +440,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-section-header">
         <div className={`mx-auto max-w-4xl px-4 pb-4 pt-12 sm:px-6 ${alignmentClass(props.alignment)}`}>
-          {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">{eyebrow}</p> : null}
+          {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{eyebrow}</p> : null}
           <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
           {str(props.subtitle) ? <p className="mt-4 text-muted-foreground">{str(props.subtitle)}</p> : null}
         </div>
@@ -522,7 +522,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const ownerRole = ownerHeadingParts.length > 1 ? ownerHeadingParts.slice(1).join(" — ") : "";
     const headingContent = (
       <>
-        {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">{eyebrow}</p> : null}
+        {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{eyebrow}</p> : null}
         {ownerName ? (
           <>
             <h2 className="text-2xl font-semibold leading-tight tracking-normal sm:text-3xl">{ownerName}</h2>
@@ -884,7 +884,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
           <div className="py-4">
             <div className="mb-8 text-center">
               {str(props.eyebrow) ? (
-                <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">{str(props.eyebrow)}</p>
+                <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{str(props.eyebrow)}</p>
               ) : null}
               <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
               {subtitle ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{subtitle}</p> : null}

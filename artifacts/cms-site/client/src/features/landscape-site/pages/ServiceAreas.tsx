@@ -28,7 +28,7 @@ export default function ServiceAreas() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-primary font-bold tracking-widest text-xs mb-6 border border-primary/30 uppercase backdrop-blur-sm">
+          <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-white font-bold tracking-widest text-xs mb-6 border border-white/30 uppercase backdrop-blur-sm [&_svg]:text-white">
             <MapPin className="h-3 w-3" /> Locations
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 tracking-tight">

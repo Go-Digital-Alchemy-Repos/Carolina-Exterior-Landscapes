@@ -125,6 +125,7 @@ describe("PublicBlockRenderer hero", () => {
 
     expect(eyebrow?.textContent).toBe("Residential Landscaping");
     expect(eyebrow?.className).toContain("text-white");
+    expect(eyebrow?.className).toContain("[&_svg]:text-white");
     expect(eyebrow?.className).not.toContain("text-primary");
   });
 
