@@ -55,7 +55,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center group z-50">
-            <img src={logoFull} alt={BRAND.name} className="h-10 md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
+            <img src={logoFull} alt={BRAND.name} className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
           </Link>
 
           {/* Desktop Nav */}
