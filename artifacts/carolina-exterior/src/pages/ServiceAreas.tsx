@@ -17,8 +17,8 @@ export default function ServiceAreas() {
       
       <div className="relative w-full h-[50vh] min-h-[400px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="Carolina service areas" className="w-full h-full object-cover opacity-30 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-transparent"></div>
+          <img src={heroImg} alt="Carolina service areas" className="w-full h-full object-cover opacity-75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full mt-16 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">

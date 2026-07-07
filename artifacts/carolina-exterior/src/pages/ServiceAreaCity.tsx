@@ -36,8 +36,8 @@ export default function ServiceAreaCity() {
       
       <div className="relative w-full h-[55vh] min-h-[450px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={`${location.city} Landscaping`} className="w-full h-full object-cover opacity-30 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-transparent"></div>
+          <img src={heroImage} alt={`${location.city} Landscaping`} className="w-full h-full object-cover opacity-75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full mt-20 animate-in fade-in slide-in-from-bottom-8 duration-700">

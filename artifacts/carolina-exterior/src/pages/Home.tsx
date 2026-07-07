@@ -27,8 +27,8 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative w-full min-h-[90vh] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover opacity-40 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/20"></div>
+          <img src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover opacity-75" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/55 to-transparent"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full pt-20 pb-16">
