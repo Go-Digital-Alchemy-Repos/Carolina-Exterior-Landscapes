@@ -106,6 +106,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
+            <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
             <Link href="/about" className="hover:text-primary transition-colors">About</Link>
             <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
           </nav>
@@ -135,6 +136,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className={`fixed inset-0 bg-background/98 backdrop-blur-xl z-40 transition-transform duration-300 pt-28 px-6 overflow-y-auto ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
           <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+            <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
             <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
             
             <div className="h-px bg-border/50 my-2" />

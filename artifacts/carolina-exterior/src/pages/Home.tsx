@@ -12,6 +12,7 @@ import res2 from "@/assets/gallery-res-2.png";
 import res3 from "@/assets/gallery-res-3.png";
 import com1 from "@/assets/hero-commercial.png";
 import com2 from "@/assets/hero-hardscape.png";
+import comHoa from "@/assets/gallery-com-2.png";
 
 export default function Home() {
   const page = getPage("home");
@@ -130,6 +131,36 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Gallery Preview */}
+      <section className="py-24 bg-background">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="max-w-2xl">
+              <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-3">Proof In The Work</p>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">Recent Finished Projects</h2>
+            </div>
+            <Link href="/gallery">
+              <Button variant="outline" className="rounded-full h-12 px-6 font-bold group/btn shrink-0">
+                View Full Gallery <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { src: res2, alt: "Striped residential lawn with vibrant flower beds", label: "Lawn Renovation" },
+              { src: res3, alt: "Natural stone patio and outdoor living space", label: "Stone Patio" },
+              { src: comHoa, alt: "HOA community entrance landscaping", label: "HOA Entrance" },
+            ].map((img, i) => (
+              <Link key={i} href="/gallery" className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl transition-all duration-500 block">
+                <img src={img.src} alt={img.alt} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent"></div>
+                <span className="absolute bottom-5 left-5 text-white font-extrabold text-lg">{img.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
