@@ -3,8 +3,8 @@ import { SERVICE_AREAS } from "@/content/site";
 import { BlockRenderer } from "@/components/BlockRenderer";
 import { Seo } from "@/components/Seo";
 import { Link } from "wouter";
-import { MapPin, ArrowRight, Leaf } from "lucide-react";
-import heroImg from "@/assets/hero-home.png";
+import { MapPin, ArrowRight } from "lucide-react";
+import heroImg from "@/assets/community-aerial.png";
 
 export default function ServiceAreas() {
   const page = getPage("service-areas");
@@ -34,7 +34,9 @@ export default function ServiceAreas() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-24">
+      <div className="relative">
+        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+        <div className="max-w-5xl mx-auto px-4 py-24 relative">
         <BlockRenderer blocks={page.blocks} className="max-w-4xl mx-auto text-center" />
 
         <div className="mt-20">
@@ -59,6 +61,7 @@ export default function ServiceAreas() {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

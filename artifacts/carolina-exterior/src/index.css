@@ -159,3 +159,25 @@
     @apply font-[family-name:--font-display] font-bold tracking-tight;
   }
 }
+
+@layer utilities {
+  .bg-dots {
+    background-image: radial-gradient(hsl(var(--primary) / 0.10) 1.2px, transparent 1.2px);
+    background-size: 24px 24px;
+  }
+  .bg-contours {
+    background-image: repeating-radial-gradient(
+      circle at 50% 120%,
+      hsl(var(--primary) / 0.06) 0,
+      hsl(var(--primary) / 0.06) 1.5px,
+      transparent 1.5px,
+      transparent 46px
+    );
+  }
+  .bg-grid-lines {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}

@@ -5,7 +5,7 @@ import { VALUE_PROPS, BRAND } from "@/content/site";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight } from "lucide-react";
-import heroImg from "@/assets/hero-home.png";
+import heroImg from "@/assets/about-story.png";
 
 export default function About() {
   const page = getPage("about");
@@ -17,7 +17,7 @@ export default function About() {
       
       <div className="relative w-full h-[55vh] min-h-[450px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="About Carolina Exterior" className="w-full h-full object-cover opacity-30 mix-blend-overlay" />
+          <img src={heroImg} alt="About Carolina Exterior" className="w-full h-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-transparent"></div>
         </div>
         
@@ -32,7 +32,9 @@ export default function About() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
+      <div className="relative">
+        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={page.blocks} />
         </div>
@@ -67,6 +69,7 @@ export default function About() {
             </Button>
           </div>
         </div>
+      </div>
       </div>
       
       {/* Simple CTA */}

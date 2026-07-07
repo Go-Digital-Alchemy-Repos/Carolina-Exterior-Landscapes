@@ -12,6 +12,8 @@ import heroCommercial from "@/assets/hero-commercial.png";
 import heroHardscape from "@/assets/hero-hardscape.png";
 import heroMulch from "@/assets/hero-mulch.png";
 import heroDrainage from "@/assets/hero-drainage.png";
+import galleryRes from "@/assets/gallery-res-1.png";
+import galleryCom from "@/assets/gallery-com-1.png";
 
 const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": heroHome,
@@ -96,7 +98,9 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
+      <div className="relative">
+        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={page.blocks} />
         </div>
@@ -147,7 +151,31 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
                 </li>
               </ul>
             </div>
+
+            <div className="rounded-3xl overflow-hidden border border-border shadow-sm relative aspect-[4/3]">
+              <img src={isCommercial ? galleryCom : galleryRes} alt={`${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
+              <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
+            </div>
           </div>
+        </div>
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="relative bg-primary text-primary-foreground py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-contours opacity-40 pointer-events-none"></div>
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-6 tracking-tight">Ready to get started?</h2>
+          <p className="text-lg md:text-xl font-medium opacity-90 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Contact {BRAND.name} for a free, no-obligation estimate for your property in {BRAND.county}.
+          </p>
+          <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"}>
+            <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-bold rounded-full text-primary hover:-translate-y-1 transition-transform">
+              REQUEST A QUOTE
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

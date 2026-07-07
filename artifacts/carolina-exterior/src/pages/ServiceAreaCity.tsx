@@ -5,8 +5,20 @@ import { useParams, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import NotFound from "@/pages/not-found";
 import heroImg from "@/assets/hero-home.png";
+import res1 from "@/assets/gallery-res-1.png";
+import res2 from "@/assets/gallery-res-2.png";
+import res3 from "@/assets/gallery-res-3.png";
+import communityAerial from "@/assets/community-aerial.png";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 import { BRAND } from "@/content/site";
+
+const CITY_IMAGES = [heroImg, res1, res2, res3, communityAerial];
+
+function pickCityImage(slug: string): string {
+  let sum = 0;
+  for (let i = 0; i < slug.length; i++) sum += slug.charCodeAt(i);
+  return CITY_IMAGES[sum % CITY_IMAGES.length];
+}
 
 export default function ServiceAreaCity() {
   const { slug } = useParams();
@@ -16,13 +28,15 @@ export default function ServiceAreaCity() {
     return <NotFound />;
   }
 
+  const heroImage = pickCityImage(slug || "");
+
   return (
     <div className="w-full bg-background pb-24">
       <Seo title={location.titleTag} description={location.metaDescription} />
       
       <div className="relative w-full h-[55vh] min-h-[450px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt={`${location.city} Landscaping`} className="w-full h-full object-cover opacity-30 mix-blend-overlay" />
+          <img src={heroImage} alt={`${location.city} Landscaping`} className="w-full h-full object-cover opacity-30 mix-blend-overlay" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/60 to-transparent"></div>
         </div>
         
@@ -41,13 +55,21 @@ export default function ServiceAreaCity() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
+      <div className="relative">
+        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={location.blocks} />
         </div>
         
         <div className="lg:col-span-4">
-          <div className="sticky top-32 bg-muted/50 p-8 rounded-3xl border border-border shadow-sm">
+          <div className="sticky top-32 space-y-8">
+          <div className="rounded-3xl overflow-hidden border border-border shadow-sm relative aspect-[4/3]">
+            <img src={communityAerial} alt={`Neighborhoods across ${location.city}, ${location.state}`} loading="lazy" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
+            <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">{location.city}, {location.state}</span>
+          </div>
+          <div className="bg-muted/50 p-8 rounded-3xl border border-border shadow-sm">
             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-6">
               <MapPin className="h-6 w-6" />
             </div>
@@ -77,6 +99,8 @@ export default function ServiceAreaCity() {
               </a>
             </div>
           </div>
+          </div>
+        </div>
         </div>
       </div>
     </div>

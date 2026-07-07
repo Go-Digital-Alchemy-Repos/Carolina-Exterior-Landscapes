@@ -13,6 +13,7 @@ import res3 from "@/assets/gallery-res-3.png";
 import com1 from "@/assets/hero-commercial.png";
 import com2 from "@/assets/hero-hardscape.png";
 import comHoa from "@/assets/gallery-com-2.png";
+import aboutStory from "@/assets/about-story.png";
 
 export default function Home() {
   const page = getPage("home");
@@ -70,8 +71,9 @@ export default function Home() {
       </section>
 
       {/* Services Overview */}
-      <section className="py-24 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4">
+      <section className="py-24 bg-muted/30 relative overflow-hidden">
+        <div className="absolute inset-0 bg-dots opacity-40 pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-6">Expertise for Every Property</h2>
             <p className="text-xl text-muted-foreground font-medium">Comprehensive landscaping services tailored to the Piedmont Carolina climate.</p>
@@ -195,16 +197,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Craft Band */}
+      <section className="relative w-full py-28 md:py-36 bg-foreground overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img src={aboutStory} alt="Carolina Exterior crew installing a natural stone patio" className="w-full h-full object-cover opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/40"></div>
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
+          <div className="max-w-2xl">
+            <p className="text-primary font-extrabold text-sm tracking-widest uppercase mb-4">One Company. Complete Care.</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-8 leading-tight">
+              We design it, build it, and keep it thriving.
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {BRAND.subTagline.split(" \u2022 ").map((word) => (
+                <span key={word} className="inline-flex items-center gap-2 py-2 px-5 rounded-full bg-white/10 border border-white/15 text-white font-bold tracking-wide backdrop-blur-sm">
+                  <Leaf className="h-4 w-4 text-primary" /> {word}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* SEO Content Blocks */}
-      <section className="py-24 bg-background border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4">
+      <section className="py-24 bg-background border-b border-border/50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 relative">
           <BlockRenderer blocks={page.blocks} />
         </div>
       </section>
       
       {/* CTA Section */}
       <section className="py-32 bg-accent relative overflow-hidden text-accent-foreground">
-        <div className="absolute top-0 right-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=2940&auto=format&fit=crop')] opacity-[0.03] mix-blend-multiply pointer-events-none bg-cover bg-center"></div>
+        <div className="absolute inset-0 bg-contours opacity-70 pointer-events-none"></div>
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white rounded-full blur-3xl opacity-40"></div>
         
