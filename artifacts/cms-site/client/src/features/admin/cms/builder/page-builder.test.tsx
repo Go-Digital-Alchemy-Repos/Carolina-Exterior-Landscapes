@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import { PageBuilder } from "./page-builder";
 import { fixtureWithBrokenPreview, mixedBuilderFixture } from "./page-builder-test-fixtures";
+import type { BuilderContent } from "./block-registry";
 
 vi.mock("./page-builder-preview", () => ({
   FrontendPreviewDialog: () => null,
@@ -106,5 +107,95 @@ describe("PageBuilder", () => {
     expect(container.textContent).toContain("Type: legacy-preview");
     expect(container.querySelector('[data-testid="mock-block-preview-hero-block"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="select-canvas-block-broken-preview-block"]')).not.toBeNull();
+  });
+
+  it("drops a reusable section into an exact canvas position", async () => {
+    root = createRoot(container);
+    const onChange = vi.fn();
+    const content: BuilderContent = {
+      blocks: [
+        { id: "first-block", type: "section-header", props: { heading: "First" } },
+        { id: "second-block", type: "section-header", props: { heading: "Second" } },
+      ],
+    };
+    const sectionBlocks = [
+      { id: "section-block", type: "rich-text", props: { content: "Reusable copy" } },
+    ];
+
+    await act(async () => {
+      root!.render(
+        React.createElement(PageBuilder, {
+          content,
+          onChange,
+        }),
+      );
+    });
+
+    const dropZone = container.querySelector('[data-testid="canvas-insert-dropzone-1"]') as HTMLElement | null;
+    expect(dropZone).not.toBeNull();
+
+    const dataTransfer = {
+      dropEffect: "copy",
+      getData: (type: string) =>
+        type === "application/x-page-builder-insert"
+          ? JSON.stringify({ kind: "section", sectionId: "saved-section", blocks: sectionBlocks })
+          : "",
+      setData: vi.fn(),
+      effectAllowed: "copy",
+    };
+    const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(dropEvent, "dataTransfer", { value: dataTransfer });
+
+    await act(async () => {
+      dropZone!.dispatchEvent(dropEvent);
+    });
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].blocks.map((block: { id: string }) => block.id)).toEqual([
+      "first-block",
+      "section-block",
+      "second-block",
+    ]);
+  });
+
+  it("accepts a reusable section drop on an empty canvas", async () => {
+    root = createRoot(container);
+    const onChange = vi.fn();
+    const sectionBlocks = [
+      { id: "empty-section-block", type: "rich-text", props: { content: "Start here" } },
+    ];
+
+    await act(async () => {
+      root!.render(
+        React.createElement(PageBuilder, {
+          content: { blocks: [] },
+          onChange,
+        }),
+      );
+    });
+
+    const dropZone = container.querySelector('[data-testid="canvas-empty-dropzone"]') as HTMLElement | null;
+    expect(dropZone).not.toBeNull();
+
+    const dataTransfer = {
+      dropEffect: "copy",
+      getData: (type: string) =>
+        type === "application/x-page-builder-insert"
+          ? JSON.stringify({ kind: "section", sectionId: "saved-section", blocks: sectionBlocks })
+          : "",
+      setData: vi.fn(),
+      effectAllowed: "copy",
+    };
+    const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(dropEvent, "dataTransfer", { value: dataTransfer });
+
+    await act(async () => {
+      dropZone!.dispatchEvent(dropEvent);
+    });
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].blocks.map((block: { id: string }) => block.id)).toEqual([
+      "empty-section-block",
+    ]);
   });
 });
