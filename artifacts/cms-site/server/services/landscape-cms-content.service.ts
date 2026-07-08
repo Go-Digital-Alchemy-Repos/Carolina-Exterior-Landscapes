@@ -196,6 +196,7 @@ const HERO_IMAGES: Record<string, string> = {
   "commercial-drainage": imageUrl("hero-commercial-drainage.png"),
   "commercial-pressure-washing": imageUrl("hero-commercial-pressure-washing.avif"),
   "hoa-services": imageUrl("hero-hoa.png"),
+  "get-a-quote": imageUrl("hero-quote.png"),
 };
 
 const GALLERY_PROJECTS: NonNullable<LandscapeMedia["projects"]> = [

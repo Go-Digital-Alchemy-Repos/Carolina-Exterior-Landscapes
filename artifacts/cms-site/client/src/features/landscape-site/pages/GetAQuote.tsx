@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -72,14 +73,24 @@ export default function GetAQuote() {
 
   if (!page) return null;
 
+  const heroImage = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/hero-quote.png`;
+  const heroAlt = page.media?.heroImageAlt ?? "Professionally landscaped home with lawn and garden beds";
+
   return (
     <div className="w-full bg-background min-h-screen pb-24">
       <Seo title={page.titleTag} description={page.metaDescription} />
       
-      <div className="bg-foreground py-20 px-4 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15" />
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15 scale-x-[-1]" />
+      <div className="py-20 px-4 text-center relative overflow-hidden">
+        <img
+          src={heroImage}
+          alt={heroAlt}
+          className="absolute inset-0 h-full w-full object-cover"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-black/65 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/70 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-white/10" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-white/10 scale-x-[-1]" />
         <div className="relative z-10">
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">{page.h1}</h1>
           <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
