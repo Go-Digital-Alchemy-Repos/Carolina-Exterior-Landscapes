@@ -51,60 +51,61 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes("node_modules")) return undefined;
+          const normalizedId = id.replace(/\\/g, "/");
+          if (!normalizedId.includes("/node_modules/")) return undefined;
 
           if (
-            id.includes("/react/") ||
-            id.includes("/react-dom/") ||
-            id.includes("/scheduler/") ||
-            id.includes("/use-sync-external-store/")
+            normalizedId.includes("/node_modules/react/") ||
+            normalizedId.includes("/node_modules/react-dom/") ||
+            normalizedId.includes("/node_modules/scheduler/") ||
+            normalizedId.includes("/node_modules/use-sync-external-store/")
           ) {
             return "react";
           }
 
-          if (id.includes("/@tanstack/")) {
+          if (normalizedId.includes("/node_modules/@tanstack/")) {
             return "query";
           }
 
           if (
-            id.includes("/@radix-ui/") ||
-            id.includes("/@floating-ui/") ||
-            id.includes("/cmdk/") ||
-            id.includes("/vaul/") ||
-            id.includes("/sonner/")
+            normalizedId.includes("/node_modules/@radix-ui/") ||
+            normalizedId.includes("/node_modules/@floating-ui/") ||
+            normalizedId.includes("/node_modules/cmdk/") ||
+            normalizedId.includes("/node_modules/vaul/") ||
+            normalizedId.includes("/node_modules/sonner/")
           ) {
             return "ui-primitives";
           }
 
-          if (id.includes("/lucide-react/")) {
+          if (normalizedId.includes("/node_modules/lucide-react/")) {
             return "icons";
           }
 
           if (
-            id.includes("/leaflet/") ||
-            id.includes("/react-leaflet/") ||
-            id.includes("/@react-leaflet/")
+            normalizedId.includes("/node_modules/leaflet/") ||
+            normalizedId.includes("/node_modules/react-leaflet/") ||
+            normalizedId.includes("/node_modules/@react-leaflet/")
           ) {
             return "maps";
           }
 
-          if (id.includes("/@tiptap/")) {
+          if (normalizedId.includes("/node_modules/@tiptap/")) {
             return "tiptap";
           }
 
           if (
-            id.includes("/prosemirror-") ||
-            id.includes("/orderedmap/") ||
-            id.includes("/rope-sequence/")
+            normalizedId.includes("/node_modules/prosemirror-") ||
+            normalizedId.includes("/node_modules/orderedmap/") ||
+            normalizedId.includes("/node_modules/rope-sequence/")
           ) {
             return "prosemirror";
           }
 
-          if (id.includes("/recharts/")) {
+          if (normalizedId.includes("/node_modules/recharts/")) {
             return "charts";
           }
 
-          if (id.includes("/embla-carousel")) {
+          if (normalizedId.includes("/node_modules/embla-carousel")) {
             return "carousel";
           }
 
