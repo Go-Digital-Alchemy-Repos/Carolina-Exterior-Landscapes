@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 export default function BlogIndex() {
   const posts = useLandscapeCmsBlogPosts(getBlogPosts());
@@ -62,7 +63,7 @@ export default function BlogIndex() {
             <Link key={post.slug} href={`/blog/${post.slug}`}>
               <Card className="h-full shadow-natural hover:shadow-natural-lg hover:-translate-y-1 hover:border-muted-foreground/40 transition-all duration-500 cursor-pointer group flex flex-col overflow-hidden">
                 <div className="relative aspect-[16/9] overflow-hidden bg-muted">
-                  <img
+                  <LandscapeImage
                     src={post.imageUrl ?? post.media?.heroImageUrl ?? getBlogImage(post.image)}
                     alt={post.h1}
                     loading="lazy"

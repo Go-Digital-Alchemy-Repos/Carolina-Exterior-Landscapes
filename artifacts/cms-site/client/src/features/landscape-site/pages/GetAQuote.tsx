@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -81,7 +82,7 @@ export default function GetAQuote() {
       <Seo title={page.titleTag} description={page.metaDescription} />
       
       <div className="py-20 px-4 text-center relative overflow-hidden">
-        <img
+        <LandscapeImage
           src={heroImage}
           alt={heroAlt}
           className="absolute inset-0 h-full w-full object-cover"

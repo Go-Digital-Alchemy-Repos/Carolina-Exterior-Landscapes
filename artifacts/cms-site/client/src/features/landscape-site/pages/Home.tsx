@@ -9,6 +9,7 @@ import { ArrowRight, CheckCircle2, Leaf, Shield, Clock, MapPin } from "lucide-re
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 export default function Home() {
   const page = useLandscapeCmsPage("home", getPage("home"));
@@ -32,7 +33,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative w-full min-h-[90vh] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
+          <LandscapeImage src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-transparent"></div>
           <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>
@@ -99,7 +100,7 @@ export default function Home() {
             {/* Residential Card */}
             <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
-                <img src={residentialCardImage} alt="Residential Landscaping" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <LandscapeImage src={residentialCardImage} alt="Residential Landscaping" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <h3 className="absolute bottom-6 left-8 text-3xl font-extrabold text-white">Residential</h3>
               </div>
@@ -126,7 +127,7 @@ export default function Home() {
             {/* Commercial Card */}
             <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
-                <img src={commercialCardImage} alt="Commercial Landscaping" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <LandscapeImage src={commercialCardImage} alt="Commercial Landscaping" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <h3 className="absolute bottom-6 left-8 text-3xl font-extrabold text-white">Commercial</h3>
               </div>
@@ -170,7 +171,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {galleryPreview.map((img, i) => (
               <Link key={i} href="/gallery" className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 block hover:-translate-y-1">
-                <img src={img.src} alt={img.alt} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <LandscapeImage src={img.src} alt={img.alt} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                 <span className="absolute bottom-5 left-5 text-white font-extrabold text-lg">{img.label}</span>
               </Link>
@@ -215,7 +216,7 @@ export default function Home() {
       {/* Craft Band */}
       <section className="relative w-full py-28 md:py-36 bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={aboutStory} alt="Carolina Exterior crew installing a natural stone patio" loading="lazy" decoding="async" className="w-full h-full object-cover opacity-30" />
+          <LandscapeImage src={aboutStory} alt="Carolina Exterior crew installing a natural stone patio" loading="lazy" decoding="async" className="w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/40"></div>
         </div>
         <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>

@@ -7,6 +7,7 @@ import NotFound from "@/features/landscape-site/pages/not-found";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, ArrowLeft, Phone } from "lucide-react";
 import { BRAND } from "@/features/landscape-site/content/site";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -95,7 +96,7 @@ export default function BlogPost() {
 
             {heroImage && (
               <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted mb-12">
-                <img
+                <LandscapeImage
                   src={heroImage}
                   alt={post.h1}
                   loading="eager"
@@ -154,7 +155,7 @@ export default function BlogPost() {
                         className="flex gap-3 group"
                       >
                         <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                          <img
+                          <LandscapeImage
                             src={p.imageUrl ?? p.media?.heroImageUrl ?? getBlogImage(p.image)}
                             alt={p.h1}
                             loading="lazy"

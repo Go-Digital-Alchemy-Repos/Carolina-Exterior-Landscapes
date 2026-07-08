@@ -7,6 +7,7 @@ import { ServiceAreaMap } from "@/features/landscape-site/components/ServiceArea
 import { MapPin } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 export default function ServiceAreas() {
   const page = useLandscapeCmsPage("service-areas", getPage("service-areas"));
@@ -20,7 +21,7 @@ export default function ServiceAreas() {
       
       <div className="relative w-full h-[50vh] min-h-[400px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="Carolina service areas" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
+          <LandscapeImage src={heroImg} alt="Carolina service areas" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
           <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>

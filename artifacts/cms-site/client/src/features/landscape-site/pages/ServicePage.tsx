@@ -11,6 +11,7 @@ import { getServiceImages } from "@/features/landscape-site/lib/serviceImages";
 import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
@@ -74,7 +75,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       {/* Hero Section */}
       <div className="relative w-full h-[60vh] min-h-[500px] flex items-end bg-foreground overflow-hidden md:items-center">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
+          <LandscapeImage src={heroImage} alt={page.h1} className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
           <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>
@@ -161,7 +162,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             </div>
 
             <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
-              <img src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              <LandscapeImage src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
             </div>

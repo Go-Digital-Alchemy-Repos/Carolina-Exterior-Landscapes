@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 type Category = "residential" | "commercial";
 type Filter = "all" | Category;
@@ -160,7 +161,7 @@ export default function Gallery() {
 
       {/* Hero */}
       <div className="py-20 md:py-24 px-4 text-center relative overflow-hidden">
-        <img
+        <LandscapeImage
           src={heroImage}
           alt={heroAlt}
           className="absolute inset-0 h-full w-full object-cover"
@@ -212,7 +213,7 @@ export default function Gallery() {
               className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg hover:-translate-y-1 transition-all duration-500 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={`View larger photo: ${project.title}`}
             >
-              <img
+              <LandscapeImage
                 src={project.src}
                 alt={project.alt}
                 loading="lazy"
@@ -297,7 +298,7 @@ export default function Gallery() {
             className="max-w-5xl w-full max-h-[85vh] flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <LandscapeImage
               src={activeProject.src}
               alt={activeProject.alt}
               decoding="async"
