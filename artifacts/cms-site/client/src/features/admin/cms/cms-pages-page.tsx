@@ -35,6 +35,8 @@ const PAGE_TYPE_COLORS: Record<string, string> = {
   "service-hub": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   "service-area": "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
   location: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+  "blog-index": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  "blog-post": "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
   custom: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400",
 };
 

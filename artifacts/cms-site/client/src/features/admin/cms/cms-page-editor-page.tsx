@@ -79,7 +79,7 @@ import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 const editorSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-/]+$/, "Lowercase letters, numbers, hyphens and slashes only"),
-  pageType: z.enum(["home", "landing", "service", "service-hub", "service-area", "location", "custom"]),
+  pageType: z.enum(["home", "landing", "service", "service-hub", "service-area", "location", "blog-index", "blog-post", "custom"]),
   template: z.enum(["full-width", "with-sidebar"]).default("full-width"),
   sidebarId: z.string().default(""),
   status: z.enum(["draft", "published", "scheduled", "archived"]),
@@ -122,6 +122,16 @@ function parseBuilderContent(raw: unknown): BuilderContent {
     return { blocks: obj.blocks as BuilderContent["blocks"] };
   }
   return EMPTY_CONTENT;
+}
+
+function mergeBuilderContentForSave(existingContent: unknown, builderContent: BuilderContent): BuilderContent | Record<string, unknown> {
+  if (!existingContent || typeof existingContent !== "object") return builderContent;
+  const existing = existingContent as Record<string, unknown>;
+  if (existing.source !== "carolina-landscape-v1" && !existing.landscape) return builderContent;
+  return {
+    ...existing,
+    blocks: builderContent.blocks,
+  };
 }
 
 export default function CmsPageEditorPage() {
@@ -243,7 +253,7 @@ export default function CmsPageEditorPage() {
   );
 
   const createMutation = useMutation({
-    mutationFn: (data: EditorForm & { content: BuilderContent }) =>
+    mutationFn: (data: EditorForm & { content: unknown }) =>
       apiRequest("POST", "/api/admin/cms/pages", data),
     onSuccess: async (res, variables) => {
       const created: CmsPage = await res.json();
@@ -265,7 +275,7 @@ export default function CmsPageEditorPage() {
           canonicalUrl: variables.canonicalUrl ?? "",
           noindex: variables.noindex ?? false,
         },
-        variables.content
+        parseBuilderContent(variables.content)
       );
       saveState.markSaved();
       navTimerRef.current = setTimeout(() => navigate(`/admin/cms/pages/${created.id}`), 1500);
@@ -277,7 +287,7 @@ export default function CmsPageEditorPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditorForm & { content: BuilderContent }) =>
+    mutationFn: (data: EditorForm & { content: unknown }) =>
       apiRequest("PUT", `/api/admin/cms/pages/${id}`, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
@@ -300,7 +310,7 @@ export default function CmsPageEditorPage() {
           canonicalUrl: variables.canonicalUrl ?? "",
           noindex: variables.noindex ?? false,
         },
-        variables.content
+        parseBuilderContent(variables.content)
       );
       saveState.markSaved();
     },
@@ -414,7 +424,7 @@ export default function CmsPageEditorPage() {
         const payload = {
           ...formData,
           sidebarId: formData.template === "with-sidebar" ? formData.sidebarId || "" : "",
-          content: normalizedContent,
+          content: mergeBuilderContentForSave(page?.content, normalizedContent),
         };
         if (isNew) {
           createMutation.mutate(payload);
@@ -878,6 +888,8 @@ export default function CmsPageEditorPage() {
                                     <SelectItem value="service-hub">Service Hub</SelectItem>
                                     <SelectItem value="service-area">Service Areas Hub</SelectItem>
                                     <SelectItem value="location">Location</SelectItem>
+                                    <SelectItem value="blog-index">Blog Index</SelectItem>
+                                    <SelectItem value="blog-post">Blog Post</SelectItem>
                                     <SelectItem value="custom">Custom</SelectItem>
                                   </SelectContent>
                                 </Select>

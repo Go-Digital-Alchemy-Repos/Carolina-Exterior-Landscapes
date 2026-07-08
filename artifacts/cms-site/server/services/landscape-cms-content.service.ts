@@ -53,6 +53,12 @@ type LandscapeBlogPost = LandscapePage & {
 
 type LandscapeCmsKind = "page" | "location" | "blog" | "virtual";
 
+type CmsBuilderBlock = {
+  id: string;
+  type: string;
+  props: Record<string, unknown>;
+};
+
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 
@@ -364,6 +370,305 @@ function withMedia<T extends LandscapePage | LandscapeLocation | LandscapeBlogPo
   return next as T;
 }
 
+function htmlEscape(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function richParagraph(text: unknown) {
+  const paragraphs = String(text ?? "").split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+  return paragraphs.map((part) => `<p>${htmlEscape(part)}</p>`).join("");
+}
+
+function blockHtml(block: LandscapeBlock): string {
+  if (block.type === "h2") return `<h2>${htmlEscape(block.text)}</h2>`;
+  if (block.type === "h3") return `<h3>${htmlEscape(block.text)}</h3>`;
+  if (block.type === "li") return `<ul><li>${htmlEscape(block.text)}</li></ul>`;
+  return richParagraph(block.text);
+}
+
+function landscapeBlocksToHtml(blocks: LandscapeBlock[]): string {
+  return blocks.map(blockHtml).join("\n");
+}
+
+function isStructuredCardSection(section: { body: LandscapeBlock[] }) {
+  return section.body.some((block) => block.type === "h3");
+}
+
+function buildCardsFromSection(section: { body: LandscapeBlock[] }) {
+  const cards: Array<{ title: string; description: string }> = [];
+  let current: { title: string; paragraphs: string[] } | null = null;
+  for (const block of section.body) {
+    if (block.type === "h3") {
+      if (current) cards.push({ title: current.title, description: current.paragraphs.map(richParagraph).join("") });
+      current = { title: block.text, paragraphs: [] };
+      continue;
+    }
+    if (current && block.type === "p") {
+      current.paragraphs.push(block.text);
+    }
+  }
+  if (current) cards.push({ title: current.title, description: current.paragraphs.map(richParagraph).join("") });
+  return cards.filter((card) => card.title && card.description);
+}
+
+function landscapeBlocksToBuilderBlocks(slug: string, blocks: LandscapeBlock[], media?: LandscapeMedia): CmsBuilderBlock[] {
+  const sections: Array<{ heading?: string; body: LandscapeBlock[] }> = [];
+  let current: { heading?: string; body: LandscapeBlock[] } = { body: [] };
+  for (const block of blocks) {
+    if (block.type === "h2") {
+      if (current.heading || current.body.length) sections.push(current);
+      current = { heading: block.text, body: [] };
+    } else {
+      current.body.push(block);
+    }
+  }
+  if (current.heading || current.body.length) sections.push(current);
+
+  return sections.flatMap((section, index): CmsBuilderBlock[] => {
+    const idBase = `${slug}-content-${index + 1}`;
+    const heading = section.heading ?? "";
+    const isFaq = /faq|frequently asked/i.test(heading);
+    const isCta = /^request a quote/i.test(heading);
+    const introBlocks = section.body.filter((block) => block.type === "p");
+
+    if (isFaq && isStructuredCardSection(section)) {
+      return [{
+        id: idBase,
+        type: "faq",
+        props: {
+          background: index % 2 === 0 ? "white" : "muted",
+          items: buildCardsFromSection(section).map((card) => ({
+            question: card.title,
+            answer: card.description,
+          })),
+        },
+      }];
+    }
+
+    if (isCta) {
+      return [{
+        id: idBase,
+        type: "cta",
+        props: {
+          heading,
+          subheading: landscapeBlocksToHtml(section.body),
+          primaryText: "Request a Quote",
+          primaryLink: slug.includes("commercial") || slug === "hoa-services" ? "/commercial-quote" : "/get-a-quote",
+        },
+      }];
+    }
+
+    if (heading && isStructuredCardSection(section)) {
+      const cards = buildCardsFromSection(section);
+      if (cards.length > 0) {
+        return [{
+          id: idBase,
+          type: "cards-grid",
+          props: {
+            title: heading,
+            subtitle: introBlocks.length ? introBlocks.map((block) => richParagraph(block.text)).join("") : "",
+            columns: cards.length === 2 ? "2" : "3",
+            cards: cards.map((card) => ({
+              ...card,
+              imageUrl: media?.serviceImages?.[card.title] ?? "",
+              imagePositionX: 50,
+              imagePositionY: 50,
+            })),
+          },
+        }];
+      }
+    }
+
+    return [{
+      id: idBase,
+      type: "rich-text",
+      props: {
+        content: landscapeBlocksToHtml(heading ? [{ type: "h2", text: heading }, ...section.body] : section.body),
+        alignment: "left",
+        background: index % 2 === 0 ? "white" : "muted",
+      },
+    }];
+  });
+}
+
+function buildBuilderBlocks(
+  data: LandscapePage | LandscapeLocation | LandscapeBlogPost | Record<string, unknown>,
+  options: { slug: string; kind: LandscapeCmsKind; title: string; path: string; seoDescription: string },
+): CmsBuilderBlock[] {
+  const slug = options.slug;
+  const media = mediaForPage(data, slug);
+  const sourceBlocks = Array.isArray((data as { blocks?: unknown }).blocks) ? (data as { blocks: LandscapeBlock[] }).blocks : [];
+  const isCommercial = slug.includes("commercial") || slug === "hoa-services";
+  const heroImageUrl = media?.heroImageUrl ?? "";
+  const heroAlt = media?.heroImageAlt ?? options.title;
+  const blocks: CmsBuilderBlock[] = [
+    {
+      id: `${slug}-hero`,
+      type: "hero",
+      props: {
+        eyebrow: options.kind === "blog" ? "Landscape Journal" : isCommercial ? "Commercial Services" : "Carolina Exterior Landscapes",
+        heading: options.title,
+        subheading: richParagraph(options.seoDescription),
+        ctaText: options.kind === "blog" || slug === "gallery" ? "" : "Request a Quote",
+        ctaLink: options.kind === "blog" || slug === "gallery" ? "" : isCommercial ? "/commercial-quote" : "/get-a-quote",
+        backgroundImageUrl: heroImageUrl,
+        backgroundImageAlt: heroAlt,
+        backgroundPositionX: 50,
+        backgroundPositionY: 50,
+        backgroundImageOpacity: 100,
+        overlayColor: "#000000",
+        overlayOpacity: slug === "gallery" || slug.includes("quote") ? 25 : 40,
+        gradientEnabled: true,
+        gradientColor: "#000000",
+        gradientOpacity: 35,
+        gradientHeight: 40,
+        alignment: slug === "home" ? "left" : "center",
+      },
+    },
+  ];
+
+  if (slug === "home" && media?.featureCards?.length) {
+    blocks.push({
+      id: "home-service-paths",
+      type: "cards-grid",
+      props: {
+        title: "Expertise for Every Property",
+        subtitle: "<p>Comprehensive landscaping services tailored to the Piedmont Carolina climate.</p>",
+        columns: "2",
+        cards: media.featureCards.map((card) => ({
+          title: card.title,
+          description: card.title === "Residential"
+            ? "Lawn maintenance, landscape installation, hardscape, mulching, planting, drainage, and pressure washing for homes."
+            : "Grounds maintenance, commercial landscaping, hardscape, drainage, HOA services, and pressure washing for managed properties.",
+          imageUrl: card.imageUrl,
+          imageAlt: card.imageAlt,
+          linkText: `Explore ${card.title} Services`,
+          linkPath: card.title === "Residential" ? "/residential-landscaping" : "/commercial",
+        })),
+      },
+    });
+  }
+
+  if (media?.sidebarImageUrl && slug === "home") {
+    const intro = sourceBlocks.filter((block) => block.type === "p").slice(0, 2).map((block) => richParagraph(block.text)).join("");
+    blocks.push({
+      id: "home-owner-story",
+      type: "text-image",
+      props: {
+        heading: "Local Outdoor Care, Built Around Reliability",
+        body: intro,
+        imageUrl: media.sidebarImageUrl,
+        imageAlt: media.sidebarImageAlt ?? "Carolina Exterior Landscapes project",
+        imagePosition: "right",
+        imagePositionX: 50,
+        imagePositionY: 50,
+      },
+    });
+  }
+
+  if (media?.galleryPreview?.length) {
+    blocks.push({
+      id: `${slug}-gallery-preview`,
+      type: "cards-grid",
+      props: {
+        title: "Recent Outdoor Transformations",
+        subtitle: "<p>A quick look at finished residential and commercial landscape projects.</p>",
+        columns: "3",
+        variant: "photo-gallery",
+        cards: media.galleryPreview.map((item) => ({
+          title: item.label,
+          description: item.alt,
+          imageUrl: item.src,
+          imageAlt: item.alt,
+        })),
+      },
+    });
+  }
+
+  blocks.push(...landscapeBlocksToBuilderBlocks(slug, sourceBlocks, media));
+
+  if (media?.projects?.length) {
+    blocks.push({
+      id: `${slug}-projects`,
+      type: "cards-grid",
+      props: {
+        title: "Project Gallery",
+        subtitle: "<p>Representative residential and commercial projects from across our service area.</p>",
+        columns: "3",
+        variant: "photo-gallery",
+        cards: media.projects.map((project) => ({
+          title: project.title,
+          description: `${project.location} · ${project.tag}`,
+          imageUrl: project.src,
+          imageAlt: project.alt,
+        })),
+      },
+    });
+  }
+
+  if (media?.images?.length) {
+    blocks.push({
+      id: `${slug}-images`,
+      type: "cards-grid",
+      props: {
+        title: "Commercial Portfolio",
+        columns: "2",
+        variant: "photo-gallery",
+        cards: media.images.map((image, index) => ({
+          title: `Project ${index + 1}`,
+          description: image.alt,
+          imageUrl: image.src,
+          imageAlt: image.alt,
+        })),
+      },
+    });
+  }
+
+  if (slug === "get-a-quote" || slug === "commercial-quote") {
+    blocks.push({
+      id: `${slug}-form`,
+      type: "form-embed",
+      props: {
+        formSlug: slug === "commercial-quote" ? "commercial-quote" : "residential-quote",
+      },
+    });
+  }
+
+  if (options.kind !== "blog" && !slug.includes("quote")) {
+    blocks.push({
+      id: `${slug}-cta`,
+      type: "cta",
+      props: {
+        heading: "Ready to improve your outdoor space?",
+        subheading: "<p>Tell us about your property and we will help you choose the right next step.</p>",
+        primaryText: isCommercial ? "Request a Commercial Proposal" : "Request a Quote",
+        primaryLink: isCommercial ? "/commercial-quote" : "/get-a-quote",
+      },
+    });
+  }
+
+  return blocks;
+}
+
+function hasBuilderBlocks(content: unknown): boolean {
+  return Boolean(content && typeof content === "object" && Array.isArray((content as { blocks?: unknown }).blocks) && (content as { blocks: unknown[] }).blocks.length > 0);
+}
+
+function mergeLandscapeContent(existingContent: unknown, seededContent: unknown) {
+  const existing = existingContent && typeof existingContent === "object" ? existingContent as Record<string, unknown> : {};
+  const seeded = seededContent && typeof seededContent === "object" ? seededContent as Record<string, unknown> : {};
+  return {
+    ...existing,
+    source: seeded.source,
+    landscape: existing.landscape ?? seeded.landscape,
+    blocks: hasBuilderBlocks(existing) ? existing.blocks : seeded.blocks,
+  };
+}
+
 function pageRecord(
   data: LandscapePage | LandscapeLocation | LandscapeBlogPost | Record<string, unknown>,
   options: {
@@ -378,6 +683,7 @@ function pageRecord(
     ogImageUrl?: string;
   },
 ): InsertCmsPage {
+  const landscapeData = withMedia(data, options.slug);
   return {
     title: options.title,
     slug: options.slug,
@@ -390,8 +696,9 @@ function pageRecord(
       landscape: {
         kind: options.kind,
         path: options.path,
-        data: withMedia(data, options.slug),
+        data: landscapeData,
       },
+      blocks: buildBuilderBlocks(data, options),
     },
     seoTitle: options.seoTitle,
     seoDescription: options.seoDescription,
@@ -657,7 +964,22 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
 
-    await storage.cmsPages.updatePage(existing.id, page);
+    await storage.cmsPages.updatePage(existing.id, {
+      ...page,
+      title: existing.title || page.title,
+      status: existing.status || page.status,
+      pageType: existing.pageType || page.pageType,
+      template: existing.template || page.template,
+      sidebarId: existing.sidebarId ?? page.sidebarId,
+      seoTitle: existing.seoTitle ?? page.seoTitle,
+      seoDescription: existing.seoDescription ?? page.seoDescription,
+      seoKeywords: existing.seoKeywords ?? page.seoKeywords,
+      ogImageUrl: existing.ogImageUrl ?? page.ogImageUrl,
+      canonicalUrl: existing.canonicalUrl ?? page.canonicalUrl,
+      noindex: existing.noindex ?? page.noindex,
+      publishedAt: existing.publishedAt ?? page.publishedAt,
+      content: mergeLandscapeContent(existing.content, page.content),
+    });
   }
 
   for (const menu of buildMenus()) {
