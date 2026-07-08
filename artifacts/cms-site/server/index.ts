@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import fs from "node:fs";
 import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -23,6 +24,7 @@ enforceRequiredSecrets();
 const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
+const landscapeAssetsPath = path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets");
 
 app.use(securityHeaders());
 app.use(requestIdMiddleware);
@@ -94,9 +96,33 @@ app.use("/api", apiLimiter);
 app.use(originCheck);
 
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+
+function negotiateLandscapeImageFormat(req: Request, res: Response, next: NextFunction) {
+  if (!/\.(png|jpe?g)$/i.test(req.path)) return next();
+
+  res.vary("Accept");
+  const accepted = req.headers.accept ?? "";
+  const requestedPath = path.resolve(landscapeAssetsPath, `.${req.path}`);
+  if (!requestedPath.startsWith(landscapeAssetsPath)) return next();
+
+  const sourceExtension = path.extname(requestedPath);
+  const basePath = requestedPath.slice(0, -sourceExtension.length);
+
+  for (const format of ["avif", "webp"] as const) {
+    if (!accepted.includes(`image/${format}`)) continue;
+    const optimizedPath = `${basePath}.${format}`;
+    if (!fs.existsSync(optimizedPath)) continue;
+    req.url = req.url.replace(/\.(png|jpe?g)(?=($|[?#]))/i, `.${format}`);
+    break;
+  }
+
+  next();
+}
+
 app.use(
   "/images/landscape",
-  express.static(path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets"), {
+  negotiateLandscapeImageFormat,
+  express.static(landscapeAssetsPath, {
     immutable: true,
     maxAge: "1y",
   }),

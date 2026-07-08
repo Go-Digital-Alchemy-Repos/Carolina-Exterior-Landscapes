@@ -41,6 +41,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
     window.scrollTo(0, 0);
   }, [location]);
 
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <div className="landscape-site min-h-screen flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
       {/* Top Bar */}
@@ -143,16 +150,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile Menu Toggle */}
           <button 
-            className="lg:hidden p-2 text-foreground z-50 relative bg-muted/50 rounded-full"
+            className="lg:hidden p-2 text-foreground z-50 relative bg-muted/80 rounded-full border border-border/70 shadow-sm"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {/* Mobile Nav Overlay */}
-        <div className={`fixed inset-0 bg-background/98 backdrop-blur-xl z-40 transition-transform duration-300 pt-28 px-6 overflow-y-auto ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
-          <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
+        <div
+          className={`fixed inset-x-0 top-[5.75rem] bottom-0 bg-[hsl(var(--background))] text-foreground z-40 transition-transform duration-300 px-6 py-6 overflow-y-auto overscroll-contain shadow-2xl border-t border-border/70 lg:hidden ${
+            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <nav className="flex flex-col gap-5 font-extrabold text-2xl pb-8" aria-label="Mobile navigation">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
             <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
@@ -160,7 +173,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="h-px bg-border/50 my-2" />
             
             <span className="text-primary text-sm tracking-widest uppercase">Residential</span>
-            <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
+            <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
               {RESIDENTIAL_SERVICES.map(s => (
                 <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
               ))}
@@ -170,7 +183,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="h-px bg-border/50 my-2" />
 
             <span className="text-primary text-sm tracking-widest uppercase">Commercial</span>
-            <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
+            <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
               <Link href="/commercial" className="hover:text-primary transition-colors text-foreground">Commercial Hub</Link>
               {COMMERCIAL_SERVICES.map(s => (
                 <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
@@ -193,7 +206,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Button size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">GET A QUOTE</Button>
               </Link>
             </div>
-          </div>
+          </nav>
         </div>
       </header>
 

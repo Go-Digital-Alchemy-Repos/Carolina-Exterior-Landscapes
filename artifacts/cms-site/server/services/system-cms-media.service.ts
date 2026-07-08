@@ -6,6 +6,7 @@ import type { InsertCmsMedia } from "@shared/schema";
 const PUBLIC_DIR = path.resolve(process.cwd(), "client/public");
 const LANDSCAPE_ASSETS_DIR = path.resolve(process.cwd(), "client/src/features/landscape-site/assets");
 const IMAGE_EXTENSIONS = new Set([".avif", ".gif", ".jpg", ".jpeg", ".png", ".svg", ".webp"]);
+const ORIGINAL_STATIC_IMAGE_EXTENSIONS = new Set([".gif", ".jpg", ".jpeg", ".png", ".svg"]);
 
 const MIME_TYPES: Record<string, string> = {
   ".avif": "image/avif",
@@ -56,7 +57,11 @@ export async function buildStaticCmsMediaAssets(
   landscapeAssetsDir: string | null = LANDSCAPE_ASSETS_DIR,
 ): Promise<InsertCmsMedia[]> {
   const publicFiles = await findStaticImageFiles(publicDir);
-  const landscapeFiles = landscapeAssetsDir ? await findStaticImageFiles(landscapeAssetsDir) : [];
+  const landscapeFiles = landscapeAssetsDir
+    ? (await findStaticImageFiles(landscapeAssetsDir)).filter((filePath) =>
+        ORIGINAL_STATIC_IMAGE_EXTENSIONS.has(path.extname(filePath).toLowerCase()),
+      )
+    : [];
 
   const publicAssets = publicFiles.map((filePath) => ({
     filePath,

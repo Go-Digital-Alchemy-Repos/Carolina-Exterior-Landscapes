@@ -15,6 +15,7 @@
     "db:push": "drizzle-kit push",
     "backup:run": "tsx server/scripts/run-system-backup.ts",
     "backup:restore": "tsx server/scripts/restore-system-backup.ts",
+    "images:optimize": "tsx script/optimize-landscape-images.ts",
     "lint": "eslint client/src server shared",
     "format": "prettier --check client/src server shared",
     "test": "vitest run"
