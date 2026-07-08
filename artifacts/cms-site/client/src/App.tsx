@@ -211,6 +211,7 @@ function Router() {
         <Route path="/residential-lawn-maintenance" component={LandscapeSiteRoute} />
         <Route path="/residential-landscaping" component={LandscapeSiteRoute} />
         <Route path="/residential-hardscape" component={LandscapeSiteRoute} />
+        <Route path="/residential-pressure-washing" component={LandscapeSiteRoute} />
         <Route path="/mulching-and-planting" component={LandscapeSiteRoute} />
         <Route path="/drainage-solutions" component={LandscapeSiteRoute} />
         <Route path="/commercial" component={LandscapeSiteRoute} />
@@ -218,6 +219,7 @@ function Router() {
         <Route path="/commercial-landscaping" component={LandscapeSiteRoute} />
         <Route path="/commercial-hardscape" component={LandscapeSiteRoute} />
         <Route path="/commercial-drainage" component={LandscapeSiteRoute} />
+        <Route path="/commercial-pressure-washing" component={LandscapeSiteRoute} />
         <Route path="/hoa-services" component={LandscapeSiteRoute} />
         <Route path="/service-areas" component={LandscapeSiteRoute} />
         <Route path="/service-areas/:slug" component={LandscapeSiteRoute} />

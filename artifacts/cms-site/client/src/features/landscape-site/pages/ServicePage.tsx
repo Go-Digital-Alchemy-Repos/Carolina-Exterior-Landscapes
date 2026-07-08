@@ -16,6 +16,7 @@ const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
   "residential-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
   "residential-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-hardscape.png`,
+  "residential-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-residential-pressure-washing.avif`,
   "mulching-and-planting": `${LANDSCAPE_IMAGE_BASE}/hero-mulch.png`,
   "drainage-solutions": `${LANDSCAPE_IMAGE_BASE}/hero-drainage.png`,
   "commercial": `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
@@ -23,6 +24,7 @@ const HERO_IMAGES: Record<string, string> = {
   "commercial-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-landscaping.png`,
   "commercial-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-hardscape.png`,
   "commercial-drainage": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-drainage.png`,
+  "commercial-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-pressure-washing.avif`,
   "hoa-services": `${LANDSCAPE_IMAGE_BASE}/hero-hoa.png`,
 };
 

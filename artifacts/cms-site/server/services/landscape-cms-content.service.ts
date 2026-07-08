@@ -109,6 +109,13 @@ const SERVICE_IMAGE_CONCEPTS: Record<string, Record<string, string>> = {
     "Decorative Borders & Edging": "edging",
     "Steps & Stairs": "steps",
   },
+  "residential-pressure-washing": {
+    "Driveway Pressure Washing": "hero-residential-pressure-washing",
+    "Sidewalks, Walkways & Front Entries": "hero-residential-pressure-washing",
+    "Patio, Porch & Outdoor Living Area Cleaning": "hero-residential-pressure-washing",
+    "House Washing & Exterior Surface Cleaning": "hero-residential-pressure-washing",
+    "Fence, Wall & Hardscape Cleaning": "hero-residential-pressure-washing",
+  },
   "drainage-solutions": {
     "French Drain Installation": "french-drain",
     "Yard Regrading & Grading": "regrading",
@@ -148,6 +155,13 @@ const SERVICE_IMAGE_CONCEPTS: Record<string, Record<string, string>> = {
     "Downspout & Roof Drainage Management": "commercial-downspout",
     "Erosion Control & Stabilization": "commercial-erosion",
   },
+  "commercial-pressure-washing": {
+    "Sidewalk & Walkway Cleaning": "hero-commercial-pressure-washing",
+    "Storefront, Entryway & Common Area Cleaning": "hero-commercial-pressure-washing",
+    "Concrete, Curb & Parking Island Cleaning": "hero-commercial-pressure-washing",
+    "Dumpster Pad & Service Area Cleaning": "hero-commercial-pressure-washing",
+    "HOA Amenity & Community Area Washing": "hero-commercial-pressure-washing",
+  },
   "hoa-services": {
     "Common Area Grounds Maintenance": "commercial-grounds-maintenance",
     "Entrance & Signage Landscaping": "commercial-entryway",
@@ -172,6 +186,7 @@ const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": imageUrl("hero-home.png"),
   "residential-landscaping": imageUrl("hero-home.png"),
   "residential-hardscape": imageUrl("hero-hardscape.png"),
+  "residential-pressure-washing": imageUrl("hero-residential-pressure-washing.avif"),
   "mulching-and-planting": imageUrl("hero-mulch.png"),
   "drainage-solutions": imageUrl("hero-drainage.png"),
   commercial: imageUrl("hero-commercial.png"),
@@ -179,6 +194,7 @@ const HERO_IMAGES: Record<string, string> = {
   "commercial-landscaping": imageUrl("hero-commercial-landscaping.png"),
   "commercial-hardscape": imageUrl("hero-commercial-hardscape.png"),
   "commercial-drainage": imageUrl("hero-commercial-drainage.png"),
+  "commercial-pressure-washing": imageUrl("hero-commercial-pressure-washing.avif"),
   "hoa-services": imageUrl("hero-hoa.png"),
 };
 
@@ -523,14 +539,20 @@ function buildLandscapePages(): InsertCmsPage[] {
 
 function buildMenus(): InsertCmsMenu[] {
   const pages = readJson<Record<string, LandscapePage>>("client/src/features/landscape-site/content/pages.json");
+  const menuLabelOverrides: Record<string, string> = {
+    "residential-pressure-washing": "Pressure Washing",
+    "commercial-pressure-washing": "Pressure Washing",
+  };
+  const serviceLabel = (slug: string, prefix: RegExp) => menuLabelOverrides[slug] ?? pages[slug]?.h1.replace(prefix, "") ?? slug;
 
   const residential = [
     "residential-lawn-maintenance",
     "residential-landscaping",
     "residential-hardscape",
+    "residential-pressure-washing",
     "mulching-and-planting",
     "drainage-solutions",
-  ].map((slug) => menuItem(slug, pages[slug]?.h1.replace(/^Residential\s+/i, "") ?? slug, `/${slug}`));
+  ].map((slug) => menuItem(slug, serviceLabel(slug, /^Residential\s+/i), `/${slug}`));
 
   const commercial = [
     menuItem("commercial", "Commercial Hub", "/commercial"),
@@ -539,8 +561,9 @@ function buildMenus(): InsertCmsMenu[] {
       "commercial-landscaping",
       "commercial-hardscape",
       "commercial-drainage",
+      "commercial-pressure-washing",
       "hoa-services",
-    ].map((slug) => menuItem(slug, pages[slug]?.h1.replace(/^Commercial\s+/i, "") ?? slug, `/${slug}`)),
+    ].map((slug) => menuItem(slug, serviceLabel(slug, /^Commercial\s+/i), `/${slug}`)),
   ];
 
   return [

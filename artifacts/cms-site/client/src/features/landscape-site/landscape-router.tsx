@@ -21,6 +21,7 @@ export const LANDSCAPE_CONTENT_PAGE_SLUGS = [
   "residential-lawn-maintenance",
   "residential-landscaping",
   "residential-hardscape",
+  "residential-pressure-washing",
   "mulching-and-planting",
   "drainage-solutions",
   "commercial",
@@ -28,6 +29,7 @@ export const LANDSCAPE_CONTENT_PAGE_SLUGS = [
   "commercial-landscaping",
   "commercial-hardscape",
   "commercial-drainage",
+  "commercial-pressure-washing",
   "hoa-services",
 ] as const;
 

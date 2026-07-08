@@ -20,6 +20,13 @@ const SERVICE_CONCEPTS: Record<string, Record<string, string>> = {
     "Decorative Borders & Edging": "edging",
     "Steps & Stairs": "steps",
   },
+  "residential-pressure-washing": {
+    "Driveway Pressure Washing": "hero-residential-pressure-washing",
+    "Sidewalks, Walkways & Front Entries": "hero-residential-pressure-washing",
+    "Patio, Porch & Outdoor Living Area Cleaning": "hero-residential-pressure-washing",
+    "House Washing & Exterior Surface Cleaning": "hero-residential-pressure-washing",
+    "Fence, Wall & Hardscape Cleaning": "hero-residential-pressure-washing",
+  },
   "drainage-solutions": {
     "French Drain Installation": "french-drain",
     "Yard Regrading & Grading": "regrading",
@@ -58,6 +65,13 @@ const SERVICE_CONCEPTS: Record<string, Record<string, string>> = {
     "Stormwater Management Solutions": "stormwater",
     "Downspout & Roof Drainage Management": "commercial-downspout",
     "Erosion Control & Stabilization": "commercial-erosion",
+  },
+  "commercial-pressure-washing": {
+    "Sidewalk & Walkway Cleaning": "hero-commercial-pressure-washing",
+    "Storefront, Entryway & Common Area Cleaning": "hero-commercial-pressure-washing",
+    "Concrete, Curb & Parking Island Cleaning": "hero-commercial-pressure-washing",
+    "Dumpster Pad & Service Area Cleaning": "hero-commercial-pressure-washing",
+    "HOA Amenity & Community Area Washing": "hero-commercial-pressure-washing",
   },
   "hoa-services": {
     "Common Area Grounds Maintenance": "commercial-grounds-maintenance",
