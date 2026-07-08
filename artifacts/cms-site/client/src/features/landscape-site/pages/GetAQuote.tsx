@@ -87,8 +87,8 @@ export default function GetAQuote() {
           className="absolute inset-0 h-full w-full object-cover"
           fetchPriority="high"
         />
-        <div className="absolute inset-0 bg-black/65 pointer-events-none"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/70 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-black/25 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/20 to-transparent pointer-events-none"></div>
         <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-white/10" />
         <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-white/10 scale-x-[-1]" />
         <div className="relative z-10">
