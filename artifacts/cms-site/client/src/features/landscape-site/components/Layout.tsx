@@ -96,7 +96,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main Header */}
       <header
         ref={headerRef}
-        className={`sticky top-0 z-[100] w-full transition-all duration-300 border-b ${
+        className={`sticky top-0 z-[10000] w-full transition-all duration-300 border-b ${
           isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm py-3 border-border/50" : "bg-background py-5 border-transparent"
         }`}
       >
@@ -188,7 +188,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Nav Overlay */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-[90] bg-background text-foreground transition-transform duration-300 overflow-y-auto overscroll-contain shadow-2xl border-t border-border/70 lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-[9999] bg-[#f8f7f6] text-foreground pointer-events-auto transition-transform duration-300 overflow-y-auto overscroll-contain shadow-2xl border-t border-border/70 lg:hidden ${
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
         style={{ top: headerHeight }}
