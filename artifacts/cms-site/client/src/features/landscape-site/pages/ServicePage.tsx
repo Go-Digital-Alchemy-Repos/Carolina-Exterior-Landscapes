@@ -72,9 +72,9 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       {/* Hero Section */}
       <div className="relative w-full h-[60vh] min-h-[500px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover opacity-75" />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
-          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
+          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>
 
         <BotanicalAccent variant="fern" className="hidden lg:block absolute right-10 top-1/2 -translate-y-1/2 h-72 w-auto text-primary/20 z-10" />
@@ -160,7 +160,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
 
             <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
               <img src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
             </div>
           </div>

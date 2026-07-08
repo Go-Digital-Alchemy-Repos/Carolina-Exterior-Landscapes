@@ -51,9 +51,9 @@ export default function ServiceAreaCity() {
       
       <div className="relative w-full h-[55vh] min-h-[450px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={`${location.city} Landscaping`} className="w-full h-full object-cover opacity-75" />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
-          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
+          <img src={heroImage} alt={`${location.city} Landscaping`} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>
 
         <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />

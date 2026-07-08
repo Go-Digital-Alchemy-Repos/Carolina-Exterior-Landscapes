@@ -43,7 +43,7 @@ export function CityMiniMap({ lat, lng, city, state }: CityMiniMapProps) {
         <span className="mt-2 h-2 w-8 rounded-full bg-black/20 blur-[2px]" />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/80 via-foreground/50 to-transparent p-6 pt-16">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6 pt-16">
         <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">Local service area</p>
         <p className="mt-1 text-xl font-extrabold tracking-tight text-white">
           {city}, {state}

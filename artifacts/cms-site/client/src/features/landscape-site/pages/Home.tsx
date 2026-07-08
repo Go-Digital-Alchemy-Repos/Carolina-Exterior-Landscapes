@@ -32,9 +32,9 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative w-full min-h-[90vh] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover opacity-75" />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/55 to-transparent"></div>
-          <div className="absolute inset-0 bg-topo-light opacity-60 mix-blend-overlay pointer-events-none"></div>
+          <img src={heroImg} alt="Carolina beautiful lawn" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>
 
         <BotanicalAccent variant="fern" className="hidden md:block absolute right-10 lg:right-24 top-1/2 -translate-y-1/2 h-[26rem] w-auto text-primary/25 z-10" />
@@ -100,7 +100,7 @@ export default function Home() {
             <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
                 <img src={residentialCardImage} alt="Residential Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <h3 className="absolute bottom-6 left-8 text-3xl font-extrabold text-white">Residential</h3>
               </div>
               <div className="p-8">
@@ -127,7 +127,7 @@ export default function Home() {
             <div className="group rounded-3xl overflow-hidden bg-card border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 hover:-translate-y-1">
               <div className="h-72 w-full relative overflow-hidden">
                 <img src={commercialCardImage} alt="Commercial Landscaping" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <h3 className="absolute bottom-6 left-8 text-3xl font-extrabold text-white">Commercial</h3>
               </div>
               <div className="p-8">
@@ -171,7 +171,7 @@ export default function Home() {
             {galleryPreview.map((img, i) => (
               <Link key={i} href="/gallery" className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg transition-all duration-500 block hover:-translate-y-1">
                 <img src={img.src} alt={img.alt} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                 <span className="absolute bottom-5 left-5 text-white font-extrabold text-lg">{img.label}</span>
               </Link>
             ))}
@@ -216,7 +216,7 @@ export default function Home() {
       <section className="relative w-full py-28 md:py-36 bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img src={aboutStory} alt="Carolina Exterior crew installing a natural stone patio" className="w-full h-full object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/40"></div>
         </div>
         <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4">

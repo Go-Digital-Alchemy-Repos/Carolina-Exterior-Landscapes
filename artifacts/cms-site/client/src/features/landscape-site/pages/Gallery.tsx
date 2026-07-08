@@ -201,7 +201,7 @@ export default function Gallery() {
                 loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
               <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-foreground text-xs font-extrabold tracking-wide uppercase px-3 py-1.5 rounded-full">
                 {project.tag}
               </span>
@@ -246,7 +246,7 @@ export default function Gallery() {
       {/* Lightbox */}
       {activeProject && (
         <div
-          className="fixed inset-0 z-[100] bg-foreground/95 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label={activeProject.title}

@@ -390,11 +390,11 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const heroHeightClass = isInterior ? "min-h-[620px] sm:min-h-[620px] lg:min-h-[680px]" : "min-h-[560px] sm:min-h-[620px] lg:min-h-[680px]";
     const heroPaddingClass = isInterior ? "py-24 sm:py-28" : "py-28 sm:py-32";
     const isServiceHeroImage = backgroundImageUrl.includes("/images/hero-");
-    const defaultOverlayOpacity = isServiceHeroImage ? 20 : 30;
+    const defaultOverlayOpacity = isServiceHeroImage ? 45 : 40;
     const overlayColor = str(props.overlayColor, "#000000") || "#000000";
     const overlayOpacity = percent(props.overlayOpacity, defaultOverlayOpacity);
     const gradientEnabled = optionalBool(props.gradientEnabled, true);
-    const gradientColor = str(props.gradientColor, "#102234") || "#102234";
+    const gradientColor = str(props.gradientColor, "#000000") || "#000000";
     const gradientOpacity = percent(props.gradientOpacity, 75);
     const gradientHeight = percent(props.gradientHeight, 40);
     const textAlignment = props.alignment;
