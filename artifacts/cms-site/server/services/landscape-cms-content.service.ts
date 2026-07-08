@@ -313,7 +313,13 @@ function mediaForPage(page: LandscapePage | LandscapeLocation | LandscapeBlogPos
       ],
     };
   }
-  if (slug === "gallery") return { projects: GALLERY_PROJECTS };
+  if (slug === "gallery") {
+    return {
+      heroImageUrl: imageUrl("hero-gallery.png"),
+      heroImageAlt: "Manicured residential lawn and landscape beds framing a white brick home",
+      projects: GALLERY_PROJECTS,
+    };
+  }
   if (slug === "commercial-portfolio") {
     return {
       images: GALLERY_PROJECTS.filter((project) => project.category === "commercial")

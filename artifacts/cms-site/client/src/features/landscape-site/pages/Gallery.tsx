@@ -111,11 +111,19 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 export default function Gallery() {
-  const cmsPage = useLandscapeCmsData<{ media?: LandscapeMedia }>("gallery", { media: { projects: PROJECTS } });
+  const cmsPage = useLandscapeCmsData<{ media?: LandscapeMedia }>("gallery", {
+    media: {
+      heroImageUrl: `${LANDSCAPE_IMAGE_BASE}/hero-gallery.png`,
+      heroImageAlt: "Manicured residential lawn and landscape beds framing a white brick home",
+      projects: PROJECTS,
+    },
+  });
   const [filter, setFilter] = useState<Filter>("all");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const projects = cmsPage.media?.projects ?? PROJECTS;
+  const heroImage = cmsPage.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/hero-gallery.png`;
+  const heroAlt = cmsPage.media?.heroImageAlt ?? "Manicured residential lawn and landscape beds framing a white brick home";
   const visible = filter === "all" ? projects : projects.filter(p => p.category === filter);
 
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
@@ -151,11 +159,17 @@ export default function Gallery() {
       />
 
       {/* Hero */}
-      <div className="bg-foreground py-20 md:py-24 px-4 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15" />
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15 scale-x-[-1]" />
+      <div className="py-20 md:py-24 px-4 text-center relative overflow-hidden">
+        <img
+          src={heroImage}
+          alt={heroAlt}
+          className="absolute inset-0 h-full w-full object-cover"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-black/65 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/70 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-6 top-1/2 -translate-y-1/2 h-64 w-auto text-white/10" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 h-64 w-auto text-white/10 scale-x-[-1]" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-4">Our Work</p>
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-5">Project Gallery</h1>
