@@ -13,6 +13,8 @@ export {
   insertCmsMediaSchema,
   type InsertCmsMedia,
   type CmsMediaAsset,
+  type CmsMediaVariant,
+  type CmsMediaVariants,
   type CmsMediaUsageEntityType,
   type CmsMediaAssetKind,
   type CmsMediaUsageReference,

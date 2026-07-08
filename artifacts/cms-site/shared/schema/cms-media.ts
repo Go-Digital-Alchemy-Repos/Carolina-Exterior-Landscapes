@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, index } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, varchar, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./users";
@@ -20,6 +20,7 @@ export const cmsMedia = pgTable("cms_media", {
   seoDescription: text("seo_description"),
   ogTitle: text("og_title"),
   ogDescription: text("og_description"),
+  variants: jsonb("variants").$type<CmsMediaVariants>(),
   uploadedBy: varchar("uploaded_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
@@ -31,8 +32,23 @@ export const insertCmsMediaSchema = createInsertSchema(cmsMedia).omit({
   createdAt: true,
 });
 
-export type InsertCmsMedia = z.infer<typeof insertCmsMediaSchema>;
+export type InsertCmsMedia = typeof cmsMedia.$inferInsert;
 export type CmsMediaAsset = typeof cmsMedia.$inferSelect;
+
+export interface CmsMediaVariant {
+  url: string;
+  key?: string | null;
+  mimeType: string;
+  fileSize: number;
+  width?: number;
+  height?: number;
+}
+
+export interface CmsMediaVariants {
+  source?: CmsMediaVariant;
+  webp?: CmsMediaVariant & { mimeType: "image/webp" };
+  avif?: CmsMediaVariant & { mimeType: "image/avif" };
+}
 
 export type CmsMediaUsageEntityType = "page" | "global_seo";
 export type CmsMediaAssetKind = "image" | "document";

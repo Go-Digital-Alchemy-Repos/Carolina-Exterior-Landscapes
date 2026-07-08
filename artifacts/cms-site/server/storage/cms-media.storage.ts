@@ -10,6 +10,7 @@ type CmsMediaMetadataUpdate = Partial<Pick<
 type CmsMediaFileUpdate = Pick<CmsMediaAsset, "mimeType" | "fileSize" | "url"> & {
   filename?: CmsMediaAsset["filename"];
   r2Key?: CmsMediaAsset["r2Key"];
+  variants?: CmsMediaAsset["variants"];
 };
 
 export class CmsMediaStorage {

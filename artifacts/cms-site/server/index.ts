@@ -15,6 +15,7 @@ import { logger, requestIdMiddleware } from "./utils/logger";
 import { recordRequest, getMetricsSnapshot } from "./utils/metrics";
 import { startScheduledPublishService } from "./services/scheduled-publish.service";
 import { startSystemBackupService } from "./services/system-backup.service";
+import { resolveBestLocalCmsImagePath } from "./services/cms-image-variants.service";
 
 declare const __APP_VERSION__: string;
 const pkgVersion = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
@@ -25,6 +26,7 @@ const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
 const landscapeAssetsPath = path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets");
+const cmsUploadsPath = path.resolve(process.cwd(), "uploads", "cms");
 
 app.use(securityHeaders());
 app.use(requestIdMiddleware);
@@ -95,6 +97,30 @@ app.get("/api/health/metrics", (req, res) => {
 app.use("/api", apiLimiter);
 app.use(originCheck);
 
+function negotiateLocalCmsUploadImageFormat(req: Request, res: Response, next: NextFunction) {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  if (!/\.(webp|png|jpe?g)$/i.test(req.path)) return next();
+
+  const requestedPath = path.resolve(cmsUploadsPath, `.${req.path}`);
+  if (!requestedPath.startsWith(cmsUploadsPath)) return next();
+
+  const bestVariant = resolveBestLocalCmsImagePath(requestedPath, req.headers.accept);
+  if (!bestVariant || bestVariant.filePath === requestedPath) return next();
+
+  res.vary("Accept");
+  res.setHeader("Content-Type", bestVariant.mimeType);
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  return res.sendFile(bestVariant.filePath);
+}
+
+app.use(
+  "/uploads/cms",
+  negotiateLocalCmsUploadImageFormat,
+  express.static(cmsUploadsPath, {
+    immutable: true,
+    maxAge: "1y",
+  }),
+);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 function negotiateLandscapeImageFormat(req: Request, res: Response, next: NextFunction) {
