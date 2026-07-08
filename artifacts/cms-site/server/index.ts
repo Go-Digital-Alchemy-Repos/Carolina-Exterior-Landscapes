@@ -230,6 +230,12 @@ app.use((req, res, next) => {
     await runMigrations();
   }
 
+  {
+    const { db } = await import("./db");
+    const { sql } = await import("drizzle-orm");
+    await db.execute(sql`ALTER TABLE IF EXISTS "cms_media" ADD COLUMN IF NOT EXISTS "variants" jsonb`);
+  }
+
   const { runSystemBootstrap } = await import("./services/system-bootstrap.service");
   await runSystemBootstrap();
 
