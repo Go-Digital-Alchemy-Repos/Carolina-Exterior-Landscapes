@@ -81,14 +81,6 @@ export default defineConfig({
           }
 
           if (
-            id.includes("/react-hook-form/") ||
-            id.includes("/@hookform/") ||
-            id.includes("/zod/")
-          ) {
-            return "forms";
-          }
-
-          if (
             id.includes("/leaflet/") ||
             id.includes("/react-leaflet/") ||
             id.includes("/@react-leaflet/")
