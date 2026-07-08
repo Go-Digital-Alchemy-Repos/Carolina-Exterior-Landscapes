@@ -86,7 +86,7 @@ export default defineConfig({
             normalizedId.includes("/node_modules/react-leaflet/") ||
             normalizedId.includes("/node_modules/@react-leaflet/")
           ) {
-            return "maps";
+            return undefined;
           }
 
           if (normalizedId.includes("/node_modules/@tiptap/")) {
