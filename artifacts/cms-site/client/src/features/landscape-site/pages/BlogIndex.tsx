@@ -66,6 +66,7 @@ export default function BlogIndex() {
                     src={post.imageUrl ?? post.media?.heroImageUrl ?? getBlogImage(post.image)}
                     alt={post.h1}
                     loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>

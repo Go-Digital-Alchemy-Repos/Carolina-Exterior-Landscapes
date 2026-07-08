@@ -98,6 +98,9 @@ export default function BlogPost() {
                 <img
                   src={heroImage}
                   alt={post.h1}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -155,6 +158,7 @@ export default function BlogPost() {
                             src={p.imageUrl ?? p.media?.heroImageUrl ?? getBlogImage(p.image)}
                             alt={p.h1}
                             loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                         </div>

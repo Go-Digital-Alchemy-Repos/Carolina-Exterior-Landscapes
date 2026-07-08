@@ -10,6 +10,66 @@ import {
 
 const BrandingContext = createContext<BrandingSettings>(DEFAULT_BRANDING_SETTINGS);
 
+const GOOGLE_FONT_FAMILIES: Record<string, string> = {
+  inter: "Inter:opsz,wght@14..32,100..900",
+  roboto: "Roboto:wght@300;400;500;700;900",
+  "open-sans": "Open+Sans:wght@300;400;500;600;700;800",
+  lato: "Lato:wght@300;400;700;900",
+  manrope: "Manrope:wght@200..800",
+  montserrat: "Montserrat:wght@300;400;500;600;700;800",
+  poppins: "Poppins:wght@300;400;500;600;700;800",
+  "source-sans-3": "Source+Sans+3:wght@300;400;500;600;700;800",
+  "nunito-sans": "Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000",
+  "work-sans": "Work+Sans:wght@300;400;500;600;700;800",
+  raleway: "Raleway:wght@300;400;500;600;700;800",
+  merriweather: "Merriweather:wght@300;400;700;900",
+  "playfair-display": "Playfair+Display:wght@400;500;600;700;800",
+  lora: "Lora:ital,wght@0,400..700;1,400..700",
+  "libre-baskerville": "Libre+Baskerville:wght@400;700",
+  "cormorant-garamond": "Cormorant+Garamond:wght@300;400;500;600;700",
+  "eb-garamond": "EB+Garamond:ital,wght@0,400..800;1,400..800",
+  "crimson-text": "Crimson+Text:wght@400;600;700",
+  "pt-serif": "PT+Serif:wght@400;700",
+  bitter: "Bitter:wght@300..900",
+  "source-serif-4": "Source+Serif+4:opsz,wght@8..60,300..900",
+};
+
+function googleFontsUrl(fontValues: Array<string | null | undefined>) {
+  const families = Array.from(
+    new Set(
+      fontValues
+        .map((value) => (value ? GOOGLE_FONT_FAMILIES[value] : null))
+        .filter(Boolean) as string[],
+    ),
+  );
+
+  if (!families.length) return "";
+  const params = families.map((family) => `family=${family}`).join("&");
+  return `https://fonts.googleapis.com/css2?${params}&display=swap`;
+}
+
+function syncGoogleFontStylesheet(fontValues: Array<string | null | undefined>) {
+  const href = googleFontsUrl(fontValues);
+  const id = "active-brand-google-fonts";
+  let link = document.head.querySelector<HTMLLinkElement>(`#${id}`);
+
+  if (!href) {
+    link?.remove();
+    return;
+  }
+
+  if (!link) {
+    link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  }
+
+  if (link.href !== href) {
+    link.href = href;
+  }
+}
+
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data } = useQuery<BrandingSettings>({
@@ -59,6 +119,18 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   );
   const pathname = location.split(/[?#]/)[0] || "/";
   const isAdminRoute = pathname.startsWith("/admin");
+
+  useEffect(() => {
+    if (isAdminRoute) {
+      syncGoogleFontStylesheet(["inter"]);
+      return;
+    }
+
+    syncGoogleFontStylesheet([
+      branding.bodyFont || "nunito-sans",
+      branding.headingFont || "eb-garamond",
+    ]);
+  }, [branding.bodyFont, branding.headingFont, isAdminRoute]);
 
   useEffect(() => {
     const root = document.documentElement;

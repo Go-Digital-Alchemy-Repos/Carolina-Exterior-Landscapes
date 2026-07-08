@@ -40,6 +40,9 @@ export default function CommercialPortfolio() {
               <img 
                 src={img.src} 
                 alt={img.alt} 
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "auto"}
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </div>

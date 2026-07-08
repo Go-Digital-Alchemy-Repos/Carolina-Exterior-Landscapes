@@ -1,6 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
-import fs from "node:fs";
 import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -124,25 +123,19 @@ app.use(
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 function negotiateLandscapeImageFormat(req: Request, res: Response, next: NextFunction) {
-  if (!/\.(png|jpe?g)$/i.test(req.path)) return next();
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  if (!/\.(webp|png|jpe?g)$/i.test(req.path)) return next();
 
-  res.vary("Accept");
-  const accepted = req.headers.accept ?? "";
   const requestedPath = path.resolve(landscapeAssetsPath, `.${req.path}`);
   if (!requestedPath.startsWith(landscapeAssetsPath)) return next();
 
-  const sourceExtension = path.extname(requestedPath);
-  const basePath = requestedPath.slice(0, -sourceExtension.length);
+  const bestVariant = resolveBestLocalCmsImagePath(requestedPath, req.headers.accept);
+  if (!bestVariant || bestVariant.filePath === requestedPath) return next();
 
-  for (const format of ["avif", "webp"] as const) {
-    if (!accepted.includes(`image/${format}`)) continue;
-    const optimizedPath = `${basePath}.${format}`;
-    if (!fs.existsSync(optimizedPath)) continue;
-    req.url = req.url.replace(/\.(png|jpe?g)(?=($|[?#]))/i, `.${format}`);
-    break;
-  }
-
-  next();
+  res.vary("Accept");
+  res.setHeader("Content-Type", bestVariant.mimeType);
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  return res.sendFile(bestVariant.filePath);
 }
 
 app.use(

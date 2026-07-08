@@ -85,7 +85,9 @@ export default function GetAQuote() {
           src={heroImage}
           alt={heroAlt}
           className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
           fetchPriority="high"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-black/25 pointer-events-none"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/20 to-transparent pointer-events-none"></div>

@@ -257,7 +257,7 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
                     <div key={gIdx} className={cn("flex flex-col gap-6 md:gap-10 md:items-center", gIdx % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row")}>
                       <div className="md:w-1/2 shrink-0">
                         <div className="relative overflow-hidden rounded-2xl shadow-md border border-border/60 aspect-[4/3] group">
-                          <img src={serviceImages![item.title]} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                          <img src={serviceImages![item.title]} alt={item.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                           <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl pointer-events-none"></div>
                         </div>
                       </div>

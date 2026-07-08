@@ -16,7 +16,7 @@ const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
   "residential-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
   "residential-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-hardscape.png`,
-  "residential-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-residential-pressure-washing.avif`,
+  "residential-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-residential-pressure-washing.png`,
   "mulching-and-planting": `${LANDSCAPE_IMAGE_BASE}/hero-mulch.png`,
   "drainage-solutions": `${LANDSCAPE_IMAGE_BASE}/hero-drainage.png`,
   "commercial": `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
@@ -24,7 +24,7 @@ const HERO_IMAGES: Record<string, string> = {
   "commercial-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-landscaping.png`,
   "commercial-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-hardscape.png`,
   "commercial-drainage": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-drainage.png`,
-  "commercial-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-pressure-washing.avif`,
+  "commercial-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-pressure-washing.png`,
   "hoa-services": `${LANDSCAPE_IMAGE_BASE}/hero-hoa.png`,
 };
 
@@ -74,7 +74,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       {/* Hero Section */}
       <div className="relative w-full h-[60vh] min-h-[500px] flex items-end bg-foreground overflow-hidden md:items-center">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover" />
+          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
           <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
         </div>
@@ -161,7 +161,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             </div>
 
             <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
-              <img src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
+              <img src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
             </div>
