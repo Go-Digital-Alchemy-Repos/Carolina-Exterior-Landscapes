@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { DndContext, DragEndEvent, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -9,7 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,8 +17,12 @@ import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHea
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import type { CrmLead, CrmLeadDetail, CrmLeadStage } from "@shared/schema";
+
+interface CrmSettings {
+  leadNotificationEmail: string;
+}
 
 const stages: Array<{ value: CrmLeadStage; label: string; className: string }> = [
   { value: "new", label: "New", className: "bg-blue-100 text-blue-800" },
@@ -85,11 +89,18 @@ export default function CrmPage() {
   const [note, setNote] = useState("");
   const [task, setTask] = useState("");
   const [taskDue, setTaskDue] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [leadNotificationEmail, setLeadNotificationEmail] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const qs = new URLSearchParams({ q: query, stage }).toString();
   const { data: leads = [] } = useQuery<CrmLead[]>({ queryKey: [`/api/admin/crm?${qs}`] });
   const { data: detail } = useQuery<CrmLeadDetail>({ queryKey: [`/api/admin/crm/${selectedId}`], enabled: Boolean(selectedId) });
+  const { data: crmSettings } = useQuery<CrmSettings>({ queryKey: ["/api/admin/crm/settings"] });
+
+  useEffect(() => {
+    if (crmSettings) setLeadNotificationEmail(crmSettings.leadNotificationEmail);
+  }, [crmSettings]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/admin/crm") });
@@ -114,6 +125,14 @@ export default function CrmPage() {
     mutationFn: ({ id, completed }: { id: string; completed: boolean }) => apiRequest("PATCH", `/api/admin/crm/tasks/${id}`, { completed }),
     onSuccess: invalidate,
   });
+  const saveSettings = useMutation({
+    mutationFn: () => apiRequest("PUT", "/api/admin/crm/settings", { leadNotificationEmail }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/crm/settings"] });
+      toast({ title: "CRM settings saved" });
+      setSettingsOpen(false);
+    },
+  });
 
   const grouped = useMemo(() => Object.fromEntries(stages.map((item) => [item.value, leads.filter((lead) => lead.stage === item.value)])) as Record<CrmLeadStage, CrmLead[]>, [leads]);
   const onDragEnd = (event: DragEndEvent) => {
@@ -128,7 +147,10 @@ export default function CrmPage() {
       <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div><h1 className="text-2xl font-semibold">CRM Pipeline</h1><p className="text-muted-foreground">Track inbound leads from forms, social sources, and manual outreach.</p></div>
-          <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Lead</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setSettingsOpen(true)}><Settings className="mr-2 h-4 w-4" />Settings</Button>
+            <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Lead</Button>
+          </div>
         </div>
         <div className="flex gap-3">
           <Input placeholder="Search leads..." value={query} onChange={(e) => setQuery(e.target.value)} className="max-w-sm" />
@@ -148,6 +170,35 @@ export default function CrmPage() {
       </div>
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
         <SheetContent side="right" size="md"><SheetHeader><SheetTitle>Create Lead</SheetTitle><SheetDescription>Add a manual CRM lead to the pipeline.</SheetDescription></SheetHeader><SheetBody className="space-y-4">{(["name", "email", "phone", "company"] as const).map((key) => <div key={key} className="space-y-1"><Label className="capitalize">{key}</Label><Input value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} /></div>)}<div className="space-y-1"><Label>Message</Label><Textarea value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} /></div></SheetBody><SheetFooter><Button disabled={!form.name.trim()} onClick={() => createLead.mutate()}>Create Lead</Button></SheetFooter></SheetContent>
+      </Sheet>
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent side="right" size="md">
+          <SheetHeader>
+            <SheetTitle>CRM Settings</SheetTitle>
+            <SheetDescription>Control where new website lead notifications are sent.</SheetDescription>
+          </SheetHeader>
+          <SheetBody className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Lead Notifications</CardTitle>
+                <CardDescription>Contact and quote form leads are saved to the CRM and emailed here. Use commas for multiple addresses.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label htmlFor="crm-lead-notification-email">Notification Email</Label>
+                <Input
+                  id="crm-lead-notification-email"
+                  type="text"
+                  value={leadNotificationEmail}
+                  onChange={(event) => setLeadNotificationEmail(event.target.value)}
+                  placeholder="van@carolinaexteriorlandscapes.com"
+                />
+              </CardContent>
+            </Card>
+          </SheetBody>
+          <SheetFooter>
+            <Button onClick={() => saveSettings.mutate()} disabled={saveSettings.isPending}>Save Settings</Button>
+          </SheetFooter>
+        </SheetContent>
       </Sheet>
       <Sheet open={Boolean(selectedId)} onOpenChange={(open) => !open && setSelectedId(null)}>
         <SheetContent side="right" size="lg"><SheetHeader><SheetTitle>{detail?.name ?? "Loading lead..."}</SheetTitle><SheetDescription>{detail?.email || detail?.phone || "No contact info"}</SheetDescription></SheetHeader><SheetBody>{detail ? <Tabs defaultValue="notes"><Card className="mb-4"><CardContent className="grid gap-3 pt-4 md:grid-cols-2"><div><Label>Stage</Label><Select value={detail.stage} onValueChange={(value) => updateLead.mutate({ id: detail.id, data: { stage: value as CrmLeadStage } })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{stages.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div><div><Label>Next Follow-Up</Label><Input type="date" defaultValue={inputDate(detail.nextFollowUpAt)} onBlur={(e) => updateLead.mutate({ id: detail.id, data: { nextFollowUpAt: e.target.value ? new Date(e.target.value) : null } })} /></div><p><b>Source:</b> {detail.source}</p><p><b>Company:</b> {detail.company || "—"}</p><p><b>Linked Client:</b> {detail.client ? detail.client.name : "—"}</p></CardContent></Card><TabsList><TabsTrigger value="notes">Notes</TabsTrigger><TabsTrigger value="tasks">Tasks</TabsTrigger><TabsTrigger value="data">Data</TabsTrigger></TabsList><TabsContent value="notes" className="space-y-3"><Textarea placeholder="Add an internal note..." value={note} onChange={(e) => setNote(e.target.value)} /><Button disabled={!note.trim()} onClick={() => addNote.mutate()}>Add Note</Button>{detail.notes.map((item) => <Card key={item.id}><CardContent className="pt-4"><p>{item.body}</p><p className="text-xs text-muted-foreground">{fmt(item.createdAt)}</p></CardContent></Card>)}</TabsContent><TabsContent value="tasks" className="space-y-3"><div className="flex gap-2"><Input placeholder="Follow-up task" value={task} onChange={(e) => setTask(e.target.value)} /><Input type="date" value={taskDue} onChange={(e) => setTaskDue(e.target.value)} /><Button disabled={!task.trim()} onClick={() => addTask.mutate()}>Add</Button></div>{detail.tasks.map((item) => <label key={item.id} className="flex items-center gap-2 rounded-md border p-2"><Checkbox checked={item.completed} onCheckedChange={(checked) => updateTask.mutate({ id: item.id, completed: Boolean(checked) })} /><span className={item.completed ? "text-muted-foreground line-through" : ""}>{item.title} · {fmt(item.dueAt)}</span></label>)}</TabsContent><TabsContent value="data"><pre className="overflow-auto rounded-md bg-muted p-4 text-xs">{JSON.stringify({ formData: detail.formData, metadata: detail.metadata }, null, 2)}</pre></TabsContent></Tabs> : null}</SheetBody></SheetContent>

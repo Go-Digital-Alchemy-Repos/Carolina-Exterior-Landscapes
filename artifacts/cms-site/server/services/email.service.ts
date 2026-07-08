@@ -272,6 +272,34 @@ export async function sendManagedFormSubmissionEmail(
   await Promise.all(to.map((recipient) => sendEmail(recipient, `New form submission: ${formName}`, html)));
 }
 
+export async function sendCrmLeadNotificationEmail(
+  to: string[],
+  lead: {
+    id: string;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    company?: string | null;
+    message?: string | null;
+    source?: string | null;
+  },
+  adminUrl: string,
+  duplicate = false,
+): Promise<void> {
+  const html = await renderEmailShell(
+    duplicate ? "CRM lead updated" : "New CRM lead",
+    `<p>A ${duplicate ? "duplicate website lead updated an existing CRM lead" : "new lead was added to the CRM"}.</p>
+    <p><strong>Name:</strong> ${lead.name}</p>
+    <p><strong>Email:</strong> ${lead.email || "-"}</p>
+    <p><strong>Phone:</strong> ${lead.phone || "-"}</p>
+    <p><strong>Company:</strong> ${lead.company || "-"}</p>
+    <p><strong>Source:</strong> ${lead.source || "-"}</p>
+    <p><strong>Message:</strong><br>${lead.message || "-"}</p>
+    <p><a href="${adminUrl}">View lead in CRM</a></p>`,
+  );
+  await Promise.all(to.map((recipient) => sendEmail(recipient, `${duplicate ? "Updated" : "New"} CRM lead: ${lead.name}`, html)));
+}
+
 export async function testMailgunConnection(): Promise<{ success: boolean; message: string }> {
   const config = await getMailgunConfig();
   if (!config) return { success: false, message: "Mailgun is not configured" };

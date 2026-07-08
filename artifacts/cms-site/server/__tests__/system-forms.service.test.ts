@@ -79,7 +79,7 @@ describe("ensureSystemForms", () => {
     expect(contactUpdate[1].fields).toHaveLength(1);
     expect(contactUpdate[1].fields[0].label).toBe("How can we help?");
     expect(contactUpdate[1].settings.successMessage).toBe("Custom contact success");
-    expect(contactUpdate[1].settings.createCrmLead).toBe(false);
+    expect(contactUpdate[1].settings.createCrmLead).toBe(true);
   });
 
   it("creates missing system forms on a clean install", async () => {
@@ -88,15 +88,17 @@ describe("ensureSystemForms", () => {
     const mod = await import("../services/system-forms.service");
     await mod.ensureSystemForms();
 
-    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate).toHaveBeenCalledTimes(3);
     const createdSlugs = mockCreate.mock.calls.map(([form]) => form.slug);
     expect(createdSlugs).toEqual(
       expect.arrayContaining([
+        "contact-form",
         "residential-quote",
         "commercial-quote",
       ])
     );
     const contactForm = mockCreate.mock.calls.find(([form]) => form.slug === "residential-quote")?.[0];
+    expect(contactForm.settings.createCrmLead).toBe(true);
     const serviceField = contactForm.fields.find((field: { key: string }) => field.key === "servicesInterested");
     expect(serviceField.options).toEqual(
       expect.arrayContaining([

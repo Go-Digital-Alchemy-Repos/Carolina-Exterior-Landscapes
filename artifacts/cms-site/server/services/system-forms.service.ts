@@ -34,7 +34,7 @@ function settings(overrides: Partial<CmsFormSettings>): CmsFormSettings {
     successRedirect: "",
     notifyAdmins: false,
     storeAsContactMessage: false,
-    createCrmLead: false,
+    createCrmLead: true,
     ...overrides,
   };
 }
@@ -65,6 +65,36 @@ const RESIDENTIAL_QUOTE_FIELDS = [
   }),
   field("message", "message", "Project Details / Message", "textarea", {
     placeholder: "Tell us a bit about your property and what you're looking for.",
+  }),
+];
+
+const CONTACT_FORM_FIELDS = [
+  field("full-name", "fullName", "Full Name", "text", { placeholder: "Your full name", required: true, width: "half" }),
+  field("phone", "phone", "Phone Number", "tel", { placeholder: "(704) 975-5867", width: "half" }),
+  field("email", "email", "Email Address", "email", { placeholder: "you@example.com", required: true }),
+  field("service", "service", "Service of Interest", "select", {
+    options: [
+      choice("Residential Landscaping"),
+      choice("Residential Lawn Maintenance"),
+      choice("Residential Pressure Washing"),
+      choice("Commercial Grounds Maintenance"),
+      choice("Commercial Landscaping"),
+      choice("Commercial Pressure Washing"),
+      choice("Drainage & Site Work"),
+      choice("Hardscape"),
+      choice("Other / Not Sure"),
+    ],
+  }),
+  field("property-type", "propertyType", "Property Type", "radio", {
+    options: [
+      choice("Residential"),
+      choice("Commercial"),
+      choice("HOA / Community"),
+    ],
+  }),
+  field("city", "city", "City / Location", "text", { placeholder: "Monroe" }),
+  field("message", "message", "Tell us about your project", "textarea", {
+    placeholder: "Tell us what you need and when you would like to get started.",
   }),
 ];
 
@@ -110,6 +140,23 @@ const COMMERCIAL_QUOTE_FIELDS = [
 
 const SYSTEM_FORMS: InsertCmsForm[] = [
   {
+    name: "Contact Form",
+    slug: "contact-form",
+    description: "General landscaping, lawn care, and pressure washing contact form.",
+    kind: "contact",
+    isSystem: true,
+    isActive: true,
+    fields: CONTACT_FORM_FIELDS,
+    settings: settings({
+      submitButtonText: "Send Message",
+      successMessage: "Thank you for reaching out. We will be in touch shortly.",
+      successRedirect: "/thank-you/",
+      notifyAdmins: true,
+      storeAsContactMessage: true,
+      createCrmLead: true,
+    }),
+  },
+  {
     name: "Residential Quote Form",
     slug: "residential-quote",
     description: "Request a residential landscaping, lawn maintenance, hardscape, or drainage estimate.",
@@ -123,6 +170,7 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
       successRedirect: "/thank-you/",
       notifyAdmins: true,
       storeAsContactMessage: true,
+      createCrmLead: true,
     }),
   },
   {
@@ -139,6 +187,7 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
       successRedirect: "/thank-you/",
       notifyAdmins: true,
       storeAsContactMessage: true,
+      createCrmLead: true,
     }),
   },
 ];
@@ -185,7 +234,6 @@ export async function ensureSystemForms() {
       const existingSettings = typeof existing.settings === "object" && existing.settings ? { ...(existing.settings as Record<string, unknown>) } : {};
       delete existingSettings.mailchimpEnabled;
       delete existingSettings.mailchimpTag;
-      delete existingSettings.createCrmLead;
       const useSystemFields =
         !Array.isArray(existing.fields) ||
         existing.fields.length === 0 ||
@@ -193,7 +241,10 @@ export async function ensureSystemForms() {
         isSystemCcaContactForm(existing.fields) ||
         isLandscapeResidentialQuoteForm(existing.fields) ||
         isLandscapeCommercialQuoteForm(existing.fields);
-      const settingsData = useSystemFields ? systemForm.settings : { ...systemForm.settings, ...existingSettings };
+      const settingsData = {
+        ...(useSystemFields ? systemForm.settings : { ...systemForm.settings, ...existingSettings }),
+        createCrmLead: true,
+      };
 
       await storage.forms.update(existing.id, {
         name: existing.name || systemForm.name,
