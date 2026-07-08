@@ -86,7 +86,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-topo opacity-70 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-6 top-16 h-64 w-auto text-brand-leaf/15 -rotate-12" />
         <BotanicalAccent variant="sprig" className="hidden lg:block absolute -right-6 bottom-16 h-64 w-auto text-brand-leaf/15 rotate-12 scale-x-[-1]" />
-        <div className="max-w-7xl mx-auto px-4 relative">
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-brand-leaf/10 text-brand-leaf font-bold tracking-widest text-xs mb-6 border border-brand-leaf/20 uppercase">
               <Leaf className="h-3 w-3" /> Field Notes
@@ -155,7 +155,7 @@ export default function Home() {
 
       {/* Gallery Preview */}
       <section className="py-24 bg-background bg-paper relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 relative">
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="max-w-2xl">
               <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-3">Proof In The Work</p>
@@ -184,7 +184,7 @@ export default function Home() {
       <section className="py-24 bg-foreground text-background relative overflow-hidden">
         <div className="absolute inset-0 bg-topo-light opacity-70 pointer-events-none"></div>
         <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-10 h-72 w-auto text-primary/15" />
-        <div className="max-w-7xl mx-auto px-4 relative">
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             <div className="lg:col-span-1">
               <h2 className="text-3xl md:text-4xl font-extrabold mb-6 tracking-tight text-white">Why Carolina Exterior?</h2>
@@ -242,7 +242,7 @@ export default function Home() {
       <section className="py-24 surface-mist bg-paper relative overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="leaf" className="hidden lg:block absolute right-6 top-24 h-72 w-auto text-brand-leaf/10" />
-        <div className="max-w-7xl mx-auto px-4 relative">
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
           <BlockRenderer blocks={page.blocks} />
         </div>
       </section>

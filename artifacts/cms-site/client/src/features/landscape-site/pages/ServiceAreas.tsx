@@ -46,7 +46,7 @@ export default function ServiceAreas() {
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -right-4 bottom-32 h-72 w-auto text-brand-leaf/10 rotate-6 scale-x-[-1]" />
-        <div className="max-w-5xl mx-auto px-4 py-24 relative">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 py-24">
         <div className="mb-24">
           <h2 className="text-3xl font-extrabold text-center mb-4 tracking-tight">Communities We Serve</h2>
           <p className="text-center text-muted-foreground font-medium mb-12 max-w-2xl mx-auto">

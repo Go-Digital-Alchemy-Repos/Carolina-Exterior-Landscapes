@@ -193,7 +193,7 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
 
   return (
     <CityLinkProvider excludeSlug={excludeSlug}>
-    <div className={cn("w-full space-y-16", className)}>
+    <div className={cn("relative z-10 w-full space-y-16", className)}>
       {groups.map((group, idx) => {
         if (group.type === 'faq') {
           return (

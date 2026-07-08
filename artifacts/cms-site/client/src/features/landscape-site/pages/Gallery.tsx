@@ -223,7 +223,7 @@ export default function Gallery() {
       <section className="surface-sand bg-paper py-20 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-4 bottom-6 h-64 w-auto text-brand-leaf/10 -rotate-12" />
-        <div className="max-w-3xl mx-auto text-center relative">
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-5">Want results like these on your property?</h2>
           <p className="text-lg text-muted-foreground font-medium mb-8">
             Tell us about your project and we'll put together a free, no-pressure quote — usually within one business day.

@@ -76,7 +76,7 @@ export default function ServiceAreaCity() {
       <div className="relative surface-stone bg-paper overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
-        <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={location.blocks} excludeSlug={location.slug} />
         </div>
