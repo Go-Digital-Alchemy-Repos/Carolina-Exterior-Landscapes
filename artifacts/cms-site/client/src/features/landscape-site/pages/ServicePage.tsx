@@ -72,7 +72,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       />
       
       {/* Hero Section */}
-      <div className="relative w-full h-[60vh] min-h-[500px] flex items-center bg-foreground overflow-hidden">
+      <div className="relative w-full h-[60vh] min-h-[500px] flex items-end bg-foreground overflow-hidden md:items-center">
         <div className="absolute inset-0 z-0">
           <img src={heroImage} alt={page.h1} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
@@ -81,7 +81,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
 
         <BotanicalAccent variant="fern" className="hidden lg:block absolute right-10 top-1/2 -translate-y-1/2 h-72 w-auto text-primary/20 z-10" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full pb-16 pt-28 animate-in fade-in slide-in-from-bottom-8 duration-700 md:py-16">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
               {page.h1}
