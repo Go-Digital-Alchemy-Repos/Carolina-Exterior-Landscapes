@@ -2,10 +2,12 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,11 +19,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Globe, FileCode, CalendarClock } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Globe, CalendarClock, Search } from "lucide-react";
 import type { CmsPage } from "@shared/schema";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { filterAndSortCmsPages, type CmsPageSort } from "./cms-pages-list-utils";
 
 const PAGE_TYPE_COLORS: Record<string, string> = {
   home: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
@@ -40,6 +43,8 @@ export default function CmsPagesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [deleteTarget, setDeleteTarget] = useState<CmsPage | null>(null);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<CmsPageSort>("title-asc");
 
   const { data: pages = [], isLoading } = useQuery<CmsPage[]>({
     queryKey: ["/api/admin/cms/pages"],
@@ -57,6 +62,7 @@ export default function CmsPagesPage() {
   });
 
   const pageLocksById = new Map(pageLocks.map((entry) => [entry.resourceId, entry.lock] as const));
+  const visiblePages = useMemo(() => filterAndSortCmsPages(pages, search, sort), [pages, search, sort]);
 
   const publishMutation = useMutation({
     mutationFn: (id: string) => apiRequest("POST", `/api/admin/cms/pages/${id}/publish`),
@@ -107,7 +113,42 @@ export default function CmsPagesPage() {
         </div>
 
         <Card>
-          <CardContent className="pt-0">
+          <CardContent className="space-y-4 pt-6">
+            {pages.length > 0 ? (
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search pages by title or content keyword"
+                    className="pl-9"
+                    data-testid="input-search-pages"
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-[170px_220px] lg:flex lg:items-center">
+                  <div className="text-sm text-muted-foreground" data-testid="text-pages-result-count">
+                    {visiblePages.length} of {pages.length} page{pages.length === 1 ? "" : "s"}
+                  </div>
+                  <Select value={sort} onValueChange={(value) => setSort(value as CmsPageSort)}>
+                    <SelectTrigger data-testid="select-sort-pages">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="title-asc">Title A-Z</SelectItem>
+                      <SelectItem value="title-desc">Title Z-A</SelectItem>
+                      <SelectItem value="updated-desc">Recently updated</SelectItem>
+                      <SelectItem value="updated-asc">Oldest updated</SelectItem>
+                      <SelectItem value="created-desc">Recently created</SelectItem>
+                      <SelectItem value="created-asc">Oldest created</SelectItem>
+                      <SelectItem value="status">Status</SelectItem>
+                      <SelectItem value="type">Type</SelectItem>
+                      <SelectItem value="slug">Slug</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : null}
             {isLoading ? (
               <div className="space-y-3 pt-6">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -127,6 +168,15 @@ export default function CmsPagesPage() {
                   Create Page
                 </Button>
               </div>
+            ) : visiblePages.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground" data-testid="text-empty-page-search">
+                <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">No matching pages</p>
+                <p className="text-sm mt-1">Try a different title, slug, or content keyword.</p>
+                <Button variant="outline" className="mt-4" onClick={() => setSearch("")}>
+                  Clear search
+                </Button>
+              </div>
             ) : (
               <table className="w-full text-sm" data-testid="table-cms-pages">
                 <thead>
@@ -140,7 +190,7 @@ export default function CmsPagesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pages.map((page) => {
+                  {visiblePages.map((page) => {
                     const activeLock = pageLocksById.get(page.id);
                     const isLockedByOther = Boolean(activeLock && activeLock.lockedByUserId !== user?.id);
                     const isOwnedByCurrentUser = Boolean(activeLock && activeLock.lockedByUserId === user?.id);
