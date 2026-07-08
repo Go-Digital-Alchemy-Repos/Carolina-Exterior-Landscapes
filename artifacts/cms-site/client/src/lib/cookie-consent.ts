@@ -24,6 +24,13 @@ export interface CookieConsentRecord {
 
 export const DEFAULT_COOKIE_CONSENT_PREFERENCES: CookieConsentPreferences = {
   essential: true,
+  preferences: true,
+  analytics: true,
+  marketing: true,
+};
+
+export const ESSENTIAL_ONLY_COOKIE_CONSENT_PREFERENCES: CookieConsentPreferences = {
+  essential: true,
   preferences: false,
   analytics: false,
   marketing: false,

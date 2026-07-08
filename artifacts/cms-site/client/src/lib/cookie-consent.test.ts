@@ -5,6 +5,7 @@ import {
   COOKIE_CONSENT_DURATION_DAYS,
   COOKIE_CONSENT_STORAGE_KEY,
   DEFAULT_COOKIE_CONSENT_PREFERENCES,
+  ESSENTIAL_ONLY_COOKIE_CONSENT_PREFERENCES,
   buildCookieConsentRecord,
   getCookieConsentPreferences,
   hasCookieConsent,
@@ -66,10 +67,16 @@ describe("cookie consent utilities", () => {
     if (originalDocument) vi.stubGlobal("document", originalDocument);
   });
 
-  it("defaults to essential-only when no active consent exists", () => {
+  it("defaults settings preferences to on without granting gated consent before save", () => {
     expect(getCookieConsentPreferences()).toEqual(DEFAULT_COOKIE_CONSENT_PREFERENCES);
     expect(hasCookieConsent("essential")).toBe(true);
     expect(hasCookieConsent("analytics")).toBe(false);
+  });
+
+  it("can build an explicit essential-only record", () => {
+    const record = buildCookieConsentRecord(ESSENTIAL_ONLY_COOKIE_CONSENT_PREFERENCES);
+
+    expect(record.preferences).toEqual(ESSENTIAL_ONLY_COOKIE_CONSENT_PREFERENCES);
   });
 
   it("writes consent, persists 60-day cookie state, and notifies subscribers", () => {
