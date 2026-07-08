@@ -136,10 +136,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </button>
               <div className="absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
                 <div className="p-3 flex flex-col gap-1">
-                  <Link href="/commercial" className="p-3 bg-muted/30 hover:bg-muted/80 rounded-lg transition-colors text-sm font-extrabold flex items-center justify-between group/link">
-                    Commercial Hub
-                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-primary" />
-                  </Link>
                   {COMMERCIAL_SERVICES.map(s => (
                     <Link key={s.slug} href={`/${s.slug}`} className="p-3 hover:bg-muted/50 rounded-lg transition-colors text-sm group/link flex items-center justify-between">
                       {s.name}
@@ -213,7 +209,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <span className="text-primary text-sm tracking-widest uppercase">Commercial</span>
           <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
-            <Link href="/commercial" className="hover:text-primary transition-colors text-foreground">Commercial Hub</Link>
             {COMMERCIAL_SERVICES.map(s => (
               <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
             ))}

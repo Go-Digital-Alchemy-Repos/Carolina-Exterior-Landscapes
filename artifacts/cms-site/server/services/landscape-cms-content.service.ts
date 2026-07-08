@@ -561,16 +561,19 @@ function buildMenus(): InsertCmsMenu[] {
     "drainage-solutions",
   ].map((slug) => menuItem(slug, serviceLabel(slug, /^Residential\s+/i), `/${slug}`));
 
-  const commercial = [
+  const commercialServices = [
+    "commercial-grounds-maintenance",
+    "commercial-landscaping",
+    "commercial-hardscape",
+    "commercial-drainage",
+    "commercial-pressure-washing",
+    "hoa-services",
+  ].map((slug) => menuItem(slug, serviceLabel(slug, /^Commercial\s+/i), `/${slug}`));
+
+  const mainCommercial = commercialServices;
+  const footerCommercial = [
     menuItem("commercial", "Commercial Hub", "/commercial"),
-    ...[
-      "commercial-grounds-maintenance",
-      "commercial-landscaping",
-      "commercial-hardscape",
-      "commercial-drainage",
-      "commercial-pressure-washing",
-      "hoa-services",
-    ].map((slug) => menuItem(slug, serviceLabel(slug, /^Commercial\s+/i), `/${slug}`)),
+    ...commercialServices,
   ];
 
   return [
@@ -580,7 +583,7 @@ function buildMenus(): InsertCmsMenu[] {
       items: [
         menuItem("home", "Home", "/"),
         menuItem("residential", "Residential", "/residential-landscaping", residential),
-        menuItem("commercial", "Commercial", "/commercial", commercial),
+        menuItem("commercial", "Commercial", "/commercial", mainCommercial),
         menuItem("gallery", "Gallery", "/gallery"),
         menuItem("service-areas", "Service Areas", "/service-areas"),
         menuItem("about", "About", "/about"),
@@ -595,7 +598,7 @@ function buildMenus(): InsertCmsMenu[] {
     {
       name: "Footer Commercial",
       location: "footer_secondary",
-      items: commercial,
+      items: footerCommercial,
     },
     {
       name: "Footer Company",
