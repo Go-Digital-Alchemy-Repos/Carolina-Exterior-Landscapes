@@ -266,6 +266,99 @@ function buildCarolinaLandscapeSections() {
         }),
       ],
     },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Gallery Project Grid`,
+      description: "Reusable photo-card gallery section for portfolio and project pages.",
+      category: "media",
+      blocks: [
+        block("cards-grid", {
+          title: "Project Gallery",
+          subtitle: "Representative residential and commercial landscape projects from across our service area.",
+          columns: "3",
+          variant: "photo-gallery",
+          cards: [
+            {
+              title: "Lawn Renovation",
+              description: "Residential turf, edging, and refreshed landscape beds.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-res-2.png`,
+              imageAlt: "Striped residential lawn with vibrant flower beds",
+            },
+            {
+              title: "Stone Patio",
+              description: "Natural stone outdoor living space.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-res-3.png`,
+              imageAlt: "Natural stone patio and outdoor living space",
+            },
+            {
+              title: "HOA Entrance",
+              description: "Community entrance landscaping and seasonal color.",
+              imageUrl: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`,
+              imageAlt: "HOA community entrance landscaping",
+            },
+          ],
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Residential Quote Form`,
+      description: "Reusable residential quote form embed connected to managed forms and CRM ingestion.",
+      category: "forms",
+      blocks: [
+        block("form-embed", {
+          formSlug: "residential-quote",
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Commercial Quote Form`,
+      description: "Reusable commercial quote form embed connected to managed forms and CRM ingestion.",
+      category: "forms",
+      blocks: [
+        block("form-embed", {
+          formSlug: "commercial-quote",
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}Service Areas Grid`,
+      description: "Reusable service-area link grid for location hubs and landing pages.",
+      category: "content",
+      blocks: [
+        block("areas-grid", {
+          items: [
+            { label: "Monroe, NC", path: "/service-areas/monroe-nc" },
+            { label: "Matthews, NC", path: "/service-areas/matthews-nc" },
+            { label: "Waxhaw, NC", path: "/service-areas/waxhaw-nc" },
+            { label: "Indian Trail, NC", path: "/service-areas/indian-trail-nc" },
+            { label: "Charlotte, NC", path: "/service-areas/charlotte-nc" },
+            { label: "Fort Mill, SC", path: "/service-areas/fort-mill-sc" },
+          ],
+        }),
+      ],
+    },
+    {
+      name: `${CAROLINA_SECTION_NAME_PREFIX}FAQ Accordion`,
+      description: "Reusable landscaping FAQ section for residential and commercial pages.",
+      category: "faq",
+      blocks: [
+        block("faq", {
+          items: [
+            {
+              question: "How quickly can you provide an estimate?",
+              answer: "Most residential quote requests receive a follow-up within one business day. Commercial proposal timing depends on property size and scope.",
+            },
+            {
+              question: "Do you handle both residential and commercial properties?",
+              answer: "Yes. Carolina Exterior Landscapes provides residential lawn and landscape services along with commercial grounds maintenance, hardscape, drainage, HOA, and pressure washing services.",
+            },
+            {
+              question: "Are services available across the Charlotte region?",
+              answer: "Yes. We serve Monroe, Union County, Charlotte-area communities, and nearby South Carolina markets including Fort Mill and Rock Hill.",
+            },
+          ],
+        }),
+      ],
+    },
   ];
 }
 
