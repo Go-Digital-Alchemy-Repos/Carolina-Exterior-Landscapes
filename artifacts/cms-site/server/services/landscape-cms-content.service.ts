@@ -577,8 +577,8 @@ function buildMenus(): InsertCmsMenu[] {
   ];
   const mobileNavigation = [
     menuItem("home", "Home", "/"),
-    menuItem("residential", "Residential", "/residential-landscaping", residential),
-    menuItem("commercial", "Commercial", "/commercial", mainCommercial),
+    menuItem("residential", "Residential Services", "/residential-landscaping", residential),
+    menuItem("commercial", "Commercial Services", "/commercial", mainCommercial),
     menuItem("gallery", "Gallery", "/gallery"),
     menuItem("about", "About Us", "/about"),
     menuItem("service-areas", "Service Areas", "/service-areas"),

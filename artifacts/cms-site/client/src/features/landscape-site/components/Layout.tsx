@@ -200,7 +200,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="h-px bg-border/50 my-2" />
 
-          <span className="text-primary text-sm tracking-widest uppercase">Residential</span>
+          <span className="text-primary text-sm tracking-widest uppercase">Residential Services</span>
           <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
             {RESIDENTIAL_SERVICES.map(s => (
               <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
@@ -209,7 +209,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="h-px bg-border/50 my-2" />
 
-          <span className="text-primary text-sm tracking-widest uppercase">Commercial</span>
+          <span className="text-primary text-sm tracking-widest uppercase">Commercial Services</span>
           <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
             {COMMERCIAL_SERVICES.map(s => (
               <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
