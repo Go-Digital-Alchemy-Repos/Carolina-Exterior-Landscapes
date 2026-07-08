@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES } from "@/features/landscape-site/content/site";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "lucide-react";
 import { useState, useEffect } from "react";

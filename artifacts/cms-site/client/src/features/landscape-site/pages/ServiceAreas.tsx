@@ -1,4 +1,5 @@
-import { getPage, LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
+import { getPage } from "@/features/landscape-site/content/pages";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";

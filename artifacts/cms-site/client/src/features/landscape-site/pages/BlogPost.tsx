@@ -1,4 +1,4 @@
-import { getBlogPost, getBlogPosts, getBlogImage } from "@/features/landscape-site/content";
+import { getBlogPost, getBlogPosts, getBlogImage } from "@/features/landscape-site/content/blog";
 import { useLandscapeCmsBlogPost, useLandscapeCmsBlogPosts } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";

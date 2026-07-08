@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
 import { useLandscapeCmsData } from "@/features/landscape-site/use-landscape-cms";
-import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content";
+import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content/base";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { Button } from "@/components/ui/button";

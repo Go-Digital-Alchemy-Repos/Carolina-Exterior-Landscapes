@@ -1,4 +1,4 @@
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
 
 function url(concept: string): string {
   return `${LANDSCAPE_IMAGE_BASE}/services/${concept}.png`;

@@ -1,4 +1,4 @@
-import { getPage } from "@/features/landscape-site/content";
+import { getPage } from "@/features/landscape-site/content/pages";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -8,7 +8,7 @@ import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Leaf, Shield, Clock, MapPin } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content";
+import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
 
 export default function Home() {
   const page = useLandscapeCmsPage("home", getPage("home"));

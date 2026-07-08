@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { BlogPost, LocationContent, PageContent } from "@/features/landscape-site/content";
+import type { BlogPost, LocationContent, PageContent } from "@/features/landscape-site/content/base";
 
 type LandscapeKind = "page" | "location" | "blog" | "virtual";
 

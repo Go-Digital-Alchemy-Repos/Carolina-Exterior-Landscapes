@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Block } from "@/features/landscape-site/content";
+import { Block } from "@/features/landscape-site/content/base";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/features/landscape-site/lib/utils";

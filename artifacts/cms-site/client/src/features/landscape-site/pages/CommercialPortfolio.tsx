@@ -1,6 +1,6 @@
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { useLandscapeCmsData } from "@/features/landscape-site/use-landscape-cms";
-import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content";
+import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content/base";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 

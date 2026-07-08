@@ -53,6 +53,49 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
 
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/scheduler/") ||
+            id.includes("/use-sync-external-store/")
+          ) {
+            return "react";
+          }
+
+          if (id.includes("/@tanstack/")) {
+            return "query";
+          }
+
+          if (
+            id.includes("/@radix-ui/") ||
+            id.includes("/@floating-ui/") ||
+            id.includes("/cmdk/") ||
+            id.includes("/vaul/") ||
+            id.includes("/sonner/")
+          ) {
+            return "ui-primitives";
+          }
+
+          if (id.includes("/lucide-react/")) {
+            return "icons";
+          }
+
+          if (
+            id.includes("/react-hook-form/") ||
+            id.includes("/@hookform/") ||
+            id.includes("/zod/")
+          ) {
+            return "forms";
+          }
+
+          if (
+            id.includes("/leaflet/") ||
+            id.includes("/react-leaflet/") ||
+            id.includes("/@react-leaflet/")
+          ) {
+            return "maps";
+          }
+
           if (id.includes("/@tiptap/")) {
             return "tiptap";
           }

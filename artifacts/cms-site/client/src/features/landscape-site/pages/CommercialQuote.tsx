@@ -2,7 +2,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { getPage } from "@/features/landscape-site/content";
+import { getPage } from "@/features/landscape-site/content/pages";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { COMMERCIAL_SERVICE_OPTIONS, PROPERTY_TYPES } from "@/features/landscape-site/content/site";
