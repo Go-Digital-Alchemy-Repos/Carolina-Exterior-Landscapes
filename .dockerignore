@@ -1,0 +1,16 @@
+.git
+.github
+.DS_Store
+node_modules
+**/node_modules
+dist
+**/dist
+output
+uploads
+**/uploads
+server/public
+**/server/public
+*.tar.gz
+carolina-exterior-landscapes.zip
+attached_assets
+.playwright-cli
