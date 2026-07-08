@@ -191,9 +191,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         aria-hidden={!mobileMenuOpen}
       >
         <nav className="flex flex-col gap-5 px-6 py-6 font-extrabold text-2xl pb-8" aria-label="Mobile navigation">
+          <a href={`tel:${telHref}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
+            <Phone className="h-6 w-6 text-primary" />
+            {displayPhone}
+          </a>
+
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-          <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
-          <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
 
           <div className="h-px bg-border/50 my-2" />
 
@@ -202,7 +205,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {RESIDENTIAL_SERVICES.map(s => (
               <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
             ))}
-            <Link href="/gallery" className="text-primary hover:text-primary/80 transition-colors">Gallery</Link>
           </div>
 
           <div className="h-px bg-border/50 my-2" />
@@ -217,15 +219,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="h-px bg-border/50 my-2" />
 
+          <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
+          <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
           <Link href="/service-areas" className="hover:text-primary transition-colors">Service Areas</Link>
           <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
           <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
 
           <div className="mt-8 flex flex-col gap-4">
-            <a href={`tel:${telHref}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
-              <Phone className="h-6 w-6 text-primary" />
-              {displayPhone}
-            </a>
             <Link href="/get-a-quote">
               <Button size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">GET A QUOTE</Button>
             </Link>

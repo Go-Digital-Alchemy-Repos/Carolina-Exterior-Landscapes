@@ -575,6 +575,17 @@ function buildMenus(): InsertCmsMenu[] {
     menuItem("commercial", "Commercial Hub", "/commercial"),
     ...commercialServices,
   ];
+  const mobileNavigation = [
+    menuItem("home", "Home", "/"),
+    menuItem("residential", "Residential", "/residential-landscaping", residential),
+    menuItem("commercial", "Commercial", "/commercial", mainCommercial),
+    menuItem("gallery", "Gallery", "/gallery"),
+    menuItem("about", "About Us", "/about"),
+    menuItem("service-areas", "Service Areas", "/service-areas"),
+    menuItem("blog", "Blog", "/blog"),
+    menuItem("faq", "FAQ", "/faq"),
+    menuItem("get-a-quote", "Get A Quote", "/get-a-quote"),
+  ];
 
   return [
     {
@@ -589,6 +600,11 @@ function buildMenus(): InsertCmsMenu[] {
         menuItem("about", "About", "/about"),
         menuItem("blog", "Blog", "/blog"),
       ],
+    },
+    {
+      name: "Mobile Navigation",
+      location: "mobile_navigation",
+      items: mobileNavigation,
     },
     {
       name: "Footer Residential",

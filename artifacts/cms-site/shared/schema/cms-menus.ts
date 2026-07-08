@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export const STANDARD_MENU_LOCATIONS = [
   "main_navigation",
+  "mobile_navigation",
   "footer_platform",
   "footer_secondary",
   "footer_resources",
@@ -26,6 +27,7 @@ export type MenuLocation = (typeof MENU_LOCATIONS)[number];
 
 export const MENU_LOCATION_LABELS: Record<MenuLocation, string> = {
   main_navigation: "Main Navigation",
+  mobile_navigation: "Mobile Navigation",
   footer_platform: "Footer Platform Column",
   footer_secondary: "Footer Secondary Column",
   footer_resources: "Footer Resources Column",
