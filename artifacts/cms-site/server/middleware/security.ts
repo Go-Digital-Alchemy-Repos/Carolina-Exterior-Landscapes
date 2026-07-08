@@ -39,7 +39,7 @@ export function securityHeaders(): RequestHandler {
           "https://www.googletagmanager.com",
           "https://static.cloudflareinsights.com",
         ],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: [
           "'self'",
@@ -48,7 +48,6 @@ export function securityHeaders(): RequestHandler {
           "https://*.r2.cloudflarestorage.com",
           "https://*.r2.dev",
           "https://*.tile.openstreetmap.org",
-          "https://unpkg.com",
           "https://*.basemaps.cartocdn.com",
         ],
         connectSrc: [
