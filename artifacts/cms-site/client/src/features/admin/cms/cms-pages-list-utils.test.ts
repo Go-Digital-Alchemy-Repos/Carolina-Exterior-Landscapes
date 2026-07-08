@@ -63,4 +63,38 @@ describe("CMS page list helpers", () => {
 
     expect(sorted.map((item) => item.slug)).toEqual(["newer", "older"]);
   });
+
+  it("toggles status sorting between published-first and archived-first", () => {
+    const pages = [
+      page({ title: "Draft", slug: "draft", status: "draft" }),
+      page({ title: "Archived", slug: "archived", status: "archived" }),
+      page({ title: "Published", slug: "published", status: "published" }),
+      page({ title: "Scheduled", slug: "scheduled", status: "scheduled" }),
+    ];
+
+    expect(sortCmsPages(pages, "status-asc").map((item) => item.status)).toEqual([
+      "published",
+      "scheduled",
+      "draft",
+      "archived",
+    ]);
+    expect(sortCmsPages(pages, "status-desc").map((item) => item.status)).toEqual([
+      "archived",
+      "draft",
+      "scheduled",
+      "published",
+    ]);
+  });
+
+  it("supports bidirectional slug and type sorting", () => {
+    const pages = [
+      page({ title: "B", slug: "beta", pageType: "service" }),
+      page({ title: "A", slug: "alpha", pageType: "custom" }),
+    ];
+
+    expect(sortCmsPages(pages, "slug-asc").map((item) => item.slug)).toEqual(["alpha", "beta"]);
+    expect(sortCmsPages(pages, "slug-desc").map((item) => item.slug)).toEqual(["beta", "alpha"]);
+    expect(sortCmsPages(pages, "type-asc").map((item) => item.pageType)).toEqual(["custom", "service"]);
+    expect(sortCmsPages(pages, "type-desc").map((item) => item.pageType)).toEqual(["service", "custom"]);
+  });
 });

@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Globe, CalendarClock, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Plus, Pencil, Trash2, Eye, EyeOff, Globe, CalendarClock, Search } from "lucide-react";
 import type { CmsPage } from "@shared/schema";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
@@ -37,6 +37,25 @@ const PAGE_TYPE_COLORS: Record<string, string> = {
   location: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
   custom: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400",
 };
+
+type SortableColumn = "title" | "slug" | "type" | "status" | "updated";
+type SortDirection = "asc" | "desc";
+
+const COLUMN_SORTS: Record<SortableColumn, { asc: CmsPageSort; desc: CmsPageSort; defaultDirection: SortDirection }> = {
+  title: { asc: "title-asc", desc: "title-desc", defaultDirection: "asc" },
+  slug: { asc: "slug-asc", desc: "slug-desc", defaultDirection: "asc" },
+  type: { asc: "type-asc", desc: "type-desc", defaultDirection: "asc" },
+  status: { asc: "status-asc", desc: "status-desc", defaultDirection: "asc" },
+  updated: { asc: "updated-asc", desc: "updated-desc", defaultDirection: "desc" },
+};
+
+function getSortState(sort: CmsPageSort): { column: SortableColumn | null; direction: SortDirection | null } {
+  for (const [column, values] of Object.entries(COLUMN_SORTS) as Array<[SortableColumn, typeof COLUMN_SORTS[SortableColumn]]>) {
+    if (sort === values.asc) return { column, direction: "asc" };
+    if (sort === values.desc) return { column, direction: "desc" };
+  }
+  return { column: null, direction: null };
+}
 
 export default function CmsPagesPage() {
   const [, navigate] = useLocation();
@@ -63,6 +82,39 @@ export default function CmsPagesPage() {
 
   const pageLocksById = new Map(pageLocks.map((entry) => [entry.resourceId, entry.lock] as const));
   const visiblePages = useMemo(() => filterAndSortCmsPages(pages, search, sort), [pages, search, sort]);
+  const currentSort = getSortState(sort);
+
+  const setColumnSort = (column: SortableColumn) => {
+    const config = COLUMN_SORTS[column];
+    if (currentSort.column !== column) {
+      setSort(config[config.defaultDirection]);
+      return;
+    }
+    setSort(currentSort.direction === "asc" ? config.desc : config.asc);
+  };
+
+  const renderSortableHeader = (column: SortableColumn, label: string, className = "") => {
+    const isActive = currentSort.column === column;
+    const direction = isActive ? currentSort.direction : null;
+    const Icon = direction === "asc" ? ArrowUp : direction === "desc" ? ArrowDown : ChevronsUpDown;
+
+    return (
+      <th
+        className={`text-left py-3 px-2 text-muted-foreground font-medium ${className}`}
+        aria-sort={isActive ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      >
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-sm text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          onClick={() => setColumnSort(column)}
+          data-testid={`button-sort-pages-${column}`}
+        >
+          {label}
+          <Icon className={`h-3.5 w-3.5 ${isActive ? "text-foreground" : "text-muted-foreground/60"}`} />
+        </button>
+      </th>
+    );
+  };
 
   const publishMutation = useMutation({
     mutationFn: (id: string) => apiRequest("POST", `/api/admin/cms/pages/${id}/publish`),
@@ -141,9 +193,12 @@ export default function CmsPagesPage() {
                       <SelectItem value="updated-asc">Oldest updated</SelectItem>
                       <SelectItem value="created-desc">Recently created</SelectItem>
                       <SelectItem value="created-asc">Oldest created</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                      <SelectItem value="type">Type</SelectItem>
-                      <SelectItem value="slug">Slug</SelectItem>
+                      <SelectItem value="status-asc">Status: Published first</SelectItem>
+                      <SelectItem value="status-desc">Status: Archived first</SelectItem>
+                      <SelectItem value="type-asc">Type A-Z</SelectItem>
+                      <SelectItem value="type-desc">Type Z-A</SelectItem>
+                      <SelectItem value="slug-asc">Slug A-Z</SelectItem>
+                      <SelectItem value="slug-desc">Slug Z-A</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -181,11 +236,11 @@ export default function CmsPagesPage() {
               <table className="w-full text-sm" data-testid="table-cms-pages">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-2 text-muted-foreground font-medium">Title</th>
-                    <th className="text-left py-3 px-2 text-muted-foreground font-medium hidden md:table-cell">Slug</th>
-                    <th className="text-left py-3 px-2 text-muted-foreground font-medium hidden lg:table-cell">Type</th>
-                    <th className="text-left py-3 px-2 text-muted-foreground font-medium">Status</th>
-                    <th className="text-left py-3 px-2 text-muted-foreground font-medium hidden md:table-cell">Updated</th>
+                    {renderSortableHeader("title", "Title")}
+                    {renderSortableHeader("slug", "Slug", "hidden md:table-cell")}
+                    {renderSortableHeader("type", "Type", "hidden lg:table-cell")}
+                    {renderSortableHeader("status", "Status")}
+                    {renderSortableHeader("updated", "Updated", "hidden md:table-cell")}
                     <th className="text-right py-3 px-2 text-muted-foreground font-medium">Actions</th>
                   </tr>
                 </thead>

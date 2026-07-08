@@ -7,9 +7,19 @@ export type CmsPageSort =
   | "updated-asc"
   | "created-desc"
   | "created-asc"
-  | "status"
-  | "type"
-  | "slug";
+  | "status-asc"
+  | "status-desc"
+  | "type-asc"
+  | "type-desc"
+  | "slug-asc"
+  | "slug-desc";
+
+const STATUS_SORT_ORDER = ["published", "scheduled", "draft", "archived"];
+
+function statusRank(status: string): number {
+  const index = STATUS_SORT_ORDER.indexOf(status);
+  return index === -1 ? STATUS_SORT_ORDER.length : index;
+}
 
 function normalize(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -41,6 +51,7 @@ export function sortCmsPages(pages: CmsPage[], sort: CmsPageSort): CmsPage[] {
   const sorted = [...pages];
   sorted.sort((a, b) => {
     const titleCompare = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+    const statusCompare = statusRank(a.status) - statusRank(b.status);
     switch (sort) {
       case "title-desc":
         return b.title.localeCompare(a.title, undefined, { sensitivity: "base" });
@@ -52,11 +63,17 @@ export function sortCmsPages(pages: CmsPage[], sort: CmsPageSort): CmsPage[] {
         return timeValue(b.createdAt) - timeValue(a.createdAt) || titleCompare;
       case "created-asc":
         return timeValue(a.createdAt) - timeValue(b.createdAt) || titleCompare;
-      case "status":
-        return a.status.localeCompare(b.status, undefined, { sensitivity: "base" }) || titleCompare;
-      case "type":
+      case "status-desc":
+        return -statusCompare || titleCompare;
+      case "status-asc":
+        return statusCompare || titleCompare;
+      case "type-desc":
+        return b.pageType.localeCompare(a.pageType, undefined, { sensitivity: "base" }) || titleCompare;
+      case "type-asc":
         return a.pageType.localeCompare(b.pageType, undefined, { sensitivity: "base" }) || titleCompare;
-      case "slug":
+      case "slug-desc":
+        return b.slug.localeCompare(a.slug, undefined, { sensitivity: "base" }) || titleCompare;
+      case "slug-asc":
         return a.slug.localeCompare(b.slug, undefined, { sensitivity: "base" }) || titleCompare;
       case "title-asc":
       default:
