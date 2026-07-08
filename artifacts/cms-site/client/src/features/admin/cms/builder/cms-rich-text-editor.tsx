@@ -1,9 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EditorContent, useEditor } from "@tiptap/react";
+import ImageExtension from "@tiptap/extension-image";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
   Code,
   Italic,
@@ -25,7 +29,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { createCmsLinkExtension, createStarterKit } from "@/lib/tiptap";
+import { CmsTextAlignExtension, createCmsLinkExtension, createStarterKit } from "@/lib/tiptap";
+import { CmsImageUpload } from "../components/cms-image-upload";
 import type { CmsGalleryListItem } from "@shared/schema";
 
 interface CmsRichTextEditorProps {
@@ -82,10 +87,13 @@ export function CmsRichTextEditor({
 }: CmsRichTextEditorProps) {
   const [activeTab, setActiveTab] = useState<"visual" | "html">("visual");
   const [showLinkPanel, setShowLinkPanel] = useState(false);
+  const [showMediaPanel, setShowMediaPanel] = useState(false);
   const [showGalleryPanel, setShowGalleryPanel] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkText, setLinkText] = useState("");
   const [linkOpenInNewTab, setLinkOpenInNewTab] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaAlt, setMediaAlt] = useState("");
   const [selectedGalleryId, setSelectedGalleryId] = useState("");
   const { data: galleries = [] } = useQuery<CmsGalleryListItem[]>({
     queryKey: ["/api/admin/cms/galleries", "published"],
@@ -104,6 +112,13 @@ export function CmsRichTextEditor({
       }),
       Underline,
       createCmsLinkExtension(),
+      ImageExtension.configure({
+        allowBase64: false,
+        HTMLAttributes: {
+          class: "rounded-md",
+        },
+      }),
+      CmsTextAlignExtension,
       Placeholder.configure({
         placeholder: placeholder ?? "Write and format your content here...",
       }),
@@ -177,6 +192,14 @@ export function CmsRichTextEditor({
     setShowGalleryPanel(false);
   };
 
+  const insertMedia = () => {
+    if (!editor || !mediaUrl.trim()) return;
+    editor.chain().focus().setImage({ src: mediaUrl.trim(), alt: mediaAlt.trim() }).run();
+    setMediaUrl("");
+    setMediaAlt("");
+    setShowMediaPanel(false);
+  };
+
   if (!editor) return null;
 
   return (
@@ -239,6 +262,16 @@ export function CmsRichTextEditor({
               <Quote className="h-3.5 w-3.5" />
             </ToolbarButton>
             <ToolbarSep />
+            <ToolbarButton active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setCmsTextAlign("left").run()} title="Align left">
+              <AlignLeft className="h-3.5 w-3.5" />
+            </ToolbarButton>
+            <ToolbarButton active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setCmsTextAlign("center").run()} title="Align center">
+              <AlignCenter className="h-3.5 w-3.5" />
+            </ToolbarButton>
+            <ToolbarButton active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setCmsTextAlign("right").run()} title="Align right">
+              <AlignRight className="h-3.5 w-3.5" />
+            </ToolbarButton>
+            <ToolbarSep />
             <ToolbarButton
               active={showLinkPanel || editor.isActive("link")}
               onClick={() => {
@@ -247,16 +280,30 @@ export function CmsRichTextEditor({
                 setLinkUrl(existingUrl ?? "");
                 setLinkOpenInNewTab(existingTarget === "_blank");
                 setShowLinkPanel((open) => !open);
+                setShowMediaPanel(false);
+                setShowGalleryPanel(false);
               }}
               title="Insert or edit link"
             >
               <LinkIcon className="h-3.5 w-3.5" />
             </ToolbarButton>
             <ToolbarButton
+              active={showMediaPanel}
+              onClick={() => {
+                setShowMediaPanel((open) => !open);
+                setShowLinkPanel(false);
+                setShowGalleryPanel(false);
+              }}
+              title="Insert image"
+            >
+              <Images className="h-3.5 w-3.5" />
+            </ToolbarButton>
+            <ToolbarButton
               active={showGalleryPanel}
               onClick={() => {
                 setShowGalleryPanel((open) => !open);
                 setShowLinkPanel(false);
+                setShowMediaPanel(false);
               }}
               title="Insert gallery"
             >
@@ -348,6 +395,49 @@ export function CmsRichTextEditor({
                       setLinkUrl("");
                       setLinkText("");
                       setLinkOpenInNewTab(false);
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showMediaPanel && (
+            <div className="space-y-3 border-b bg-muted/20 px-3 py-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Image</Label>
+                <CmsImageUpload
+                  value={mediaUrl}
+                  onChange={setMediaUrl}
+                  data-testid={testId ? `${testId}-media-upload` : "cms-richtext-media-upload"}
+                />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div className="space-y-1">
+                  <Label className="text-xs">Alt text</Label>
+                  <Input
+                    value={mediaAlt}
+                    onChange={(event) => setMediaAlt(event.target.value)}
+                    placeholder="Describe the image"
+                    className="h-8 text-xs"
+                    data-testid={testId ? `${testId}-media-alt` : "cms-richtext-media-alt"}
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button type="button" size="sm" className="h-8 text-xs" onClick={insertMedia} disabled={!mediaUrl.trim()}>
+                    Insert Image
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => {
+                      setShowMediaPanel(false);
+                      setMediaUrl("");
+                      setMediaAlt("");
                     }}
                   >
                     <X className="h-3.5 w-3.5" />

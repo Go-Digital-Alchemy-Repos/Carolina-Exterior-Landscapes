@@ -6,7 +6,6 @@ const PLAIN_TEXT_FALLBACK_KEYS = new Set([
   "mobileHeading",
   "title",
   "subtitle",
-  "subheading",
   "eyebrow",
   "badge",
   "label",
@@ -17,9 +16,21 @@ const PLAIN_TEXT_FALLBACK_KEYS = new Set([
   "secondaryText",
   "buttonText",
   "linkText",
-  "quote",
+]);
+
+const RICH_TEXT_FIELD_KEYS = new Set([
   "answer",
+  "body",
+  "caption",
+  "content",
   "description",
+  "details",
+  "message",
+  "quote",
+  "sectionDescription",
+  "subheading",
+  "subtitle",
+  "summary",
 ]);
 
 function decodeBasicEntities(value: string) {
@@ -46,12 +57,18 @@ export function stripHtmlForPlainText(value: string) {
     .trim();
 }
 
-export function shouldUseRichTextEditor(propDef: Pick<PropDef, "type">) {
-  return propDef.type === "richtext";
+export function shouldUseRichTextEditor(propDef: Pick<PropDef, "key" | "type">) {
+  if (propDef.type === "richtext") return true;
+  if (propDef.type !== "textarea") return false;
+  if (propDef.key === "mobileHeading") return false;
+  return RICH_TEXT_FIELD_KEYS.has(propDef.key);
 }
 
-function shouldNormalizePlainText(propDef?: Pick<PropDef, "type">, key?: string) {
-  if (propDef) return propDef.type === "text" || propDef.type === "textarea";
+function shouldNormalizePlainText(propDef?: Pick<PropDef, "key" | "type">, key?: string) {
+  if (propDef) {
+    if (shouldUseRichTextEditor(propDef)) return false;
+    return propDef.type === "text" || propDef.type === "textarea";
+  }
   return key ? PLAIN_TEXT_FALLBACK_KEYS.has(key) : false;
 }
 

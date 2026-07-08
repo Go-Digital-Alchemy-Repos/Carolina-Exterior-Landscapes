@@ -103,6 +103,10 @@ function plainTextLines(value: unknown) {
     .filter(Boolean);
 }
 
+function hasRichMarkup(value: string) {
+  return /<[^>]+>|\[gallery\s+id=/i.test(value);
+}
+
 function items(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
@@ -267,6 +271,15 @@ function renderRichTextWithGalleries(html: string) {
     nodes.push(<div key={`html-${index}`} dangerouslySetInnerHTML={{ __html: part }} />);
   }
   return nodes;
+}
+
+function RichTextContent({ html, className }: { html: string; className?: string }) {
+  if (!html) return null;
+  return hasRichMarkup(html) ? (
+    <div className={className}>{renderRichTextWithGalleries(html)}</div>
+  ) : (
+    <p className={className}>{html}</p>
+  );
 }
 
 function Icon({ name, className }: { name: unknown; className?: string }) {
@@ -439,7 +452,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             <h1 className={heroHeadingClass(heading)}>
               <HeroHeadingText heading={heading} mobileHeading={mobileHeading} />
             </h1>
-            {subheading ? <p className={`mt-5 max-w-3xl text-lg text-white/80 ${heroSubheadingClass(textAlignment, forceServiceHeroDesktopLeft)}`}>{subheading}</p> : null}
+            {subheading ? (
+              <RichTextContent
+                html={subheading}
+                className={`mt-5 max-w-3xl text-lg text-white/80 [&_a]:text-white [&_a]:underline [&_a]:underline-offset-4 [&_img]:mt-5 [&_img]:rounded-md [&_p]:m-0 ${heroSubheadingClass(textAlignment, forceServiceHeroDesktopLeft)}`}
+              />
+            ) : null}
             {buttons.length > 0 || (ctaText && ctaLink) ? (
               <div className={`mt-8 flex flex-wrap gap-3 ${heroActionsClass(textAlignment, forceServiceHeroDesktopLeft)}`}>
                 {buttons.length > 0 ? (
@@ -465,7 +483,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <div className={`mx-auto max-w-4xl px-4 pb-4 pt-12 sm:px-6 ${alignmentClass(props.alignment)}`}>
           {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{eyebrow}</p> : null}
           <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
-          {str(props.subtitle) ? <p className="mt-4 text-muted-foreground">{str(props.subtitle)}</p> : null}
+          {str(props.subtitle) ? (
+            <RichTextContent
+              html={str(props.subtitle)}
+              className="mt-4 text-muted-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_img]:mt-4 [&_img]:rounded-md [&_p]:m-0"
+            />
+          ) : null}
         </div>
       </section>
     );
@@ -590,8 +613,8 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     );
     const renderBody = (className = "") => {
       if (!body) return null;
-      return body.includes("<") ? (
-        <div className={`prose prose-slate max-w-none ${className}`} dangerouslySetInnerHTML={{ __html: body }} />
+      return hasRichMarkup(body) ? (
+        <div className={`prose prose-slate max-w-none ${className}`}>{renderRichTextWithGalleries(body)}</div>
       ) : (
         <p className={`${className} text-muted-foreground`}>{body}</p>
       );
@@ -714,7 +737,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
       <section className={sectionBackgroundClass(props.background)} data-testid="block-cards-grid">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           {str(props.title) ? <h2 className="text-center text-3xl font-semibold tracking-normal">{str(props.title)}</h2> : null}
-          {str(props.subtitle) ? <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">{str(props.subtitle)}</p> : null}
+          {str(props.subtitle) ? (
+            <RichTextContent
+              html={str(props.subtitle)}
+              className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_img]:mx-auto [&_img]:mt-4 [&_img]:rounded-md [&_p]:m-0"
+            />
+          ) : null}
           <div className={`mt-8 grid gap-5 ${gridClass}`}>
             {cards.map((card, index) => {
               const cardTitle = str(card.title) || str(card.label);
@@ -753,8 +781,8 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                       </h3>
                     ) : null}
                     {cardBody ? (
-                      cardBody.includes("<") ? (
-                        <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${cardTitle ? "mt-2" : ""}`} dangerouslySetInnerHTML={{ __html: cardBody }} />
+                      hasRichMarkup(cardBody) ? (
+                        <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${cardTitle ? "mt-2" : ""}`}>{renderRichTextWithGalleries(cardBody)}</div>
                       ) : (
                         <p className={`${cardTitle ? "mt-2" : ""} text-sm text-muted-foreground`}>{cardBody}</p>
                       )
@@ -800,9 +828,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           <div className="rounded-md border bg-muted/40 px-5 py-6 text-center">
             <p className="text-sm font-semibold text-foreground">Google Reviews</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {str(props.message) || "Google reviews will display here once the review widget is configured."}
-            </p>
+            <div className="mt-2 text-sm text-muted-foreground">
+              <RichTextContent
+                html={str(props.message) || "Google reviews will display here once the review widget is configured."}
+                className="[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_p]:m-0"
+              />
+            </div>
             {googleBusinessUrl ? (
               <div className="mt-4">
                 <Button asChild size="sm" variant="outline">
@@ -887,7 +918,11 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             ) : (
               <Quote className="h-5 w-5 text-accent mb-3" />
             )}
-            <p className="text-sm leading-relaxed mb-4 italic">"{str(item.quote)}"</p>
+            {hasRichMarkup(str(item.quote)) ? (
+              <div className="prose prose-slate mb-4 max-w-none text-sm leading-relaxed italic">{renderRichTextWithGalleries(str(item.quote))}</div>
+            ) : (
+              <p className="text-sm leading-relaxed mb-4 italic">"{str(item.quote)}"</p>
+            )}
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
                 <span className="text-xs font-semibold text-accent">{str(item.name, "?").charAt(0)}</span>
@@ -942,7 +977,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                 <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{str(props.eyebrow)}</p>
               ) : null}
               <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
-              {subtitle ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{subtitle}</p> : null}
+              {subtitle ? (
+                <RichTextContent
+                  html={subtitle}
+                  className="mx-auto mt-4 max-w-2xl text-muted-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_img]:mx-auto [&_img]:mt-4 [&_img]:rounded-md [&_p]:m-0"
+                />
+              ) : null}
             </div>
             {reviewItems.length === 0 ? (
               <p className="text-muted-foreground">Add testimonials to display here.</p>
@@ -1089,7 +1129,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <section className={sectionBackgroundClass(props.background)} data-testid="block-cta">
           <div className="mx-auto max-w-4xl px-4 py-8 text-center sm:px-6">
             {str(props.heading) ? <h2 className="text-2xl font-semibold tracking-normal">{str(props.heading)}</h2> : null}
-            {str(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{str(props.subheading)}</p> : null}
+            {str(props.subheading) ? (
+              <RichTextContent
+                html={str(props.subheading)}
+                className="mx-auto mt-4 max-w-2xl text-muted-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_img]:mx-auto [&_img]:mt-4 [&_img]:rounded-md [&_p]:m-0"
+              />
+            ) : null}
             {buttons.length > 0 || (primaryText && primaryLink) ? (
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 {buttons.length > 0 ? (
@@ -1109,7 +1154,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
       <section className="bg-[#2C2C2C] text-white" data-testid="block-cta">
         <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6">
           <h2 className="text-3xl font-semibold tracking-normal">{str(props.heading, "Ready to get started?")}</h2>
-          {str(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-white/75">{str(props.subheading)}</p> : null}
+          {str(props.subheading) ? (
+            <RichTextContent
+              html={str(props.subheading)}
+              className="mx-auto mt-4 max-w-2xl text-white/75 [&_a]:text-white [&_a]:underline [&_a]:underline-offset-4 [&_img]:mx-auto [&_img]:mt-4 [&_img]:rounded-md [&_p]:m-0"
+            />
+          ) : null}
           {buttons.length > 0 || (primaryText && primaryLink) ? (
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               {buttons.length > 0 ? (
@@ -1136,7 +1186,11 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                 <span>{str(item.question, "Question?")}</span>
                 <ChevronDown className="h-5 w-5 shrink-0 text-primary transition-transform group-open:rotate-180" aria-hidden="true" />
               </summary>
-              <p className="mt-3 text-base leading-[1.6] text-[#2C2C2C]/80">{str(item.answer, "Answer.")}</p>
+              {hasRichMarkup(str(item.answer)) ? (
+                <div className="prose prose-slate mt-3 max-w-none text-base leading-[1.6] text-[#2C2C2C]/80">{renderRichTextWithGalleries(str(item.answer, "Answer."))}</div>
+              ) : (
+                <p className="mt-3 text-base leading-[1.6] text-[#2C2C2C]/80">{str(item.answer, "Answer.")}</p>
+              )}
             </details>
           ))}
         </div>

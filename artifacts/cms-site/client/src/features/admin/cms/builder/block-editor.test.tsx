@@ -124,7 +124,7 @@ describe("ResilientBlockEditor", () => {
     );
   });
 
-  it("edits hero subheading as plain textarea text", async () => {
+  it("edits hero subheading as rich text", async () => {
     const client = new QueryClient({
       defaultOptions: {
         queries: {
@@ -154,11 +154,15 @@ describe("ResilientBlockEditor", () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="prop-richtext-subheading"]')).toBeNull();
-    expect(container.querySelector('[data-testid="prop-textarea-subheading"]')).toBeTruthy();
-    expect((container.querySelector('[data-testid="prop-textarea-subheading"]') as HTMLTextAreaElement | null)?.value).toBe(
-      "Supporting copy",
+    expect(heroDef?.propDefs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "subheading", label: "Subheading", type: "richtext" }),
+      ]),
     );
+    expect(container.querySelector('[data-testid="prop-richtext-subheading"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="prop-textarea-subheading"]')).toBeNull();
+    expect(container.textContent).toContain("Visual");
+    expect(container.textContent).toContain("HTML");
   });
 
   it("exposes hero mobile heading as a plain textarea", async () => {

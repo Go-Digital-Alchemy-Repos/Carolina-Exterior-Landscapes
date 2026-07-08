@@ -3,7 +3,7 @@ import { normalizeBuilderPlainTextFields, stripHtmlForPlainText } from "./block-
 import type { BuilderContent } from "./block-registry";
 
 describe("block content normalization", () => {
-  it("strips HTML tags from plain hero text fields", () => {
+  it("strips HTML tags from plain hero text fields while preserving rich supporting copy", () => {
     const content: BuilderContent = {
       blocks: [
         {
@@ -23,7 +23,7 @@ describe("block content normalization", () => {
       h1: "Low Voltage Security Solutions",
       heading: "Main Heading",
       mobileHeading: "Mobile Heading",
-      subheading: "Supporting copy",
+      subheading: "<p>Supporting copy</p>",
     });
   });
 
@@ -45,7 +45,7 @@ describe("block content normalization", () => {
     );
   });
 
-  it("normalizes plain text inside array item schemas", () => {
+  it("normalizes plain text inside array item schemas while preserving rich descriptions", () => {
     const content: BuilderContent = {
       blocks: [
         {
@@ -59,7 +59,7 @@ describe("block content normalization", () => {
     };
 
     expect(normalizeBuilderPlainTextFields(content).blocks[0].props.cards).toEqual([
-      { title: "Cameras", description: "Security camera installs" },
+      { title: "Cameras", description: "<p>Security camera installs</p>" },
     ]);
   });
 
