@@ -1003,6 +1003,18 @@ function contactCmsPageRecord(): InsertCmsPage {
   };
 }
 
+function contactSeoPatch() {
+  const seeded = contactCmsPageRecord();
+  return {
+    title: seeded.title,
+    seoTitle: seeded.seoTitle,
+    seoDescription: seeded.seoDescription,
+    seoKeywords: seeded.seoKeywords,
+    ogImageUrl: seeded.ogImageUrl,
+    canonicalUrl: seeded.canonicalUrl,
+  };
+}
+
 export function getLandscapeCmsSlugs() {
   return new Set([...buildLandscapePages().map((page) => page.slug), CONTACT_PAGE_SLUG]);
 }
@@ -1052,9 +1064,19 @@ export async function ensureLandscapeCmsContent() {
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
   if (!existingContactPage) {
     await storage.cmsPages.createPage(contactCmsPageRecord());
-  } else if (existingContactPage.status !== "published" || existingContactPage.noindex) {
+  } else if (
+    existingContactPage.status !== "published" ||
+    existingContactPage.noindex ||
+    containsSecurityLowVoltageCopy({
+      title: existingContactPage.title,
+      seoTitle: existingContactPage.seoTitle,
+      seoDescription: existingContactPage.seoDescription,
+      seoKeywords: existingContactPage.seoKeywords,
+    })
+  ) {
     await storage.cmsPages.updatePage(existingContactPage.id, {
       ...(hasBuilderBlocks(existingContactPage.content) ? {} : contactCmsPageRecord()),
+      ...contactSeoPatch(),
       status: "published",
       noindex: false,
       publishedAt: existingContactPage.publishedAt ?? new Date(),
