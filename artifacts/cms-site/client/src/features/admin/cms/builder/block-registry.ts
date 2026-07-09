@@ -317,7 +317,8 @@ export const ALL_BLOCKS: BlockDef[] = [
         type: "array-items",
         itemSchema: [
           { key: "title", label: "Title", type: "text" },
-          { key: "description", label: "Description", type: "textarea" },
+          { key: "description", label: "Description", type: "richtext" },
+          { key: "body", label: "Body", type: "richtext" },
           { key: "icon", label: "Icon", type: "text" },
           { key: "linkText", label: "Link Text", type: "text" },
           { key: "linkPath", label: "Link Path", type: "url" },

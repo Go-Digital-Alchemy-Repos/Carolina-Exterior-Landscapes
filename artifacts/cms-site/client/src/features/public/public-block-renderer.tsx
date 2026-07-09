@@ -107,6 +107,15 @@ function legacyContactText(value: string) {
   return /sp\.fa|low voltage|control4|bonded/i.test(value);
 }
 
+function RichCardBody({ html, className = "" }: { html: string; className?: string }) {
+  if (!html) return null;
+  return html.includes("<") ? (
+    <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${className}`} dangerouslySetInnerHTML={{ __html: html }} />
+  ) : (
+    <p className={`${className} text-sm text-muted-foreground`}>{html}</p>
+  );
+}
+
 function items(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
@@ -719,7 +728,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                   <div className="group flex gap-5 py-6 transition-colors hover:bg-[#F8F6F2] sm:px-4">
                     <div className="min-w-0 flex-1">
                       <h3 className="text-xl font-semibold tracking-normal group-hover:text-primary">{str(card.title)}</h3>
-                      <p className="mt-2 text-muted-foreground">{str(card.description) || str(card.body)}</p>
+                      <RichCardBody html={str(card.description) || str(card.body)} className="mt-2" />
                     </div>
                     <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" aria-hidden="true" />
                   </div>
@@ -800,13 +809,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                         )}
                       </h3>
                     ) : null}
-                    {cardBody ? (
-                      cardBody.includes("<") ? (
-                        <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${cardTitle ? "mt-2" : ""}`} dangerouslySetInnerHTML={{ __html: cardBody }} />
-                      ) : (
-                        <p className={`${cardTitle ? "mt-2" : ""} text-sm text-muted-foreground`}>{cardBody}</p>
-                      )
-                    ) : null}
+                    <RichCardBody html={cardBody} className={cardTitle ? "mt-2" : ""} />
                     {str(card.linkText) && linkTarget(card) ? (
                       <Link href={linkTarget(card)} className="mt-4 inline-flex text-sm font-semibold text-primary hover:text-primary/80">
                         {str(card.linkText)}

@@ -556,6 +556,30 @@ describe("PublicBlockRenderer hero", () => {
     expect(image?.style.objectPosition).toBe("35% 20%");
   });
 
+  it("renders rich card grid descriptions", async () => {
+    await act(async () => {
+      root!.render(
+        React.createElement(PublicBlockRenderer, {
+          block: {
+            id: "rich-card-grid-test",
+            type: "cards-grid",
+            props: {
+              cards: [
+                {
+                  title: "Mulch options",
+                  description: "<p><strong>Black Dyed Mulch:</strong> Creates contrast.</p><ul><li>Holds color longer</li></ul>",
+                },
+              ],
+            },
+          },
+        }),
+      );
+    });
+
+    expect(container.querySelector("strong")?.textContent).toBe("Black Dyed Mulch:");
+    expect(container.querySelector("li")?.textContent).toBe("Holds color longer");
+  });
+
   it("links review widgets to the configured Google Business profile", async () => {
     await act(async () => {
       root!.render(
