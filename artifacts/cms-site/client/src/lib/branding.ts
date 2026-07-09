@@ -19,6 +19,8 @@ export interface BrandingSettings {
   secondaryColor: string | null;
   tertiaryColor: string | null;
   quaternaryColor: string | null;
+  eyebrowBackgroundColor: string | null;
+  eyebrowTextColor: string | null;
   h1Color: string | null;
   h2Color: string | null;
   h3ToH6Color: string | null;
@@ -89,6 +91,8 @@ export const DEFAULT_BRANDING_SETTINGS: BrandingSettings = {
   secondaryColor: DEFAULT_BRANDING_VALUES.brand_secondary_color,
   tertiaryColor: DEFAULT_BRANDING_VALUES.brand_tertiary_color,
   quaternaryColor: DEFAULT_BRANDING_VALUES.brand_quaternary_color,
+  eyebrowBackgroundColor: DEFAULT_BRANDING_VALUES.eyebrow_background_color,
+  eyebrowTextColor: DEFAULT_BRANDING_VALUES.eyebrow_text_color,
   h1Color: DEFAULT_BRANDING_VALUES.text_h1_color,
   h2Color: DEFAULT_BRANDING_VALUES.text_h2_color,
   h3ToH6Color: DEFAULT_BRANDING_VALUES.text_h3_h6_color,

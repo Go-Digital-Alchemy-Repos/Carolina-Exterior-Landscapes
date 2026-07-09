@@ -38,7 +38,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16">
           <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-white font-bold tracking-widest text-xs mb-8 border border-white/30 uppercase backdrop-blur-sm [&_svg]:text-white">
+            <span className="public-eyebrow-badge mb-8">
               <Leaf className="h-3 w-3" /> {BRAND.tagline}
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-[1.05] tracking-tight">
@@ -85,7 +85,7 @@ export default function Home() {
         <BotanicalAccent variant="sprig" className="hidden lg:block absolute -right-6 bottom-16 h-64 w-auto text-brand-leaf/15 rotate-12 scale-x-[-1]" />
         <div className="max-w-7xl mx-auto px-4 relative">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-brand-leaf/10 text-brand-leaf font-bold tracking-widest text-xs mb-6 border border-brand-leaf/20 uppercase">
+            <span className="public-eyebrow-badge mb-6">
               <Leaf className="h-3 w-3" /> Field Notes
             </span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-6">Expertise for Every Property</h2>
@@ -155,7 +155,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 relative">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="max-w-2xl">
-              <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-3">Proof In The Work</p>
+              <span className="public-eyebrow-badge mb-3">Proof In The Work</span>
               <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">Recent Finished Projects</h2>
             </div>
             <Button asChild variant="outline" className="rounded-full h-12 px-6 font-bold group/btn shrink-0">
@@ -222,7 +222,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4">
           <div className="max-w-2xl">
-            <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-4">One Company. Complete Care.</p>
+            <span className="public-eyebrow-badge mb-4">One Company. Complete Care.</span>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-8 leading-tight">
               We design it, build it, and keep it thriving.
             </h2>
@@ -257,7 +257,7 @@ export default function Home() {
         <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-16 top-1/2 -translate-y-1/2 h-80 w-auto text-brand-forest/10" />
 
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <span className="inline-block py-1.5 px-4 rounded-full bg-white/40 text-foreground font-bold tracking-widest text-xs mb-8 uppercase backdrop-blur-md border border-white/50">
+          <span className="public-eyebrow-badge mb-8">
             Start Your Project
           </span>
           <h2 className="text-4xl md:text-6xl font-extrabold mb-8 tracking-tight">Ready to transform your property?</h2>

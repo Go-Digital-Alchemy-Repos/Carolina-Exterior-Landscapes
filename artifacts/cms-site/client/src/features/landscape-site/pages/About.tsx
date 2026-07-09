@@ -29,7 +29,7 @@ export default function About() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-primary/20 text-white font-bold tracking-widest text-xs mb-6 border border-white/30 uppercase backdrop-blur-sm [&_svg]:text-white">
+            <span className="public-eyebrow-badge mb-6">
               Our Story
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">{page.h1}</h1>

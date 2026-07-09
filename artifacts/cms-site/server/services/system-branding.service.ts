@@ -32,6 +32,8 @@ const PROJECT_BRANDING_KEYS: BrandingSettingKey[] = [
   "brand_secondary_color",
   "brand_tertiary_color",
   "brand_quaternary_color",
+  "eyebrow_background_color",
+  "eyebrow_text_color",
   "text_h1_color",
   "text_h2_color",
   "text_h3_h6_color",

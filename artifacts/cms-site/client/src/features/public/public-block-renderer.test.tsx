@@ -133,16 +133,16 @@ describe("PublicBlockRenderer hero", () => {
     expect(heading?.className).toContain("max-[640px]:leading-[0.95]");
   });
 
-  it("renders hero eyebrow text as white over image heroes", async () => {
+  it("renders hero eyebrow text in the shared eyebrow badge", async () => {
     await act(async () => {
       root!.render(React.createElement(PublicBlockRenderer, { block: heroBlock({ eyebrow: "Residential Landscaping" }) }));
     });
 
-    const eyebrow = container.querySelector('[data-testid="hero-eyebrow"]') as HTMLParagraphElement | null;
+    const eyebrow = container.querySelector('[data-testid="hero-eyebrow"]') as HTMLSpanElement | null;
 
     expect(eyebrow?.textContent).toBe("Residential Landscaping");
-    expect(eyebrow?.className).toContain("text-white");
-    expect(eyebrow?.className).toContain("[&_svg]:text-white");
+    expect(eyebrow?.className).toContain("public-eyebrow-badge");
+    expect(eyebrow?.className).not.toContain("text-white");
     expect(eyebrow?.className).not.toContain("text-primary");
   });
 

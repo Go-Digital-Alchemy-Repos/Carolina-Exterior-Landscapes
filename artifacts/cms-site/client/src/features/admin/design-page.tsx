@@ -159,6 +159,21 @@ const BRAND_COLORS: ColorField[] = [
   { key: "brand_quaternary_color", label: "Water Blue", fallback: DEFAULT_BRANDING_VALUES.brand_quaternary_color },
 ];
 
+const EYEBROW_COLORS: ColorField[] = [
+  {
+    key: "eyebrow_background_color",
+    label: "Eyebrow Background",
+    fallback: DEFAULT_BRANDING_VALUES.eyebrow_background_color,
+    description: "Background color for the rounded eyebrow badge above hero and section headings.",
+  },
+  {
+    key: "eyebrow_text_color",
+    label: "Eyebrow Text",
+    fallback: DEFAULT_BRANDING_VALUES.eyebrow_text_color,
+    description: "Text color for the rounded eyebrow badge.",
+  },
+];
+
 const TEXT_COLORS: ColorField[] = [
   { key: "text_h1_color", label: "H1", fallback: DEFAULT_BRANDING_VALUES.text_h1_color },
   { key: "text_h2_color", label: "H2", fallback: DEFAULT_BRANDING_VALUES.text_h2_color },
@@ -581,6 +596,25 @@ export default function AdminDesignPage({ initialSubview }: { initialSubview: Br
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2">
                 {BRAND_COLORS.map((field) => (
+                  <ColorInput
+                    key={field.key}
+                    field={field}
+                    value={settingValue(settings, field.key)}
+                    onSave={onSave}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Eyebrow Badge</CardTitle>
+                <CardDescription>
+                  Rounded label styling used above heroes, section headings, and promotional blocks.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                {EYEBROW_COLORS.map((field) => (
                   <ColorInput
                     key={field.key}
                     field={field}

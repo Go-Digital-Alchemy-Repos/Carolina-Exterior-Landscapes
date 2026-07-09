@@ -15,6 +15,8 @@ export const DEFAULT_BRANDING_VALUES = {
   brand_secondary_color: "#103F27",
   brand_tertiary_color: "#F2B326",
   brand_quaternary_color: "#054F79",
+  eyebrow_background_color: "#53823C",
+  eyebrow_text_color: "#ffffff",
   text_h1_color: "#103F27",
   text_h2_color: "#103F27",
   text_h3_h6_color: "#103F27",

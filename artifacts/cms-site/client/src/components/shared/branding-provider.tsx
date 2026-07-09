@@ -39,6 +39,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         secondaryColor: payload?.secondaryColor ?? null,
         tertiaryColor: payload?.tertiaryColor ?? null,
         quaternaryColor: payload?.quaternaryColor ?? "#406A87",
+        eyebrowBackgroundColor: payload?.eyebrowBackgroundColor ?? null,
+        eyebrowTextColor: payload?.eyebrowTextColor ?? null,
         h1Color: payload?.h1Color ?? null,
         h2Color: payload?.h2Color ?? null,
         h3ToH6Color: payload?.h3ToH6Color ?? null,
@@ -73,6 +75,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     const secondaryColor = hexToHslToken(branding.secondaryColor);
     const tertiaryColor = hexToHslToken(branding.tertiaryColor);
     const quaternaryColor = hexToHslToken(branding.quaternaryColor);
+    const eyebrowBackgroundColor = hexToHslToken(branding.eyebrowBackgroundColor);
+    const eyebrowTextColor = hexToHslToken(branding.eyebrowTextColor);
     const h1Color = hexToHslToken(branding.h1Color);
     const h2Color = hexToHslToken(branding.h2Color);
     const h3ToH6Color = hexToHslToken(branding.h3ToH6Color);
@@ -96,6 +100,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         root.style.removeProperty("--accent");
         root.style.removeProperty("--ring");
         root.style.removeProperty("--quaternary");
+        root.style.removeProperty("--public-eyebrow-bg");
+        root.style.removeProperty("--public-eyebrow-text");
         root.style.removeProperty("--foreground");
         root.style.removeProperty("--card-foreground");
         root.style.removeProperty("--popover-foreground");
@@ -153,6 +159,18 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         root.style.setProperty("--quaternary", quaternaryColor);
       } else {
         root.style.removeProperty("--quaternary");
+      }
+
+      if (eyebrowBackgroundColor) {
+        root.style.setProperty("--public-eyebrow-bg", eyebrowBackgroundColor);
+      } else {
+        root.style.removeProperty("--public-eyebrow-bg");
+      }
+
+      if (eyebrowTextColor) {
+        root.style.setProperty("--public-eyebrow-text", eyebrowTextColor);
+      } else {
+        root.style.removeProperty("--public-eyebrow-text");
       }
 
       if (bodyTextColor) {
@@ -266,6 +284,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     branding.secondaryColor,
     branding.tertiaryColor,
     branding.quaternaryColor,
+    branding.eyebrowBackgroundColor,
+    branding.eyebrowTextColor,
     branding.h1Color,
     branding.h2Color,
     branding.h3ToH6Color,

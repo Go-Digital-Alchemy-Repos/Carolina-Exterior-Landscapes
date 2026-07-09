@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/carousel";
 import { useBranding } from "@/components/shared/branding-provider";
 import { GalleryRenderer } from "@/components/shared/gallery-renderer";
-import { PublicFormRenderer } from "@/components/forms/public-form-renderer";
+import { LazyPublicFormRenderer } from "@/components/forms/lazy-public-form-renderer";
 import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 import type { BlockInstance } from "@/features/admin/cms/builder/block-registry";
 import {
@@ -116,6 +117,17 @@ function RichCardBody({ html, className = "" }: { html: string; className?: stri
     <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${className}`} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(html) }} />
   ) : (
     <p className={`${className} text-sm text-muted-foreground`}>{html}</p>
+  );
+}
+
+function EyebrowBadge({ children, className = "", testId }: { children: ReactNode; className?: string; testId?: string }) {
+  return (
+    <span
+      className={`public-eyebrow-badge ${className}`}
+      data-testid={testId}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -589,7 +601,7 @@ function GoogleReviewsBlock({ props, googleBusinessUrl }: { props: Record<string
     <section className={sectionBackgroundClass(props.background)} data-testid="block-review-widget">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="text-center">
-          {str(props.eyebrow) ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{str(props.eyebrow)}</p> : null}
+          {str(props.eyebrow) ? <EyebrowBadge className="mb-3">{str(props.eyebrow)}</EyebrowBadge> : null}
           <h2 className="text-3xl font-semibold tracking-normal">{str(props.title, "What Customers Are Saying")}</h2>
           {plainText(props.subtitle) ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{plainText(props.subtitle)}</p> : null}
           {showPlaceSummary && payload?.rating && payload.userRatingCount ? (
@@ -790,9 +802,9 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <div className={`relative mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 sm:px-6 ${heroPaddingClass} ${heroContainerClass(forceServiceHeroDesktopLeft)}`}>
           <div className={`max-w-5xl ${heroContentClass(textAlignment, forceServiceHeroDesktopLeft)}`} data-testid="hero-content">
             {eyebrow ? (
-              <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white" data-testid="hero-eyebrow">
+              <EyebrowBadge className="mb-4" testId="hero-eyebrow">
                 {eyebrow}
-              </p>
+              </EyebrowBadge>
             ) : null}
             <h1 className={heroHeadingClass(heading)}>
               <HeroHeadingText heading={heading} mobileHeading={mobileHeading} />
@@ -821,7 +833,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-section-header">
         <div className={`mx-auto max-w-4xl px-4 pb-4 pt-12 sm:px-6 ${alignmentClass(props.alignment)}`}>
-          {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{eyebrow}</p> : null}
+          {eyebrow ? <EyebrowBadge className="mb-3">{eyebrow}</EyebrowBadge> : null}
           <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
           {plainText(props.subtitle) ? <p className="mt-4 text-muted-foreground">{plainText(props.subtitle)}</p> : null}
         </div>
@@ -959,7 +971,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const ownerRole = ownerHeadingParts.length > 1 ? ownerHeadingParts.slice(1).join(" — ") : "";
     const headingContent = (
       <>
-        {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{eyebrow}</p> : null}
+        {eyebrow ? <EyebrowBadge className="mb-3">{eyebrow}</EyebrowBadge> : null}
         {ownerName ? (
           <>
             <h2 className="text-2xl font-semibold leading-tight tracking-normal sm:text-3xl">{ownerName}</h2>
@@ -1297,7 +1309,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
           <div className="py-4">
             <div className="mb-8 text-center">
               {str(props.eyebrow) ? (
-                <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{str(props.eyebrow)}</p>
+                <EyebrowBadge className="mb-3">{str(props.eyebrow)}</EyebrowBadge>
               ) : null}
               <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
               {subtitle ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{subtitle}</p> : null}
@@ -1510,7 +1522,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     return (
       <section className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6" data-testid="block-form-embed">
         <div className="rounded-xl border border-border bg-card bg-paper p-6 shadow-natural-lg sm:p-10">
-          <PublicFormRenderer
+          <LazyPublicFormRenderer
             slug={str(props.formSlug) || str(props.formKey, "contact-form")}
             buttonTextOverride={str(props.submitButtonText) || undefined}
             appearance="quote"

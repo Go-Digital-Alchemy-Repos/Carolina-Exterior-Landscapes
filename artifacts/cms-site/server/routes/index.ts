@@ -56,6 +56,8 @@ export function registerApiRoutes(app: Express) {
         secondaryColor: branding.brand_secondary_color || DEFAULT_BRANDING_VALUES.brand_secondary_color,
         tertiaryColor: branding.brand_tertiary_color || DEFAULT_BRANDING_VALUES.brand_tertiary_color,
         quaternaryColor: branding.brand_quaternary_color || DEFAULT_BRANDING_VALUES.brand_quaternary_color,
+        eyebrowBackgroundColor: branding.eyebrow_background_color || DEFAULT_BRANDING_VALUES.eyebrow_background_color,
+        eyebrowTextColor: branding.eyebrow_text_color || DEFAULT_BRANDING_VALUES.eyebrow_text_color,
         h1Color: branding.text_h1_color || DEFAULT_BRANDING_VALUES.text_h1_color,
         h2Color: branding.text_h2_color || DEFAULT_BRANDING_VALUES.text_h2_color,
         h3ToH6Color: branding.text_h3_h6_color || DEFAULT_BRANDING_VALUES.text_h3_h6_color,
@@ -87,6 +89,8 @@ export function registerApiRoutes(app: Express) {
         companyLicense: DEFAULT_BRANDING_VALUES.company_license,
         companyLicensing: DEFAULT_BRANDING_VALUES.company_licensing,
         companyCredentials: DEFAULT_BRANDING_VALUES.company_credentials,
+        eyebrowBackgroundColor: DEFAULT_BRANDING_VALUES.eyebrow_background_color,
+        eyebrowTextColor: DEFAULT_BRANDING_VALUES.eyebrow_text_color,
       });
     }
   });
