@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrandingProvider } from "@/components/shared/branding-provider";
 import { CookieConsentBanner } from "@/components/shared/cookie-consent-banner";
+import { AdminEditPageBanner } from "@/components/shared/admin-edit-page-banner";
 import { ProtectedRoute } from "@/components/shared/protected-route";
 import { loadGa4IfConsented } from "@/lib/analytics-runtime";
 import { subscribeToCookieConsent } from "@/lib/cookie-consent";
@@ -349,6 +350,7 @@ function App() {
             <RouteAdminModeManager />
             <RouteScrollManager />
             <Router />
+            <AdminEditPageBanner />
             <CookieConsentBanner />
           </SetupGuard>
         </TooltipProvider>
