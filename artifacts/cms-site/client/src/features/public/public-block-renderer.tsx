@@ -103,6 +103,10 @@ function plainTextLines(value: unknown) {
     .filter(Boolean);
 }
 
+function legacyContactText(value: string) {
+  return /sp\.fa|low voltage|control4|bonded/i.test(value);
+}
+
 function items(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
@@ -500,14 +504,17 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         .map((value) => value.trim())
         .filter(Boolean)[0] || "";
       const brandingEmail = branding.companyEmail?.trim() || "";
-      const credentials = plainTextLines(branding.companyCredentials || str(content.credential));
+      const fallbackCredential = str(content.credential);
+      const credentials = plainTextLines(branding.companyCredentials || (legacyContactText(fallbackCredential) ? "" : fallbackCredential));
       const name = branding.companyName?.trim() || str(content.name);
       const address = branding.companyAddress?.trim() || [str(content.street), str(content.cityStateZip)].filter(Boolean).join("\n");
       const phoneDisplay = brandingPhone || str(phone.display);
       const emailDisplay = brandingEmail || str(email.display);
       const hours = branding.companyHours?.trim() || str(content.hours);
-      const license = branding.companyLicense?.trim() || str(content.license);
-      const licensing = branding.companyLicensing?.trim() || str(content.licensing);
+      const fallbackLicense = str(content.license);
+      const fallbackLicensing = str(content.licensing);
+      const license = branding.companyLicense?.trim() || (legacyContactText(fallbackLicense) ? "" : fallbackLicense);
+      const licensing = branding.companyLicensing?.trim() || (legacyContactText(fallbackLicensing) ? "" : fallbackLicensing);
       return (
         <section className={sectionBackgroundClass(props.background)} data-testid="block-contact-nap">
           <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
