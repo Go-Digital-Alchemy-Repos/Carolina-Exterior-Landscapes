@@ -1,6 +1,7 @@
 const LANDSCAPE_EXACT_PATHS = new Set([
   "/",
   "/about",
+  "/contact",
   "/get-a-quote",
   "/commercial-quote",
   "/residential-lawn-maintenance",

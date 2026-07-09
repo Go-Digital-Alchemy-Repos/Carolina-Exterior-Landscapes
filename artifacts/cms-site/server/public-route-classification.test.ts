@@ -3,9 +3,9 @@ import { isLandscapePublicRoute } from "./public-landscape-routes";
 import { isRetiredPublicPath } from "./retired-public-routes";
 
 describe("public route classification", () => {
-  it("lets the CMS contact slug render instead of retiring it", () => {
-    expect(isLandscapePublicRoute("/contact")).toBe(false);
-    expect(isLandscapePublicRoute("/contact/")).toBe(false);
+  it("serves the contact URL through the app shell instead of retiring it", () => {
+    expect(isLandscapePublicRoute("/contact")).toBe(true);
+    expect(isLandscapePublicRoute("/contact/")).toBe(true);
     expect(isRetiredPublicPath("/contact")).toBe(false);
     expect(isRetiredPublicPath("/contact/")).toBe(false);
   });

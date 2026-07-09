@@ -18,10 +18,11 @@ function normalizePublicSlug(slug: string) {
 async function getPublicPageBySlug(slug: string) {
   const normalizedSlug = normalizePublicSlug(slug);
   const page = await storage.cmsPages.getPageBySlug(normalizedSlug);
-  if (page) return page;
+  if (page) return { page, allowUnpublished: false };
 
   const aliasId = PUBLIC_PAGE_SLUG_ALIASES[normalizedSlug];
-  return aliasId ? storage.cmsPages.getPage(aliasId) : undefined;
+  const aliasPage = aliasId ? await storage.cmsPages.getPage(aliasId) : undefined;
+  return aliasPage ? { page: aliasPage, allowUnpublished: true } : undefined;
 }
 
 router.get(
@@ -57,11 +58,11 @@ router.get(
   "/pages/by-slug/:slug",
   asyncHandler(async (req, res) => {
     const slug = paramString(req.params.slug);
-    const page = await getPublicPageBySlug(slug);
-    if (!page || page.status !== "published") {
+    const result = await getPublicPageBySlug(slug);
+    if (!result || result.page.status === "archived" || (!result.allowUnpublished && result.page.status !== "published")) {
       return res.status(404).json({ error: "Page not found" });
     }
-    res.json(page);
+    res.json(result.page);
   })
 );
 

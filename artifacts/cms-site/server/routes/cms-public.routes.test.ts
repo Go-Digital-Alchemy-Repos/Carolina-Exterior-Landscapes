@@ -36,7 +36,7 @@ describe("public CMS routes", () => {
       id: "66e31a59-5278-4708-bcba-0da6cb06e154",
       title: "Contact Carolina Exterior Landscapes",
       slug: "contact-carolina-exterior-landscapes",
-      status: "published",
+      status: "draft",
       pageType: "custom",
       content: { blocks: [{ id: "hero", type: "hero", props: {} }] },
     });
