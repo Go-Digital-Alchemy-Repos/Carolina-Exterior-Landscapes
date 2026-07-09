@@ -45,6 +45,8 @@ type MediaMetadataForm = {
   ogDescription: string;
 };
 
+const MEDIA_PAGE_SIZE = 60;
+
 function buildMetadataForm(asset: CmsMediaLibraryAsset | null): MediaMetadataForm {
   return {
     originalName: asset?.originalName ?? "",
@@ -76,6 +78,7 @@ export default function CmsMediaPage() {
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropFileName, setCropFileName] = useState("image.webp");
   const [isPreparingCrop, setIsPreparingCrop] = useState(false);
+  const [visibleAssetCount, setVisibleAssetCount] = useState(MEDIA_PAGE_SIZE);
 
   const { data: assets = [], isLoading } = useQuery<CmsMediaLibraryAsset[]>({
     queryKey: ["/api/admin/cms/media"],
@@ -221,6 +224,12 @@ export default function CmsMediaPage() {
   const totalUnused = assets.filter((asset) => asset.usageCount === 0).length;
   const totalDocuments = assets.filter((asset) => asset.assetKind === "document").length;
 
+  useEffect(() => {
+    setVisibleAssetCount(MEDIA_PAGE_SIZE);
+  }, [search, sortBy, typeFilter, usageFilter]);
+
+  const visibleAssets = filteredAssets.slice(0, visibleAssetCount);
+
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -237,8 +246,8 @@ export default function CmsMediaPage() {
     () => assets.filter((asset) => selectedIds.has(asset.id)),
     [assets, selectedIds],
   );
-  const selectedVisibleCount = filteredAssets.filter((asset) => selectedIds.has(asset.id)).length;
-  const allVisibleSelected = filteredAssets.length > 0 && selectedVisibleCount === filteredAssets.length;
+  const selectedVisibleCount = visibleAssets.filter((asset) => selectedIds.has(asset.id)).length;
+  const allVisibleSelected = visibleAssets.length > 0 && selectedVisibleCount === visibleAssets.length;
 
   const toggleSelected = (id: string) => {
     setSelectedIds((current) => {
@@ -253,9 +262,9 @@ export default function CmsMediaPage() {
     setSelectedIds((current) => {
       const next = new Set(current);
       if (allVisibleSelected) {
-        filteredAssets.forEach((asset) => next.delete(asset.id));
+        visibleAssets.forEach((asset) => next.delete(asset.id));
       } else {
-        filteredAssets.forEach((asset) => next.add(asset.id));
+        visibleAssets.forEach((asset) => next.add(asset.id));
       }
       return next;
     });
@@ -442,7 +451,7 @@ export default function CmsMediaPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredAssets.map((asset) => (
+            {visibleAssets.map((asset) => (
               <div
                 key={asset.id}
                 role="button"
@@ -520,6 +529,21 @@ export default function CmsMediaPage() {
             ))}
           </div>
         )}
+        {!isLoading && visibleAssets.length < filteredAssets.length ? (
+          <div className="flex items-center justify-center gap-3 border-t pt-5">
+            <span className="text-sm text-muted-foreground">
+              Showing {visibleAssets.length} of {filteredAssets.length}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setVisibleAssetCount((count) => count + MEDIA_PAGE_SIZE)}
+              data-testid="button-load-more-media"
+            >
+              Load More
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>

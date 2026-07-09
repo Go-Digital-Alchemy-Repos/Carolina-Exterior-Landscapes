@@ -3,7 +3,6 @@ import { ensureSystemCmsSections } from "./system-cms-sections.service";
 import { ensureSystemDocs } from "./system-docs.service";
 import { ensureSystemEmailTemplates } from "./system-email-templates.service";
 import { ensureSystemForms } from "./system-forms.service";
-import { ensureSystemCmsMedia } from "./system-cms-media.service";
 import { ensureLandscapeCmsContent } from "./landscape-cms-content.service";
 import { ensureSystemBranding } from "./system-branding.service";
 import { populateCmsSeoMetadata } from "./cms-seo-metadata-populator.service";
@@ -13,7 +12,6 @@ export async function runSystemBootstrap() {
 
   await ensureLandscapeCmsContent();
   await ensureSystemBranding();
-  await ensureSystemCmsMedia();
   await populateCmsSeoMetadata();
   await ensureSystemCmsSections();
   await ensureSystemForms();

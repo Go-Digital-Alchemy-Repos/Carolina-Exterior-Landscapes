@@ -28,16 +28,14 @@ function buildAssetNeedles(asset: CmsMediaAsset): string[] {
   return Array.from(needles).filter(Boolean);
 }
 
-function valueReferencesAsset(value: unknown, asset: CmsMediaAsset): boolean {
-  if (!value) return false;
-  if (typeof value === "string") {
-    return buildAssetNeedles(asset).some((needle) => value.includes(needle));
+function searchableValue(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "";
   }
-  if (Array.isArray(value)) return value.some((entry) => valueReferencesAsset(entry, asset));
-  if (typeof value === "object") {
-    return Object.values(value as Record<string, unknown>).some((entry) => valueReferencesAsset(entry, asset));
-  }
-  return false;
 }
 
 function addUsageReference(
@@ -54,6 +52,7 @@ function addUsageReference(
 
 function addFieldUsage<T extends { id: string }>(
   assets: CmsMediaAsset[],
+  assetNeedles: Map<string, string[]>,
   usageMap: Map<string, CmsMediaUsageReference[]>,
   dedupe: Set<string>,
   entity: T,
@@ -64,8 +63,12 @@ function addFieldUsage<T extends { id: string }>(
   isLive: boolean,
   statusLabel: string,
 ) {
+  const searchable = searchableValue(fieldValue);
+  if (!searchable) return;
+
   for (const asset of assets) {
-    if (!valueReferencesAsset(fieldValue, asset)) continue;
+    const needles = assetNeedles.get(asset.id) ?? [];
+    if (!needles.some((needle) => searchable.includes(needle))) continue;
     addUsageReference(usageMap, dedupe, asset.id, {
       entityType: "page",
       entityId: entity.id,
@@ -92,12 +95,13 @@ export async function buildCmsMediaLibraryAssets(
 
   const usageMap = new Map<string, CmsMediaUsageReference[]>();
   const dedupe = new Set<string>();
+  const assetNeedles = new Map(assets.map((asset) => [asset.id, buildAssetNeedles(asset)]));
 
   for (const page of pages) {
     const isLive = page.status === "published";
     const path = page.slug === "home" ? "/" : `/${page.slug}`;
-    addFieldUsage(assets, usageMap, dedupe, page, page.title, path, "ogImageUrl", page.ogImageUrl, isLive, pageStatusLabel(page));
-    addFieldUsage(assets, usageMap, dedupe, page, page.title, path, "content", page.content, isLive, pageStatusLabel(page));
+    addFieldUsage(assets, assetNeedles, usageMap, dedupe, page, page.title, path, "ogImageUrl", page.ogImageUrl, isLive, pageStatusLabel(page));
+    addFieldUsage(assets, assetNeedles, usageMap, dedupe, page, page.title, path, "content", page.content, isLive, pageStatusLabel(page));
   }
 
   if (seoSettings) {
@@ -108,7 +112,9 @@ export async function buildCmsMediaLibraryAssets(
         defaultOgImageUrl: globalSeo.defaultOgImageUrl,
         organizationLogoUrl: globalSeo.organizationLogoUrl,
       })) {
-        if (!valueReferencesAsset(value, asset)) continue;
+        const searchable = searchableValue(value);
+        const needles = assetNeedles.get(asset.id) ?? [];
+        if (!needles.some((needle) => searchable.includes(needle))) continue;
         addUsageReference(usageMap, dedupe, asset.id, {
           entityType: "global_seo",
           entityId: seoEntity.id,
