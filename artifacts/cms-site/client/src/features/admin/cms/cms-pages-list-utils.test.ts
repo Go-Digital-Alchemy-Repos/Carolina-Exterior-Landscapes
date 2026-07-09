@@ -55,6 +55,19 @@ describe("CMS page list helpers", () => {
     expect(filterAndSortCmsPages(pages, "gallery", "title-asc").map((item) => item.slug)).toEqual(["gallery"]);
   });
 
+  it("searches standard CMS Pages by title only", () => {
+    const pages = [
+      page({ title: "Lawn Care", slug: "lawn-care", content: { blocks: [{ text: "Fescue overseeding services" }] } }),
+      page({ title: "Gallery", slug: "gallery", content: { blocks: [{ text: "Finished outdoor projects" }] } }),
+      page({ title: "Commercial Hub", slug: "commercial", seoDescription: "HOA and retail property maintenance" }),
+    ];
+
+    expect(filterAndSortStandardCmsPages(pages, "lawn", "title-asc").map((item) => item.slug)).toEqual(["lawn-care"]);
+    expect(filterAndSortStandardCmsPages(pages, "overseeding", "title-asc")).toEqual([]);
+    expect(filterAndSortStandardCmsPages(pages, "retail maintenance", "title-asc")).toEqual([]);
+    expect(filterAndSortStandardCmsPages(pages, "commercial", "title-asc").map((item) => item.slug)).toEqual(["commercial"]);
+  });
+
   it("supports newest updated sorting", () => {
     const sorted = filterAndSortCmsPages([
       page({ title: "Older", slug: "older", updatedAt: new Date("2026-01-01T00:00:00.000Z") }),

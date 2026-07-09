@@ -176,7 +176,7 @@ export default function CmsPagesPage() {
                   <Input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search pages by title or content keyword"
+                    placeholder="Search pages by title"
                     className="pl-9"
                     data-testid="input-search-pages"
                   />
@@ -230,7 +230,7 @@ export default function CmsPagesPage() {
               <div className="text-center py-16 text-muted-foreground" data-testid="text-empty-page-search">
                 <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No matching pages</p>
-                <p className="text-sm mt-1">Try a different title, slug, or content keyword.</p>
+                <p className="text-sm mt-1">Try a different page title.</p>
                 <Button variant="outline" className="mt-4" onClick={() => setSearch("")}>
                   Clear search
                 </Button>

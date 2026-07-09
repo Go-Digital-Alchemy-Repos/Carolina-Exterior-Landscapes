@@ -47,6 +47,10 @@ export function getCmsPageSearchText(page: CmsPage): string {
     .join(" ");
 }
 
+export function getCmsPageTitleSearchText(page: CmsPage): string {
+  return normalize(page.title);
+}
+
 export function isBlogPostPage(page: CmsPage): boolean {
   return page.pageType === "blog-post";
 }
@@ -121,7 +125,16 @@ export function filterAndSortCmsPages(pages: CmsPage[], search: string, sort: Cm
 }
 
 export function filterAndSortStandardCmsPages(pages: CmsPage[], search: string, sort: CmsPageSort): CmsPage[] {
-  return filterAndSortCmsPages(pages.filter(isStandardCmsPage), search, sort);
+  const terms = normalize(search).split(/\s+/).filter(Boolean);
+  const standardPages = pages.filter(isStandardCmsPage);
+  const filtered = terms.length === 0
+    ? standardPages
+    : standardPages.filter((page) => {
+        const haystack = getCmsPageTitleSearchText(page);
+        return terms.every((term) => haystack.includes(term));
+      });
+
+  return sortCmsPages(filtered, sort);
 }
 
 export function filterAndSortCmsBlogPosts(pages: CmsPage[], search: string, sort: CmsPageSort): CmsPage[] {
