@@ -8,18 +8,9 @@ const mockCreateNote = vi.fn();
 const mockGetClientBySourceLeadId = vi.fn();
 const mockCreateClient = vi.fn();
 const mockCreateClientNote = vi.fn();
-const mockGetDecryptedCategory = vi.fn();
-const mockUpsertSetting = vi.fn();
-const mockInvalidateCategory = vi.fn();
-const mockSendCrmLeadNotificationEmail = vi.fn();
 
 vi.mock("../storage", () => ({
   storage: {
-    settings: {
-      getDecryptedCategory: mockGetDecryptedCategory,
-      upsertSetting: mockUpsertSetting,
-      invalidateCategory: mockInvalidateCategory,
-    },
     crm: {
       findDuplicateLead: mockFindDuplicateLead,
       createLead: mockCreateLead,
@@ -29,16 +20,6 @@ vi.mock("../storage", () => ({
       createClient: mockCreateClient,
       createClientNote: mockCreateClientNote,
     },
-  },
-}));
-
-vi.mock("./email.service", () => ({
-  sendCrmLeadNotificationEmail: mockSendCrmLeadNotificationEmail,
-}));
-
-vi.mock("../utils/logger", () => ({
-  logger: {
-    email: { warn: vi.fn() },
   },
 }));
 
@@ -74,9 +55,6 @@ describe("crm service", () => {
     mockGetClientBySourceLeadId.mockResolvedValue(undefined);
     mockCreateClient.mockImplementation(async (data) => ({ id: "client-1", ...data }));
     mockCreateClientNote.mockResolvedValue({ id: "client-note-1" });
-    mockGetDecryptedCategory.mockResolvedValue({});
-    mockUpsertSetting.mockResolvedValue({});
-    mockSendCrmLeadNotificationEmail.mockResolvedValue(undefined);
   });
 
   it("creates a new lead with normalized inbound data", async () => {
@@ -142,23 +120,6 @@ describe("crm service", () => {
       phone: "7045551212",
       company: "Jane LLC",
       message: "Need a quote",
-    });
-  });
-
-  it("infers commercial quote aliases from form data", async () => {
-    const { inferCrmLeadFromFormData } = await import("./crm.service");
-    expect(inferCrmLeadFromFormData({
-      contactName: "Morgan Manager",
-      companyName: "Acme HOA",
-      email: "morgan@example.com",
-      phone: "7045551313",
-      notes: "Need monthly grounds maintenance.",
-    })).toEqual({
-      name: "Morgan Manager",
-      email: "morgan@example.com",
-      phone: "7045551313",
-      company: "Acme HOA",
-      message: "Need monthly grounds maintenance.",
     });
   });
 

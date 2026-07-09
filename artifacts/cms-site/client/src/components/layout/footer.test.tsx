@@ -50,7 +50,7 @@ describe("Footer", () => {
     const email = footer?.querySelector('a[href="mailto:info@carolinaexteriorlandscapes.com"]') as HTMLAnchorElement | null;
 
     expect(footer?.textContent).toContain("Lawn care, landscaping, hardscape, mulching, and drainage services");
-    expect(footer?.textContent).toContain("Serving Monroe, Union County, and the Greater Charlotte Area");
+    expect(footer?.textContent).toContain("Serving Waxhaw, Union County, and the Greater Charlotte Area");
     expect(phone?.textContent).toContain("(704) 975-5867");
     expect(email?.textContent).toContain("info@carolinaexteriorlandscapes.com");
   });

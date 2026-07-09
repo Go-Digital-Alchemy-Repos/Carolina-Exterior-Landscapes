@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Block } from "@/features/landscape-site/content/base";
+import { Block } from "@/features/landscape-site/content";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/features/landscape-site/lib/utils";
@@ -7,7 +7,6 @@ import { CheckCircle2, ArrowRight, Phone } from "lucide-react";
 import { Link } from "wouter";
 import { CityLinkProvider, LinkedText, resolveCitySlug } from "@/features/landscape-site/lib/cityLinks";
 import { BRAND } from "@/features/landscape-site/content/site";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 type Item = { title: string; text: string };
 
@@ -194,7 +193,7 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
 
   return (
     <CityLinkProvider excludeSlug={excludeSlug}>
-    <div className={cn("relative z-10 w-full space-y-16", className)}>
+    <div className={cn("w-full space-y-16", className)}>
       {groups.map((group, idx) => {
         if (group.type === 'faq') {
           return (
@@ -258,7 +257,7 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
                     <div key={gIdx} className={cn("flex flex-col gap-6 md:gap-10 md:items-center", gIdx % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row")}>
                       <div className="md:w-1/2 shrink-0">
                         <div className="relative overflow-hidden rounded-2xl shadow-md border border-border/60 aspect-[4/3] group">
-                          <LandscapeImage src={serviceImages![item.title]} alt={item.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                          <img src={serviceImages![item.title]} alt={item.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                           <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl pointer-events-none"></div>
                         </div>
                       </div>
@@ -298,7 +297,7 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
                           </div>
                           {citySlug && (
                             <Link href={`/service-areas/${citySlug}`} className="mt-4 inline-flex items-center gap-1.5 font-bold text-sm text-primary hover:gap-2.5 transition-all">
-                              Read More
+                              Explore landscaping in {item.title}
                               <ArrowRight className="h-4 w-4" />
                             </Link>
                           )}
@@ -327,18 +326,18 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
                     ))}
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Link href="/get-a-quote">
-                    <Button size="lg" className="font-bold h-14 rounded-full px-8 shadow-md group">
+                  <Button asChild size="lg" className="font-bold h-14 rounded-full px-8 shadow-md group">
+                    <Link href="/get-a-quote">
                       REQUEST A QUOTE
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                  <a href={`tel:${BRAND.phoneTel}`}>
-                    <Button variant="outline" size="lg" className="font-bold h-14 rounded-full px-8 bg-background">
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="font-bold h-14 rounded-full px-8 bg-background">
+                    <a href={`tel:${BRAND.phoneTel}`}>
                       <Phone className="mr-2 h-4 w-4 text-primary" />
                       {BRAND.phoneDisplay}
-                    </Button>
-                  </a>
+                    </a>
+                  </Button>
                 </div>
               </div>
             </div>

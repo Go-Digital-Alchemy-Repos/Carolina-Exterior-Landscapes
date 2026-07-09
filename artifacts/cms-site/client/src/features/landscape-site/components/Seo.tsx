@@ -1,36 +1,6 @@
 import { useEffect } from "react";
 import { BRAND } from "@/features/landscape-site/content/site";
-
-const landscapeBusinessJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "LandscapingBusiness",
-  name: BRAND.name,
-  description:
-    "Residential and commercial landscaping, lawn maintenance, hardscape, and drainage serving Monroe, Union County, and the greater Charlotte region.",
-  url: BRAND.domain,
-  telephone: BRAND.phoneTel,
-  email: BRAND.email,
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: BRAND.addressLocality,
-    addressRegion: BRAND.addressRegion,
-    postalCode: BRAND.postalCode,
-    addressCountry: "US",
-  },
-  areaServed: [
-    "Monroe NC",
-    "Marvin NC",
-    "Wesley Chapel NC",
-    "Waxhaw NC",
-    "Indian Trail NC",
-    "Mineral Springs NC",
-    "Weddington NC",
-    "Charlotte NC",
-    "Indian Land SC",
-    "Lancaster SC",
-  ],
-  priceRange: "$$",
-} as const;
+import { compactSeoDescription, compactSeoTitle } from "@/lib/seo-text";
 
 function upsertMeta(selector: string, attr: string, key: string, content: string) {
   let el = document.head.querySelector(selector);
@@ -40,6 +10,26 @@ function upsertMeta(selector: string, attr: string, key: string, content: string
     document.head.appendChild(el);
   }
   el.setAttribute("content", content);
+}
+
+function schemaKey(schema: Record<string, unknown>) {
+  const type = typeof schema["@type"] === "string" ? schema["@type"] : "unknown";
+  const id = typeof schema["@id"] === "string" ? schema["@id"] : "";
+  const url = typeof schema.url === "string" ? schema.url : "";
+  if (id) return `${type}:${id}`;
+  if (url) return `${type}:${url}`;
+  const name = typeof schema.name === "string" ? schema.name : "";
+  return `${type}:${name || "singleton"}`;
+}
+
+function parseSchema(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 export function Seo({
@@ -54,23 +44,25 @@ export function Seo({
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }) {
   useEffect(() => {
-    document.title = title;
+    const effectiveTitle = compactSeoTitle(title);
+    const effectiveDescription = compactSeoDescription(description);
+    document.title = effectiveTitle;
 
-    upsertMeta('meta[name="description"]', "name", "description", description);
-    upsertMeta('meta[property="og:title"]', "property", "og:title", title);
+    upsertMeta('meta[name="description"]', "name", "description", effectiveDescription);
+    upsertMeta('meta[property="og:title"]', "property", "og:title", effectiveTitle);
     upsertMeta(
       'meta[property="og:description"]',
       "property",
       "og:description",
-      description,
+      effectiveDescription,
     );
     upsertMeta('meta[property="og:type"]', "property", "og:type", type);
-    upsertMeta('meta[name="twitter:title"]', "name", "twitter:title", title);
+    upsertMeta('meta[name="twitter:title"]', "name", "twitter:title", effectiveTitle);
     upsertMeta(
       'meta[name="twitter:description"]',
       "name",
       "twitter:description",
-      description,
+      effectiveDescription,
     );
 
     const canonicalHref = `${BRAND.domain}${window.location.pathname}`;
@@ -83,25 +75,31 @@ export function Seo({
     canonical.setAttribute("href", canonicalHref);
     upsertMeta('meta[property="og:url"]', "property", "og:url", canonicalHref);
 
-    const schemas = [
-      landscapeBusinessJsonLd,
-      ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []),
-    ];
-    const scripts = schemas.map((schema, index) => {
-      const script = document.createElement("script");
+    let script: HTMLScriptElement | null = null;
+    if (jsonLd) {
+      const schemas = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+      const keys = new Set(schemas.map(schemaKey));
+
+      document
+        .querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"][data-prerender-json-ld="true"]')
+        .forEach((existingScript) => {
+          const existingSchema = parseSchema(existingScript.textContent);
+          if (existingSchema && keys.has(schemaKey(existingSchema))) {
+            existingScript.remove();
+          }
+        });
+
+      script = document.createElement("script");
       script.type = "application/ld+json";
-      script.setAttribute("data-seo-jsonld", `landscape-${index}`);
-      script.textContent = JSON.stringify(schema);
+      script.setAttribute("data-seo-jsonld", "true");
+      script.textContent = JSON.stringify(jsonLd);
       document.head.appendChild(script);
-      return script;
-    });
+    }
 
     return () => {
-      scripts.forEach((script) => {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
-      });
+      if (script && script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, [title, description, type, jsonLd]);
 

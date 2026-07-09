@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../middleware/error-handler";
 import * as r2Service from "../services/r2.service";
-import { resolveBestR2CmsImageKey } from "../services/cms-image-variants.service";
 
 const router = Router();
 
@@ -21,12 +20,7 @@ router.get(
       return res.status(404).send("Not found");
     }
 
-    res.vary("Accept");
-    const preferredKey = resolveBestR2CmsImageKey(key, req.headers.accept);
-    let downloaded = await r2Service.downloadFile(preferredKey);
-    if (!downloaded && preferredKey !== key) {
-      downloaded = await r2Service.downloadFile(key);
-    }
+    const downloaded = await r2Service.downloadFile(key);
     if (!downloaded) {
       return res.status(404).send("Not found");
     }

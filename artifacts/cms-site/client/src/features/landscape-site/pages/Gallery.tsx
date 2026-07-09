@@ -1,14 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
-import { useLandscapeCmsData } from "@/features/landscape-site/use-landscape-cms";
-import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content/base";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
+
+import res1 from "@/features/landscape-site/assets/gallery-res-1.webp";
+import res2 from "@/features/landscape-site/assets/gallery-res-2.webp";
+import res3 from "@/features/landscape-site/assets/gallery-res-3.webp";
+import com1 from "@/features/landscape-site/assets/gallery-com-1.webp";
+import com2 from "@/features/landscape-site/assets/gallery-com-2.webp";
+import com3 from "@/features/landscape-site/assets/gallery-com-3.webp";
+import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.webp";
+import heroMulch from "@/features/landscape-site/assets/hero-mulch.webp";
+import heroDrainage from "@/features/landscape-site/assets/hero-drainage.webp";
+import heroCommercial from "@/features/landscape-site/assets/hero-commercial.webp";
 
 type Category = "residential" | "commercial";
 type Filter = "all" | Category;
@@ -24,15 +32,15 @@ interface Project {
 
 const PROJECTS: Project[] = [
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`,
+    src: res1,
     alt: "Landscape design with natural stone retaining wall and layered plantings",
     title: "Retaining Wall & Landscape Design",
-    location: "Fort Mill, SC",
+    location: "Waxhaw, NC",
     category: "residential",
     tag: "Landscaping",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-2.png`,
+    src: res2,
     alt: "Striped residential lawn with vibrant flower beds and clean edging",
     title: "Full Lawn Renovation & Beds",
     location: "Rock Hill, SC",
@@ -40,7 +48,7 @@ const PROJECTS: Project[] = [
     tag: "Lawn Care",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/gallery-res-3.png`,
+    src: res3,
     alt: "Natural stone patio and outdoor living space with seating area",
     title: "Stone Patio & Outdoor Living",
     location: "Tega Cay, SC",
@@ -48,7 +56,7 @@ const PROJECTS: Project[] = [
     tag: "Hardscape",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/hero-hardscape.png`,
+    src: heroHardscape,
     alt: "Custom paver patio hardscape installation",
     title: "Custom Paver Patio",
     location: "Indian Land, SC",
@@ -56,7 +64,7 @@ const PROJECTS: Project[] = [
     tag: "Hardscape",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/hero-mulch.png`,
+    src: heroMulch,
     alt: "Freshly mulched garden beds with seasonal plantings",
     title: "Mulch Refresh & Seasonal Planting",
     location: "York, SC",
@@ -64,7 +72,7 @@ const PROJECTS: Project[] = [
     tag: "Mulch & Planting",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/hero-drainage.png`,
+    src: heroDrainage,
     alt: "French drain and drainage solution installation in a residential yard",
     title: "Drainage Correction",
     location: "Clover, SC",
@@ -72,7 +80,7 @@ const PROJECTS: Project[] = [
     tag: "Drainage",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-1.png`,
+    src: com1,
     alt: "Corporate office park with manicured grounds and entry landscaping",
     title: "Office Park Grounds Program",
     location: "Rock Hill, SC",
@@ -80,15 +88,15 @@ const PROJECTS: Project[] = [
     tag: "Grounds Maintenance",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`,
+    src: com2,
     alt: "HOA community entrance with signage landscaping and seasonal color",
     title: "HOA Entrance Enhancement",
-    location: "Fort Mill, SC",
+    location: "Marvin, NC",
     category: "commercial",
     tag: "HOA Services",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-3.png`,
+    src: com3,
     alt: "Commercial property hardscape walkways and plaza landscaping",
     title: "Commercial Walkways & Plaza",
     location: "Charlotte, NC",
@@ -96,7 +104,7 @@ const PROJECTS: Project[] = [
     tag: "Hardscape",
   },
   {
-    src: `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
+    src: heroCommercial,
     alt: "Pristine commercial property grounds with maintained turf and beds",
     title: "Retail Center Maintenance",
     location: "Pineville, NC",
@@ -112,20 +120,10 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 export default function Gallery() {
-  const cmsPage = useLandscapeCmsData<{ media?: LandscapeMedia }>("gallery", {
-    media: {
-      heroImageUrl: `${LANDSCAPE_IMAGE_BASE}/hero-gallery.png`,
-      heroImageAlt: "Manicured residential lawn and landscape beds framing a white brick home",
-      projects: PROJECTS,
-    },
-  });
   const [filter, setFilter] = useState<Filter>("all");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const projects = cmsPage.media?.projects ?? PROJECTS;
-  const heroImage = cmsPage.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/hero-gallery.png`;
-  const heroAlt = cmsPage.media?.heroImageAlt ?? "Manicured residential lawn and landscape beds framing a white brick home";
-  const visible = filter === "all" ? projects : projects.filter(p => p.category === filter);
+  const visible = filter === "all" ? PROJECTS : PROJECTS.filter(p => p.category === filter);
 
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
   const showPrev = useCallback(() => {
@@ -160,20 +158,11 @@ export default function Gallery() {
       />
 
       {/* Hero */}
-      <div className="py-20 md:py-24 px-4 text-center relative overflow-hidden">
-        <LandscapeImage
-          src={heroImage}
-          alt={heroAlt}
-          className="absolute inset-0 h-full w-full object-cover"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-black/25 pointer-events-none"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/20 to-transparent pointer-events-none"></div>
-        <div className="absolute inset-0 bg-topo-light opacity-20 mix-blend-multiply pointer-events-none"></div>
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-6 top-1/2 -translate-y-1/2 h-64 w-auto text-white/10" />
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 h-64 w-auto text-white/10 scale-x-[-1]" />
+      <div className="bg-foreground py-20 md:py-24 px-4 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 h-64 w-auto text-primary/15 scale-x-[-1]" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <p className="text-white font-extrabold text-sm tracking-widest uppercase mb-4">Our Work</p>
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-5">Project Gallery</h1>
@@ -213,14 +202,14 @@ export default function Gallery() {
               className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg hover:-translate-y-1 transition-all duration-500 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               aria-label={`View larger photo: ${project.title}`}
             >
-              <LandscapeImage
+              <img
                 src={project.src}
                 alt={project.alt}
                 loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
               <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-foreground text-xs font-extrabold tracking-wide uppercase px-3 py-1.5 rounded-full">
                 {project.tag}
               </span>
@@ -242,22 +231,22 @@ export default function Gallery() {
       <section className="surface-sand bg-paper py-20 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-4 bottom-6 h-64 w-auto text-brand-leaf/10 -rotate-12" />
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center relative">
           <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-5">Want results like these on your property?</h2>
           <p className="text-lg text-muted-foreground font-medium mb-8">
             Tell us about your project and we'll put together a free, no-pressure quote — usually within one business day.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/get-a-quote">
-              <Button size="lg" className="rounded-full px-8 h-14 font-extrabold tracking-wide shadow-lg shadow-primary/20 w-full sm:w-auto">
+            <Button asChild size="lg" className="rounded-full px-8 h-14 font-extrabold tracking-wide shadow-lg shadow-primary/20 w-full sm:w-auto">
+              <Link href="/get-a-quote">
                 GET A FREE QUOTE <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/commercial-quote">
-              <Button size="lg" variant="outline" className="rounded-full px-8 h-14 font-bold tracking-wide w-full sm:w-auto">
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-full px-8 h-14 font-bold tracking-wide w-full sm:w-auto">
+              <Link href="/commercial-quote">
                 Commercial Inquiry
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -265,7 +254,7 @@ export default function Gallery() {
       {/* Lightbox */}
       {activeProject && (
         <div
-          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-foreground/95 backdrop-blur-sm flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label={activeProject.title}
@@ -298,7 +287,7 @@ export default function Gallery() {
             className="max-w-5xl w-full max-h-[85vh] flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <LandscapeImage
+            <img
               src={activeProject.src}
               alt={activeProject.alt}
               decoding="async"

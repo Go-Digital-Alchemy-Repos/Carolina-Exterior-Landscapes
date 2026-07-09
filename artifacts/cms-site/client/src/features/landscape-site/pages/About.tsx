@@ -1,20 +1,18 @@
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
-import { getPage } from "@/features/landscape-site/content/pages";
+import { getPage } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { VALUE_PROPS, BRAND } from "@/features/landscape-site/content/site";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
+import heroImg from "@/features/landscape-site/assets/about-story.webp";
 
 export default function About() {
   const page = useLandscapeCmsPage("about", getPage("about"));
   if (!page) return null;
-  const heroImg = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/about-story.png`;
 
   return (
     <div className="w-full bg-background">
@@ -22,9 +20,9 @@ export default function About() {
       
       <div className="relative w-full h-[55vh] min-h-[450px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <LandscapeImage src={heroImg} alt="About Carolina Exterior" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
-          <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
+          <img src={heroImg} alt="About Carolina Exterior" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-85" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
 
         <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />
@@ -43,7 +41,7 @@ export default function About() {
       <div className="relative surface-stone bg-paper overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+        <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={page.blocks} />
         </div>
@@ -65,6 +63,18 @@ export default function About() {
               ))}
             </ul>
           </div>
+          
+          <div className="bg-primary text-primary-foreground p-10 rounded-3xl text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
+            <h3 className="text-2xl font-extrabold mb-4 relative z-10">Join Our Team</h3>
+            <p className="font-medium text-primary-foreground/90 mb-8 relative z-10 leading-relaxed">
+              We are always looking for hardworking individuals who share our passion for the outdoors and commitment to quality.
+            </p>
+            <Button variant="secondary" className="w-full font-bold h-14 rounded-full relative z-10 group text-primary">
+              VIEW OPENINGS
+              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
         </div>
       </div>
       </div>
@@ -78,11 +88,11 @@ export default function About() {
         <div className="relative z-10 max-w-3xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight">Experience the difference.</h2>
           <p className="text-xl font-medium opacity-90 mb-10 leading-relaxed">Let us show you what reliable, premium landscaping looks like.</p>
-          <Link href="/get-a-quote">
-            <Button size="lg" className="h-16 px-10 text-lg font-bold rounded-full shadow-xl shadow-primary/20 hover:-translate-y-1 transition-transform">
+          <Button asChild size="lg" className="h-16 px-10 text-lg font-bold rounded-full shadow-xl shadow-primary/20 hover:-translate-y-1 transition-transform">
+            <Link href="/get-a-quote">
               REQUEST A QUOTE
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

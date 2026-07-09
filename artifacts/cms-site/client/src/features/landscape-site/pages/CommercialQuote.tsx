@@ -2,7 +2,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { getPage } from "@/features/landscape-site/content/pages";
+import { getPage } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { COMMERCIAL_SERVICE_OPTIONS, PROPERTY_TYPES } from "@/features/landscape-site/content/site";
@@ -186,7 +186,7 @@ export default function CommercialQuote() {
                       <FormItem className="md:col-span-2">
                         <FormLabel className="font-bold">Primary Property Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="123 Main St, Monroe NC" {...field} />
+                          <Input placeholder="123 Main St, Waxhaw NC" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

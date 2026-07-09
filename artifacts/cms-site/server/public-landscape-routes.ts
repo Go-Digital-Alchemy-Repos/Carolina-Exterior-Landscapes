@@ -1,3 +1,6 @@
+import blogData from "../client/src/features/landscape-site/content/blog.json";
+import locationsData from "../client/src/features/landscape-site/content/locations.json";
+
 const LANDSCAPE_EXACT_PATHS = new Set([
   "/",
   "/about",
@@ -7,6 +10,7 @@ const LANDSCAPE_EXACT_PATHS = new Set([
   "/residential-lawn-maintenance",
   "/residential-landscaping",
   "/residential-hardscape",
+  "/residential-pressure-washing",
   "/mulching-and-planting",
   "/drainage-solutions",
   "/commercial",
@@ -14,6 +18,7 @@ const LANDSCAPE_EXACT_PATHS = new Set([
   "/commercial-landscaping",
   "/commercial-hardscape",
   "/commercial-drainage",
+  "/commercial-pressure-washing",
   "/hoa-services",
   "/service-areas",
   "/blog",
@@ -23,10 +28,19 @@ const LANDSCAPE_EXACT_PATHS = new Set([
   "/commercial-faq",
 ]);
 
-const LANDSCAPE_PREFIXES = [
-  "/service-areas/",
-  "/blog/",
-];
+const BLOG_POST_PATHS = new Set(
+  (blogData as Array<{ slug?: string }>)
+    .map((post) => post.slug)
+    .filter((slug): slug is string => Boolean(slug))
+    .map((slug) => `/blog/${slug}`),
+);
+
+const SERVICE_AREA_PATHS = new Set(
+  (locationsData as Array<{ slug?: string }>)
+    .map((location) => location.slug)
+    .filter((slug): slug is string => Boolean(slug))
+    .map((slug) => `/service-areas/${slug}`),
+);
 
 function normalizePathname(pathname: string) {
   if (!pathname || pathname === "/") return "/";
@@ -35,5 +49,9 @@ function normalizePathname(pathname: string) {
 
 export function isLandscapePublicRoute(pathname: string) {
   const normalized = normalizePathname(pathname);
-  return LANDSCAPE_EXACT_PATHS.has(normalized) || LANDSCAPE_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+  return (
+    LANDSCAPE_EXACT_PATHS.has(normalized) ||
+    BLOG_POST_PATHS.has(normalized) ||
+    SERVICE_AREA_PATHS.has(normalized)
+  );
 }

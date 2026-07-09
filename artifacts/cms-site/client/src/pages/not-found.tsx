@@ -8,7 +8,6 @@ const serviceLinks = [
   { text: "Lawn Maintenance", path: "/residential-lawn-maintenance/" },
   { text: "Residential Landscaping", path: "/residential-landscaping/" },
   { text: "Hardscape", path: "/residential-hardscape/" },
-  { text: "Pressure Washing", path: "/residential-pressure-washing/" },
   { text: "Mulching & Planting", path: "/mulching-and-planting/" },
   { text: "Drainage Solutions", path: "/drainage-solutions/" },
   { text: "Commercial Grounds", path: "/commercial-grounds-maintenance/" },

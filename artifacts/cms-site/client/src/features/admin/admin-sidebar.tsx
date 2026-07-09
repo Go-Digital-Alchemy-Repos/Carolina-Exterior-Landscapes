@@ -13,6 +13,7 @@ import {
   Images,
   LayoutDashboard,
   LogOut,
+  Mail,
   Menu as MenuIcon,
   Newspaper,
   Palette,
@@ -104,6 +105,7 @@ export function buildNavGroups(
       label: "System",
       items: [
         { title: "Documentation", href: "/admin/docs", icon: FileText, iconColor: "text-indigo-600" },
+        { title: "System Emails", href: "/admin/system/emails", icon: Mail, iconColor: "text-emerald-600" },
         { title: "System Backups", href: "/admin/system/backups", icon: Database, iconColor: "text-cyan-600" },
         { title: "System Users", href: "/admin/users", icon: Users, iconColor: "text-blue-600" },
         { title: "Settings", href: "/admin/settings", icon: Settings, iconColor: "text-slate-500" },

@@ -22,14 +22,12 @@ const LANDSCAPE_SERVICES = [
   { name: "Annual Lawn Maintenance", path: "/residential-lawn-maintenance/" },
   { name: "Residential Landscaping", path: "/residential-landscaping/" },
   { name: "Residential Hardscape", path: "/residential-hardscape/" },
-  { name: "Residential Pressure Washing", path: "/residential-pressure-washing/" },
   { name: "Mulching and Planting", path: "/mulching-and-planting/" },
   { name: "Drainage Solutions", path: "/drainage-solutions/" },
   { name: "Commercial Grounds Maintenance", path: "/commercial-grounds-maintenance/" },
   { name: "Commercial Landscaping", path: "/commercial-landscaping/" },
   { name: "Commercial Hardscape", path: "/commercial-hardscape/" },
   { name: "Commercial Drainage", path: "/commercial-drainage/" },
-  { name: "Commercial Pressure Washing", path: "/commercial-pressure-washing/" },
   { name: "HOA Services", path: "/hoa-services/" },
 ];
 
@@ -86,9 +84,9 @@ export function buildOrganizationLd(globalSeo: SeoSettings): JsonLdObject | null
     image: absoluteUrl(LANDSCAPE_SCHEMA_LOGO_PATH, siteUrl),
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Monroe",
+    addressLocality: "Waxhaw",
       addressRegion: "NC",
-      postalCode: "28110",
+      postalCode: "28173",
       addressCountry: "US",
     },
     logo: {

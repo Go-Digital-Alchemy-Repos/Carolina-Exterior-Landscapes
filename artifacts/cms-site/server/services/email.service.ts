@@ -158,6 +158,19 @@ export function renderTemplate(template: string, vars: Record<string, string | n
   return result;
 }
 
+function escapeHtml(value: string | null | undefined): string {
+  return (value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeTemplateVars(vars: Record<string, string | null>): Record<string, string> {
+  return Object.fromEntries(Object.entries(vars).map(([key, value]) => [key, escapeHtml(value)]));
+}
+
 async function getTemplateHtml(
   slug: string,
   vars: Record<string, string | null>,
@@ -170,7 +183,7 @@ async function getTemplateHtml(
     if (template) {
       return {
         subject: renderTemplate(template.subject, vars),
-        html: await renderEmailShell("", renderTemplate(template.htmlBody, vars)),
+        html: await renderEmailShell("", renderTemplate(template.htmlBody, escapeTemplateVars(vars))),
         isActive: template.isActive,
       };
     }
@@ -251,12 +264,33 @@ export async function sendContactFormEmail(
   email: string,
   message: string,
   adminUrl: string,
+  options: {
+    formName?: string;
+    phone?: string;
+    subject?: string;
+    sourcePage?: string;
+  } = {},
 ): Promise<void> {
-  const html = await renderEmailShell(
-    "New contact form submission",
-    `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p>${message}</p><p><a href="${adminUrl}">View submissions</a></p>`,
+  const formName = options.formName || "Contact Form";
+  const vars = {
+    formName,
+    senderName: name,
+    senderEmail: email,
+    senderPhone: options.phone || "",
+    subject: options.subject || "Contact form submission",
+    submissionSummary: message,
+    sourcePage: options.sourcePage || "Website",
+    adminUrl,
+  };
+  const fallbackSubject = `New ${formName} submission from ${name}`;
+  const template = await getTemplateHtml(
+    "website-form-submission",
+    vars,
+    fallbackSubject,
+    `<p>A new <strong>${escapeHtml(formName)}</strong> submission was received.</p><p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(message)}</pre><p><a href="${escapeHtml(adminUrl)}">View submissions</a></p>`,
   );
-  await Promise.all(to.map((recipient) => sendEmail(recipient, `New contact form submission from ${name}`, html)));
+  if (!template.isActive) return;
+  await Promise.all(to.map((recipient) => sendEmail(recipient, template.subject, template.html)));
 }
 
 export async function sendManagedFormSubmissionEmail(
@@ -264,40 +298,33 @@ export async function sendManagedFormSubmissionEmail(
   formName: string,
   submissionSummary: string,
   adminUrl: string,
+  options: {
+    senderName?: string;
+    senderEmail?: string;
+    senderPhone?: string;
+    subject?: string;
+    sourcePage?: string;
+  } = {},
 ): Promise<void> {
-  const html = await renderEmailShell(
-    "New form submission",
-    `<p>A new submission was received for <strong>${formName}</strong>.</p><pre style="white-space:pre-wrap;font-family:inherit;">${submissionSummary}</pre><p><a href="${adminUrl}">View submissions</a></p>`,
+  const vars = {
+    formName,
+    senderName: options.senderName || "Website visitor",
+    senderEmail: options.senderEmail || "",
+    senderPhone: options.senderPhone || "",
+    subject: options.subject || "Form submission",
+    submissionSummary,
+    sourcePage: options.sourcePage || "Website",
+    adminUrl,
+  };
+  const fallbackSubject = `New form submission: ${formName}`;
+  const template = await getTemplateHtml(
+    "website-form-submission",
+    vars,
+    fallbackSubject,
+    `<p>A new submission was received for <strong>${escapeHtml(formName)}</strong>.</p><pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(submissionSummary)}</pre><p><a href="${escapeHtml(adminUrl)}">View submissions</a></p>`,
   );
-  await Promise.all(to.map((recipient) => sendEmail(recipient, `New form submission: ${formName}`, html)));
-}
-
-export async function sendCrmLeadNotificationEmail(
-  to: string[],
-  lead: {
-    id: string;
-    name: string;
-    email?: string | null;
-    phone?: string | null;
-    company?: string | null;
-    message?: string | null;
-    source?: string | null;
-  },
-  adminUrl: string,
-  duplicate = false,
-): Promise<void> {
-  const html = await renderEmailShell(
-    duplicate ? "CRM lead updated" : "New CRM lead",
-    `<p>A ${duplicate ? "duplicate website lead updated an existing CRM lead" : "new lead was added to the CRM"}.</p>
-    <p><strong>Name:</strong> ${lead.name}</p>
-    <p><strong>Email:</strong> ${lead.email || "-"}</p>
-    <p><strong>Phone:</strong> ${lead.phone || "-"}</p>
-    <p><strong>Company:</strong> ${lead.company || "-"}</p>
-    <p><strong>Source:</strong> ${lead.source || "-"}</p>
-    <p><strong>Message:</strong><br>${lead.message || "-"}</p>
-    <p><a href="${adminUrl}">View lead in CRM</a></p>`,
-  );
-  await Promise.all(to.map((recipient) => sendEmail(recipient, `${duplicate ? "Updated" : "New"} CRM lead: ${lead.name}`, html)));
+  if (!template.isActive) return;
+  await Promise.all(to.map((recipient) => sendEmail(recipient, template.subject, template.html)));
 }
 
 export async function testMailgunConnection(): Promise<{ success: boolean; message: string }> {

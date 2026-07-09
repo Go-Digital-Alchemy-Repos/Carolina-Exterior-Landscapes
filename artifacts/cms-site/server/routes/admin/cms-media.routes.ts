@@ -7,14 +7,8 @@ import { asyncHandler } from "../../middleware/error-handler";
 import { storage } from "../../storage";
 import * as r2Service from "../../services/r2.service";
 import { paramString } from "../../utils/params";
-import {
-  deleteCmsImageVariantFiles,
-  generateCmsImageVariants,
-  isCmsImageVariantCandidate,
-  storeCmsImageVariants,
-} from "../../services/cms-image-variants.service";
+import { optimizeImage, CMS_OPTIONS, isImageMime } from "../../services/image-optimizer";
 import { buildCmsMediaLibraryAssets } from "../../services/cms-media-usage.service";
-import type { CmsMediaVariant, CmsMediaVariants } from "@shared/schema";
 
 const router = Router();
 
@@ -125,42 +119,16 @@ function buildUniqueDisplayName(
   return candidate;
 }
 
-async function deleteMediaAssetFiles(asset: { r2Key: string | null; url: string; variants?: any }) {
-  await deleteCmsImageVariantFiles(asset);
-}
-
-function appServedR2Url(key: string) {
-  return `/r2/${key
-    .replace(/^\/+/, "")
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/")}`;
-}
-
-function appServedR2Variants(variants: CmsMediaVariants): CmsMediaVariants {
-  return Object.fromEntries(
-    Object.entries(variants).map(([key, variant]) => [
-      key,
-      variant?.key ? { ...variant, url: appServedR2Url(variant.key) } : variant,
-    ]),
-  ) as CmsMediaVariants;
-}
-
-async function normalizeMediaAssetUrls<T extends { url: string; variants?: any }>(asset: T): Promise<T> {
-  const url = (await r2Service.normalizePublicUrl(asset.url)) ?? asset.url;
-  if (!asset.variants) return { ...asset, url };
-
-  const variants: Record<string, any> = {};
-  for (const [key, variant] of Object.entries(asset.variants)) {
-    if (!variant || typeof variant !== "object") {
-      variants[key] = variant;
-      continue;
-    }
-    const typedVariant = variant as CmsMediaVariant;
-    const variantUrl = (await r2Service.normalizePublicUrl(typedVariant.url)) ?? typedVariant.url;
-    variants[key] = { ...typedVariant, url: variantUrl };
+async function deleteMediaAssetFiles(asset: { r2Key: string | null; url: string }) {
+  if (asset.r2Key) {
+    await r2Service.deleteFile(asset.r2Key);
+    return;
   }
-  return { ...asset, url, variants };
+
+  if (asset.url.startsWith("/uploads/cms/")) {
+    const localPath = path.resolve(process.cwd(), asset.url.slice(1));
+    if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+  }
 }
 
 router.post(
@@ -175,10 +143,14 @@ router.post(
     const adminId = (req as any).user?.id;
     const baseName = safeName.replace(/\.[^.]+$/, "");
     const extension = path.extname(safeName) || ".bin";
-    const variants = isCmsImageVariantCandidate(req.file.mimetype, req.file.originalname)
-      ? await generateCmsImageVariants(req.file.buffer, req.file.mimetype)
+    const isImage = isImageMime(req.file.mimetype);
+    const optimized = isImage
+      ? await optimizeImage(req.file.buffer, req.file.mimetype, CMS_OPTIONS)
       : null;
-    const fileExtension = variants ? ".webp" : extension;
+    const fileBuffer = optimized?.buffer ?? req.file.buffer;
+    const fileMimeType = optimized?.mimeType ?? req.file.mimetype;
+    const fileExtension = optimized?.extension ?? extension;
+    const fileSize = optimized?.optimizedSize ?? req.file.size;
 
     const existingAssets = await storage.cmsMedia.getAllMedia();
     const originalName = buildUniqueDisplayName(
@@ -186,74 +158,31 @@ router.post(
       fileExtension,
       existingAssets.map((asset) => asset.originalName)
     );
-    const fileBase = `${Date.now()}-${stripExtension(originalName)}`;
+    const filename = `${Date.now()}-${stripExtension(originalName)}${fileExtension}`;
+    const r2Key = `cms/media/${filename}`;
 
     const r2Configured = await r2Service.isConfigured();
-    let storedFile: {
-      filename: string;
-      url: string;
-      mimeType: string;
-      fileSize: number;
-      r2Key: string | null;
-      variants?: any;
-    };
+    let publicUrl: string | null = null;
 
-    if (variants) {
-      if (r2Configured) {
-        const stored = await storeCmsImageVariants(variants, {
-          kind: "r2",
-          keyBase: `cms/media/${fileBase}`,
-        });
-        storedFile = {
-          ...stored,
-          url: appServedR2Url(stored.r2Key!),
-          variants: appServedR2Variants(stored.variants),
-        };
-      } else {
-        storedFile = await storeCmsImageVariants(variants, {
-          kind: "local",
-          directory: LOCAL_CMS_DIR,
-          publicBaseUrl: "/uploads/cms",
-          filenameBase: fileBase,
-        });
-      }
-    } else {
-      const filename = `${fileBase}${fileExtension}`;
-      const r2Key = `cms/media/${filename}`;
-      let publicUrl: string | null = null;
+    if (r2Configured) {
+      publicUrl = await r2Service.uploadFile(r2Key, fileBuffer, fileMimeType);
+    }
 
-      if (r2Configured) {
-        publicUrl = await r2Service.uploadFile(r2Key, req.file.buffer, req.file.mimetype);
-      }
-
-      if (!publicUrl) {
-        ensureCmsDir();
-        const localPath = path.join(LOCAL_CMS_DIR, filename);
-        fs.writeFileSync(localPath, req.file.buffer);
-        publicUrl = `/uploads/cms/${filename}`;
-      } else {
-        publicUrl = appServedR2Url(r2Key);
-      }
-
-      storedFile = {
-        filename,
-        url: publicUrl,
-        mimeType: req.file.mimetype,
-        fileSize: req.file.size,
-        r2Key: r2Configured ? r2Key : null,
-        variants: null,
-      };
+    if (!publicUrl) {
+      ensureCmsDir();
+      const localPath = path.join(LOCAL_CMS_DIR, filename);
+      fs.writeFileSync(localPath, fileBuffer);
+      publicUrl = `/uploads/cms/${filename}`;
     }
 
     const asset = await storage.cmsMedia.createMedia({
-      filename: storedFile.filename,
+      filename,
       originalName,
       title: stripExtension(originalName),
-      url: storedFile.url,
-      mimeType: storedFile.mimeType,
-      fileSize: storedFile.fileSize,
-      r2Key: storedFile.r2Key,
-      variants: storedFile.variants,
+      url: publicUrl,
+      mimeType: fileMimeType,
+      fileSize,
+      r2Key: r2Configured ? r2Key : null,
       alt: "",
       uploadedBy: adminId,
     });
@@ -269,7 +198,7 @@ router.get(
     const normalizedAssets = await Promise.all(
       assets.map(async (asset) => ({
         ...asset,
-        ...(await normalizeMediaAssetUrls(asset)),
+        url: (await r2Service.normalizePublicUrl(asset.url)) ?? asset.url,
       }))
     );
     res.json(await buildCmsMediaLibraryAssets(normalizedAssets));
@@ -376,7 +305,10 @@ router.patch(
     });
 
     if (!updated) return res.status(404).json({ error: "Media not found" });
-    res.json(await normalizeMediaAssetUrls(updated));
+    res.json({
+      ...updated,
+      url: (await r2Service.normalizePublicUrl(updated.url)) ?? updated.url,
+    });
   })
 );
 
@@ -390,48 +322,40 @@ router.post(
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
-    if (!isCmsImageVariantCandidate(req.file.mimetype, req.file.originalname)) {
-      return res.status(400).json({ error: "Only PNG, JPEG, or WebP images can be cropped and replaced in place" });
+    if (!isImageMime(req.file.mimetype)) {
+      return res.status(400).json({ error: "Only images can be cropped and replaced in place" });
     }
 
-    const variants = await generateCmsImageVariants(req.file.buffer, req.file.mimetype);
-    if (!variants) {
-      return res.status(400).json({ error: "Unable to optimize replacement image" });
-    }
+    const optimized = await optimizeImage(req.file.buffer, req.file.mimetype, CMS_OPTIONS);
+    let publicUrl = asset.url;
 
     if (asset.r2Key) {
-      await deleteCmsImageVariantFiles(asset);
+      const uploadedUrl = await r2Service.uploadFile(asset.r2Key, optimized.buffer, optimized.mimeType);
+      if (!uploadedUrl) {
+        return res.status(500).json({ error: "Failed to replace image in Cloudflare R2" });
+      }
+      publicUrl = uploadedUrl;
     } else if (asset.url.startsWith("/uploads/cms/")) {
-      await deleteCmsImageVariantFiles(asset);
+      const localPath = path.resolve(process.cwd(), asset.url.slice(1));
+      ensureParentDir(localPath);
+      fs.writeFileSync(localPath, optimized.buffer);
+      publicUrl = asset.url;
     } else {
       return res.status(400).json({ error: "This media asset cannot be replaced in place" });
     }
 
-    const currentBase = stripExtension(asset.r2Key ? asset.r2Key : path.basename(asset.url));
-    const stored = asset.r2Key
-      ? await storeCmsImageVariants(variants, { kind: "r2", keyBase: currentBase })
-      : await storeCmsImageVariants(variants, {
-          kind: "local",
-          directory: LOCAL_CMS_DIR,
-          publicBaseUrl: "/uploads/cms",
-          filenameBase: currentBase,
-        });
-
-    const nextVariants = asset.r2Key
-      ? appServedR2Variants(stored.variants)
-      : stored.variants;
-
     const updated = await storage.cmsMedia.updateFile(id, {
-      filename: stored.filename,
-      mimeType: stored.mimeType,
-      fileSize: stored.fileSize,
-      url: asset.r2Key ? appServedR2Url(stored.r2Key!) : stored.url,
-      r2Key: stored.r2Key,
-      variants: nextVariants,
+      mimeType: optimized.mimeType,
+      fileSize: optimized.optimizedSize,
+      url: publicUrl,
+      r2Key: asset.r2Key,
     });
 
     if (!updated) return res.status(404).json({ error: "Media not found" });
-    res.json(await normalizeMediaAssetUrls(updated));
+    res.json({
+      ...updated,
+      url: (await r2Service.normalizePublicUrl(updated.url)) ?? updated.url,
+    });
   })
 );
 
@@ -445,7 +369,10 @@ router.patch(
     }
     const asset = await storage.cmsMedia.updateAlt(id, alt);
     if (!asset) return res.status(404).json({ error: "Media not found" });
-    res.json(await normalizeMediaAssetUrls(asset));
+    res.json({
+      ...asset,
+      url: (await r2Service.normalizePublicUrl(asset.url)) ?? asset.url,
+    });
   })
 );
 

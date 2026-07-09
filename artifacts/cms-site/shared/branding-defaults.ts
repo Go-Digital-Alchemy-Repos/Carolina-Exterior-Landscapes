@@ -3,7 +3,7 @@ export const DEFAULT_BRANDING_VALUES = {
   footer_logo_url: "/images/footer-logo-horizontal.svg",
   favicon_url: "/images/symbol.svg",
   company_name: "Carolina Exterior Landscapes",
-  company_address: "Monroe, NC 28110",
+  company_address: "Waxhaw, NC 28173",
   company_phone_numbers: "(704) 975-5867",
   company_email: "info@carolinaexteriorlandscapes.com",
   company_hours: "Monday - Friday, 8:00 AM - 5:00 PM",

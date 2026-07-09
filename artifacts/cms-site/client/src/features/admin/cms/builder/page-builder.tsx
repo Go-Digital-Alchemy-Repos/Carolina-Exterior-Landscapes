@@ -53,7 +53,6 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [draggedInsertPayload, setDraggedInsertPayload] = useState<InsertPayload | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; position: "before" | "after" } | null>(null);
-  const [insertDropIndex, setInsertDropIndex] = useState<number | null>(null);
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>("structure");
   const [structurePanelOpen, setStructurePanelOpen] = useState(true);
   const [advancedInspectorOpen, setAdvancedInspectorOpen] = useState(true);
@@ -365,7 +364,6 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
     setDraggedBlockId(null);
     setDraggedInsertPayload(null);
     setDropTarget(null);
-    setInsertDropIndex(null);
   }, []);
 
   const handleDragStart = useCallback((event: DragEvent, blockId: string) => {
@@ -374,7 +372,6 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
     setDraggedBlockId(blockId);
     setDraggedInsertPayload(null);
     setDropTarget(null);
-    setInsertDropIndex(null);
   }, []);
 
   const handleInserterDragStart = useCallback((event: DragEvent, payload: InsertPayload) => {
@@ -383,7 +380,6 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
     setDraggedBlockId(null);
     setDraggedInsertPayload(payload);
     setDropTarget(null);
-    setInsertDropIndex(null);
   }, []);
 
   const handleDragOver = useCallback((event: DragEvent, targetId: string) => {
@@ -402,67 +398,22 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
         ? current
         : { id: targetId, position }
     ));
-    setInsertDropIndex(null);
   }, [draggedBlockId, draggedInsertPayload]);
-
-  const parseInsertPayload = useCallback((event: DragEvent): InsertPayload | null => {
-    const rawInsertPayload = event.dataTransfer.getData("application/x-page-builder-insert");
-    if (!rawInsertPayload) return null;
-    try {
-      return JSON.parse(rawInsertPayload) as InsertPayload;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const handleInsertDragOver = useCallback((event: DragEvent, index: number) => {
-    if (!draggedBlockId && !draggedInsertPayload) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.dataTransfer.dropEffect = draggedInsertPayload ? "copy" : "move";
-    setDropTarget(null);
-    setInsertDropIndex((current) => (current === index ? current : index));
-  }, [draggedBlockId, draggedInsertPayload]);
-
-  const moveBlockToIndex = useCallback((sourceId: string, targetIndex: number) => {
-    const sourceIndex = blocks.findIndex((block) => block.id === sourceId);
-    if (sourceIndex < 0) return;
-
-    const nextBlocks = [...blocks];
-    const [movedBlock] = nextBlocks.splice(sourceIndex, 1);
-    const boundedIndex = Math.max(0, Math.min(targetIndex, blocks.length));
-    const adjustedIndex = sourceIndex < boundedIndex ? boundedIndex - 1 : boundedIndex;
-    nextBlocks.splice(Math.max(0, Math.min(adjustedIndex, nextBlocks.length)), 0, movedBlock);
-    setBlocks(nextBlocks);
-  }, [blocks, setBlocks]);
-
-  const handleInsertDrop = useCallback((event: DragEvent, index: number) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const insertPayload = draggedInsertPayload ?? parseInsertPayload(event);
-    const sourceId = draggedBlockId ?? event.dataTransfer.getData("text/plain");
-    const insertIndex = Math.max(0, Math.min(index, blocks.length));
-
-    if (insertPayload) {
-      if (insertPayload.kind === "block") {
-        addBlockAtIndex(insertPayload.type, insertIndex);
-      } else {
-        insertBlocksAtIndex(insertPayload.blocks, insertIndex);
-      }
-    } else if (sourceId) {
-      moveBlockToIndex(sourceId, insertIndex);
-    }
-
-    clearDragState();
-  }, [addBlockAtIndex, blocks.length, clearDragState, draggedBlockId, draggedInsertPayload, insertBlocksAtIndex, moveBlockToIndex, parseInsertPayload]);
 
   const handleDrop = useCallback((event: DragEvent, targetId: string) => {
     event.preventDefault();
 
     const sourceId = draggedBlockId ?? event.dataTransfer.getData("text/plain");
-    const insertPayload = draggedInsertPayload ?? parseInsertPayload(event);
+    const rawInsertPayload = event.dataTransfer.getData("application/x-page-builder-insert");
+    let fallbackInsertPayload: InsertPayload | null = null;
+    if (rawInsertPayload) {
+      try {
+        fallbackInsertPayload = JSON.parse(rawInsertPayload) as InsertPayload;
+      } catch {
+        fallbackInsertPayload = null;
+      }
+    }
+    const insertPayload = draggedInsertPayload ?? fallbackInsertPayload;
     const position = dropTarget?.id === targetId ? dropTarget.position : "after";
     const targetIndex = blocks.findIndex((block) => block.id === targetId);
     const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
@@ -478,7 +429,7 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
     }
 
     clearDragState();
-  }, [addBlockAtIndex, blocks, clearDragState, draggedBlockId, draggedInsertPayload, dropTarget, insertBlocksAtIndex, parseInsertPayload, reorderBlocks]);
+  }, [addBlockAtIndex, blocks, clearDragState, draggedBlockId, draggedInsertPayload, dropTarget, insertBlocksAtIndex, reorderBlocks]);
 
   const savingBlock = savingSectionBlockId
     ? blocks.find((block) => block.id === savingSectionBlockId) ?? null
@@ -558,11 +509,8 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
     draggedBlockId,
     hasActiveDragPayload: !!draggedBlockId || !!draggedInsertPayload,
     dropTarget,
-    insertDropIndex,
     onBlockDragOver: handleDragOver,
     onBlockDrop: handleDrop,
-    onInsertDragOver: handleInsertDragOver,
-    onInsertDrop: handleInsertDrop,
     onBlockDragEnd: clearDragState,
     desktopFrameClassName: desktopCanvasFrameClassName,
   };

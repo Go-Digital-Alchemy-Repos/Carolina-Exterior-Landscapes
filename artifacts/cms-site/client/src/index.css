@@ -11,33 +11,33 @@
 }
 
 .landscape-site {
-  --brand-forest: var(--public-brand-secondary, 153 55% 15%);
-  --brand-leaf: var(--public-brand-primary, 92 38% 36%);
-  --brand-water: var(--public-brand-quaternary, 205 36% 39%);
+  --brand-forest: 153 55% 15%;
+  --brand-leaf: 92 38% 36%;
+  --brand-water: 205 36% 39%;
   --brand-stone: 0 0% 30%;
-  --brand-sand: var(--public-brand-tertiary, 38 36% 68%);
+  --brand-sand: 38 36% 68%;
   --brand-offwhite: 30 15% 97%;
   --surface-sand: 36 44% 94%;
   --surface-stone: 32 12% 94%;
   --surface-mist: 153 22% 95%;
   --surface-clay: 24 34% 93%;
   --background: 30 15% 97%;
-  --foreground: var(--public-text-body, 153 55% 15%);
+  --foreground: 153 55% 15%;
   --border: 153 20% 85%;
   --input: 153 20% 85%;
-  --ring: var(--public-brand-primary, 92 38% 36%);
+  --ring: 92 38% 36%;
   --card: 0 0% 100%;
-  --card-foreground: var(--public-text-body, 153 55% 15%);
+  --card-foreground: 153 55% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: var(--public-text-body, 153 55% 15%);
-  --primary: var(--public-brand-primary, 92 38% 36%);
-  --primary-foreground: var(--public-primary-foreground, 0 0% 100%);
-  --secondary: var(--public-brand-secondary, 153 55% 15%);
-  --secondary-foreground: var(--public-secondary-foreground, 0 0% 100%);
+  --popover-foreground: 153 55% 15%;
+  --primary: 92 38% 36%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 153 55% 15%;
+  --secondary-foreground: 0 0% 100%;
   --muted: 153 15% 93%;
-  --muted-foreground: var(--public-text-helper, 153 10% 45%);
-  --accent: var(--public-brand-tertiary, 38 36% 68%);
-  --accent-foreground: var(--public-tertiary-foreground, 153 55% 15%);
+  --muted-foreground: 153 10% 45%;
+  --accent: 38 36% 68%;
+  --accent-foreground: 153 55% 15%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
   --radius: 0.75rem;
@@ -61,49 +61,50 @@
   }
 
   .bg-dots {
-    z-index: 0;
-    background-image: radial-gradient(hsl(var(--primary) / 0.078) 1.2px, transparent 1.2px);
+    background-image: radial-gradient(hsl(var(--primary) / 0.12) 1.2px, transparent 1.2px);
     background-size: 24px 24px;
   }
 
   .bg-contours {
-    z-index: 0;
     background-image: repeating-radial-gradient(
       circle at 50% 120%,
-      hsl(var(--primary) / 0.065) 0,
-      hsl(var(--primary) / 0.065) 1.5px,
+      hsl(var(--primary) / 0.10) 0,
+      hsl(var(--primary) / 0.10) 1.5px,
       transparent 1.5px,
       transparent 42px
     );
   }
 
   .bg-topo {
-    z-index: 0;
     background-image: repeating-radial-gradient(
       ellipse 620px 460px at 18% 8%,
-      hsl(var(--foreground) / 0.036) 0,
-      hsl(var(--foreground) / 0.036) 1.5px,
+      hsl(var(--foreground) / 0.055) 0,
+      hsl(var(--foreground) / 0.055) 1.5px,
       transparent 1.5px,
       transparent 40px
     );
   }
 
   .bg-topo-light {
-    z-index: 0;
     background-image: repeating-radial-gradient(
       ellipse 620px 460px at 82% 4%,
-      hsl(0 0% 100% / 0.039) 0,
-      hsl(0 0% 100% / 0.039) 1.5px,
+      hsl(0 0% 100% / 0.06) 0,
+      hsl(0 0% 100% / 0.06) 1.5px,
       transparent 1.5px,
       transparent 40px
     );
   }
 
+  .landscape-cms-section--white { background-color: hsl(var(--background)); }
+  .landscape-cms-section--sand { background-color: hsl(var(--surface-sand)); }
+  .landscape-cms-section--stone { background-color: hsl(var(--surface-stone)); }
+  .landscape-cms-section--dark { background-color: hsl(var(--foreground)); }
+  .landscape-cms-section > section { background-color: transparent; }
+
   .bg-grid-lines {
-    z-index: 0;
     background-image:
-      linear-gradient(hsl(var(--foreground) / 0.026) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--foreground) / 0.026) 1px, transparent 1px);
+      linear-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 

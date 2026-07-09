@@ -2,7 +2,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { getPage } from "@/features/landscape-site/content/pages";
+import { getPage } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { QUOTE_SERVICE_OPTIONS } from "@/features/landscape-site/content/site";
@@ -16,8 +16,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -74,26 +72,14 @@ export default function GetAQuote() {
 
   if (!page) return null;
 
-  const heroImage = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/hero-quote.png`;
-  const heroAlt = page.media?.heroImageAlt ?? "Professionally landscaped home with lawn and garden beds";
-
   return (
     <div className="w-full bg-background min-h-screen pb-24">
       <Seo title={page.titleTag} description={page.metaDescription} />
       
-      <div className="py-20 px-4 text-center relative overflow-hidden">
-        <LandscapeImage
-          src={heroImage}
-          alt={heroAlt}
-          className="absolute inset-0 h-full w-full object-cover"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-        />
-        <div className="absolute inset-0 bg-black/25 pointer-events-none"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/20 to-transparent pointer-events-none"></div>
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-white/10" />
-        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-white/10 scale-x-[-1]" />
+      <div className="bg-foreground py-20 px-4 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute left-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15" />
+        <BotanicalAccent variant="fern" className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 h-56 w-auto text-primary/15 scale-x-[-1]" />
         <div className="relative z-10">
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">{page.h1}</h1>
           <p className="text-lg text-white/80 font-medium max-w-2xl mx-auto">
@@ -214,7 +200,7 @@ export default function GetAQuote() {
                       <FormItem>
                         <FormLabel className="font-bold">City</FormLabel>
                         <FormControl>
-                          <Input placeholder="Monroe" {...field} />
+                          <Input placeholder="Waxhaw" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrandingProvider } from "@/components/shared/branding-provider";
 import { CookieConsentBanner } from "@/components/shared/cookie-consent-banner";
-import { AdminEditPageBanner } from "@/components/shared/admin-edit-page-banner";
 import { ProtectedRoute } from "@/components/shared/protected-route";
 import { loadGa4IfConsented } from "@/lib/analytics-runtime";
 import { subscribeToCookieConsent } from "@/lib/cookie-consent";
@@ -20,12 +19,6 @@ const CmsHybridPage = lazy(() =>
 );
 const CmsPreviewPage = lazy(() => import("@/features/public/cms-preview-page"));
 const StandaloneFormPage = lazy(() => import("@/features/public/standalone-form-page"));
-const LandscapeSite = lazy(() =>
-  import("@/features/landscape-site/landscape-router").then((module) => ({
-    default: module.LandscapeSite,
-  })),
-);
-
 const LoginPage = lazy(() => import("@/features/auth/login-page"));
 const ForgotPasswordPage = lazy(() => import("@/features/auth/forgot-password-page"));
 const ResetPasswordPage = lazy(() => import("@/features/auth/reset-password-page"));
@@ -39,10 +32,12 @@ const CrmClientsPage = lazy(() => import("@/features/admin/crm-clients-page"));
 const DocsPage = lazy(() => import("@/features/admin/docs-page"));
 const AdminSettingsPage = lazy(() => import("@/features/admin/settings-page"));
 const AdminDesignPage = lazy(() => import("@/features/admin/design-page"));
+const SystemEmailsPage = lazy(() => import("@/features/admin/system-emails-page"));
 const CmsOverviewPage = lazy(() => import("@/features/admin/cms/cms-overview-page"));
 const CmsPagesPage = lazy(() => import("@/features/admin/cms/cms-pages-page"));
 const CmsPageEditorPage = lazy(() => import("@/features/admin/cms/cms-page-editor-page"));
 const CmsBlogPage = lazy(() => import("@/features/admin/cms/cms-blog-page"));
+const CmsBlogEditorPage = lazy(() => import("@/features/admin/cms/cms-blog-editor-page"));
 const CmsGalleriesPage = lazy(() => import("@/features/admin/cms/cms-galleries-page"));
 const CmsGalleryEditorPage = lazy(() => import("@/features/admin/cms/cms-gallery-editor-page"));
 const CmsMediaPage = lazy(() => import("@/features/admin/cms/cms-media-page"));
@@ -61,16 +56,28 @@ function PageLoader() {
   );
 }
 
-function CmsSlugRoute({ params }: { params: { slug?: string } }) {
-  return <CmsHybridPage slug={params.slug ?? ""} fallback={<NotFound />} />;
-}
-
 function ContactCmsRoute() {
   return <CmsHybridPage slug="contact" fallback={<NotFound />} />;
 }
 
-function LandscapeSiteRoute() {
-  return <LandscapeSite />;
+function CmsNotFoundRoute() {
+  return <CmsHybridPage slug="404" fallback={<NotFound />} />;
+}
+
+function CmsSlugRoute({ params }: { params: { slug?: string } }) {
+  return <CmsHybridPage slug={params.slug ?? ""} fallback={<CmsNotFoundRoute />} />;
+}
+
+function LandscapeCmsRoute({ slug }: { slug: string }) {
+  return <CmsHybridPage slug={slug} fallback={<CmsNotFoundRoute />} />;
+}
+
+function LandscapeLocationCmsRoute({ params }: { params: { slug?: string } }) {
+  return <LandscapeCmsRoute slug={params.slug ?? ""} />;
+}
+
+function LandscapeBlogPostCmsRoute({ params }: { params: { slug?: string } }) {
+  return <LandscapeCmsRoute slug={params.slug ?? ""} />;
 }
 
 function Router() {
@@ -143,6 +150,11 @@ function Router() {
             <SystemBackupsPage />
           </ProtectedRoute>
         </Route>
+        <Route path="/admin/system/emails">
+          <ProtectedRoute roles={["admin"]}>
+            <SystemEmailsPage />
+          </ProtectedRoute>
+        </Route>
         <Route path="/admin/cms">
           <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
             <CmsOverviewPage />
@@ -165,12 +177,12 @@ function Router() {
         </Route>
         <Route path="/admin/cms/blog/new">
           <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
-            <CmsPageEditorPage mode="blog" />
+            <CmsBlogEditorPage />
           </ProtectedRoute>
         </Route>
         <Route path="/admin/cms/blog/:id">
           <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
-            <CmsPageEditorPage mode="blog" />
+            <CmsBlogEditorPage />
           </ProtectedRoute>
         </Route>
         <Route path="/admin/cms/blog">
@@ -231,36 +243,38 @@ function Router() {
 
         <Route path="/contact/" component={ContactCmsRoute} />
         <Route path="/contact" component={ContactCmsRoute} />
-        <Route path="/" component={LandscapeSiteRoute} />
-        <Route path="/about" component={LandscapeSiteRoute} />
-        <Route path="/get-a-quote" component={LandscapeSiteRoute} />
-        <Route path="/commercial-quote" component={LandscapeSiteRoute} />
-        <Route path="/residential-lawn-maintenance" component={LandscapeSiteRoute} />
-        <Route path="/residential-landscaping" component={LandscapeSiteRoute} />
-        <Route path="/residential-hardscape" component={LandscapeSiteRoute} />
-        <Route path="/mulching-and-planting" component={LandscapeSiteRoute} />
-        <Route path="/drainage-solutions" component={LandscapeSiteRoute} />
-        <Route path="/commercial" component={LandscapeSiteRoute} />
-        <Route path="/commercial-grounds-maintenance" component={LandscapeSiteRoute} />
-        <Route path="/commercial-landscaping" component={LandscapeSiteRoute} />
-        <Route path="/commercial-hardscape" component={LandscapeSiteRoute} />
-        <Route path="/commercial-drainage" component={LandscapeSiteRoute} />
-        <Route path="/hoa-services" component={LandscapeSiteRoute} />
-        <Route path="/service-areas" component={LandscapeSiteRoute} />
-        <Route path="/service-areas/:slug" component={LandscapeSiteRoute} />
-        <Route path="/blog" component={LandscapeSiteRoute} />
-        <Route path="/blog/:slug" component={LandscapeSiteRoute} />
-        <Route path="/gallery" component={LandscapeSiteRoute} />
-        <Route path="/commercial-portfolio" component={LandscapeSiteRoute} />
-        <Route path="/faq" component={LandscapeSiteRoute} />
-        <Route path="/commercial-faq" component={LandscapeSiteRoute} />
+        <Route path="/">{() => <LandscapeCmsRoute slug="home" />}</Route>
+        <Route path="/about">{() => <LandscapeCmsRoute slug="about" />}</Route>
+        <Route path="/get-a-quote">{() => <LandscapeCmsRoute slug="get-a-quote" />}</Route>
+        <Route path="/commercial-quote">{() => <LandscapeCmsRoute slug="commercial-quote" />}</Route>
+        <Route path="/residential-lawn-maintenance">{() => <LandscapeCmsRoute slug="residential-lawn-maintenance" />}</Route>
+        <Route path="/residential-landscaping">{() => <LandscapeCmsRoute slug="residential-landscaping" />}</Route>
+        <Route path="/residential-hardscape">{() => <LandscapeCmsRoute slug="residential-hardscape" />}</Route>
+        <Route path="/residential-pressure-washing">{() => <LandscapeCmsRoute slug="residential-pressure-washing" />}</Route>
+        <Route path="/mulching-and-planting">{() => <LandscapeCmsRoute slug="mulching-and-planting" />}</Route>
+        <Route path="/drainage-solutions">{() => <LandscapeCmsRoute slug="drainage-solutions" />}</Route>
+        <Route path="/commercial">{() => <LandscapeCmsRoute slug="commercial" />}</Route>
+        <Route path="/commercial-grounds-maintenance">{() => <LandscapeCmsRoute slug="commercial-grounds-maintenance" />}</Route>
+        <Route path="/commercial-landscaping">{() => <LandscapeCmsRoute slug="commercial-landscaping" />}</Route>
+        <Route path="/commercial-hardscape">{() => <LandscapeCmsRoute slug="commercial-hardscape" />}</Route>
+        <Route path="/commercial-drainage">{() => <LandscapeCmsRoute slug="commercial-drainage" />}</Route>
+        <Route path="/commercial-pressure-washing">{() => <LandscapeCmsRoute slug="commercial-pressure-washing" />}</Route>
+        <Route path="/hoa-services">{() => <LandscapeCmsRoute slug="hoa-services" />}</Route>
+        <Route path="/service-areas">{() => <LandscapeCmsRoute slug="service-areas" />}</Route>
+        <Route path="/service-areas/:slug" component={LandscapeLocationCmsRoute} />
+        <Route path="/blog">{() => <LandscapeCmsRoute slug="blog" />}</Route>
+        <Route path="/blog/:slug" component={LandscapeBlogPostCmsRoute} />
+        <Route path="/gallery">{() => <LandscapeCmsRoute slug="gallery" />}</Route>
+        <Route path="/commercial-portfolio">{() => <LandscapeCmsRoute slug="commercial-portfolio" />}</Route>
+        <Route path="/faq">{() => <LandscapeCmsRoute slug="faq" />}</Route>
+        <Route path="/commercial-faq">{() => <LandscapeCmsRoute slug="commercial-faq" />}</Route>
 
         <Route path="/service-areas/:slug/" component={CmsSlugRoute} />
         <Route path="/service-areas/:slug" component={CmsSlugRoute} />
         <Route path="/:slug/" component={CmsSlugRoute} />
         <Route path="/:slug" component={CmsSlugRoute} />
 
-        <Route component={NotFound} />
+        <Route component={CmsNotFoundRoute} />
       </Switch>
     </Suspense>
   );
@@ -324,7 +338,15 @@ function RouteAdminModeManager() {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const pathname = location.split(/[?#]/)[0] || "/";
-    document.documentElement.classList.toggle("admin-mode", pathname.startsWith("/admin"));
+    const isAdminRoute = pathname.startsWith("/admin");
+    document.documentElement.classList.toggle("admin-mode", isAdminRoute);
+    if (isAdminRoute && !document.getElementById("admin-fonts")) {
+      const link = document.createElement("link");
+      link.id = "admin-fonts";
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap";
+      document.head.appendChild(link);
+    }
     return () => document.documentElement.classList.remove("admin-mode");
   }, [location]);
 
@@ -350,7 +372,6 @@ function App() {
             <RouteAdminModeManager />
             <RouteScrollManager />
             <Router />
-            <AdminEditPageBanner />
             <CookieConsentBanner />
           </SetupGuard>
         </TooltipProvider>

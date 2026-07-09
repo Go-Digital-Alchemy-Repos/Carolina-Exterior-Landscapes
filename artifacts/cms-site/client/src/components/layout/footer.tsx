@@ -39,7 +39,9 @@ export function Footer() {
   const googleBusinessUrl = companyGoogleBusinessUrl?.trim() || "";
   const { data } = useQuery<MenuMap>({
     queryKey: ["/api/cms/menus"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
   const services = menuItems(data?.footer_platform);
   const areas = menuItems(data?.footer_resources);
@@ -52,13 +54,13 @@ export function Footer() {
         <div className="lg:col-span-2">
           <Link href="/" className="inline-flex items-center text-base font-semibold text-foreground">
             {footerLogoUrl ? (
-              <img src={footerLogoUrl} alt={label} className="h-12 w-auto max-w-full" />
+              <img src={footerLogoUrl} alt={label} width={486} height={135} className="h-12 w-auto max-w-full" />
             ) : (
               label
             )}
           </Link>
           <p className="mt-3 max-w-sm">
-            Lawn care, landscaping, hardscape, mulching, and drainage services for Monroe, Union County, and the greater Charlotte region.
+            Lawn care, landscaping, hardscape, mulching, and drainage services for Waxhaw, Union County, and the greater Charlotte region.
           </p>
           <div className="mt-4 space-y-1">
             {companyAddress ? (
@@ -89,7 +91,7 @@ export function Footer() {
               </a>
             </p>
             <p>Locally owned, licensed, and insured</p>
-            <p>Serving Monroe, Union County, and the Greater Charlotte Area</p>
+            <p>Serving Waxhaw, Union County, and the Greater Charlotte Area</p>
             <p>Monday - Friday 8:00 AM - 5:00 PM</p>
           </div>
         </div>

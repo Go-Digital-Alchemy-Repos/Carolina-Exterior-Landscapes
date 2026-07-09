@@ -3,7 +3,7 @@ import { z } from "zod";
 import { crmClientUpdateSchema, crmLeadInputSchema, crmLeadUpdateSchema } from "@shared/schema";
 import { asyncHandler } from "../../middleware/error-handler";
 import { storage } from "../../storage";
-import { createOrUpdateCrmLead, ensureClientForWonLead, getCrmSettings, updateCrmSettings } from "../../services/crm.service";
+import { createOrUpdateCrmLead, ensureClientForWonLead } from "../../services/crm.service";
 import { paramString } from "../../utils/params";
 import { notFound } from "../../utils/route-helpers";
 
@@ -20,9 +20,6 @@ const taskUpdateSchema = z.object({
   dueAt: z.union([z.string(), z.date()]).optional().nullable(),
   completed: z.boolean().optional(),
   assignedToId: z.string().optional().nullable(),
-});
-const crmSettingsSchema = z.object({
-  leadNotificationEmail: z.string().trim().max(500).default(""),
 });
 
 function parseDate(value: unknown) {
@@ -86,15 +83,6 @@ router.post("/", asyncHandler(async (req, res) => {
   const data = crmLeadInputSchema.parse({ ...req.body, source: req.body?.source || "manual" });
   const result = await createOrUpdateCrmLead(data, req.user?.id);
   res.status(result.duplicate ? 200 : 201).json(result);
-}));
-
-router.get("/settings", asyncHandler(async (_req, res) => {
-  res.json(await getCrmSettings());
-}));
-
-router.put("/settings", asyncHandler(async (req, res) => {
-  const data = crmSettingsSchema.parse(req.body);
-  res.json(await updateCrmSettings(data));
 }));
 
 router.get("/:id", asyncHandler(async (req, res) => {

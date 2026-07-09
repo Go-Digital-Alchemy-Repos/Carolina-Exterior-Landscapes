@@ -357,6 +357,8 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
     onSuccess: async (res, variables) => {
       const created: CmsPage = await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/pages/by-slug", variables.slug] });
+      if (variables.pageType === "blog-post") queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
       toast({ title: `${contentLabel} created successfully` });
       setDraftPreviewUrl("");
       applySavedState(
@@ -393,6 +395,8 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id, "revisions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/pages/by-slug", variables.slug] });
+      if (variables.pageType === "blog-post") queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
       toast({ title: `${contentLabel} saved` });
       setDraftPreviewUrl("");
       applySavedState(
@@ -426,6 +430,8 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/pages/by-slug", form.getValues("slug")] });
+      if (form.getValues("pageType") === "blog-post") queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
       toast({ title: `${contentLabel} published` });
     },
     onError: () => toast({ title: "Failed to publish page", variant: "destructive" }),
@@ -436,6 +442,8 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/pages/by-slug", form.getValues("slug")] });
+      if (form.getValues("pageType") === "blog-post") queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
       toast({ title: `${contentLabel} unpublished — reverted to draft` });
     },
     onError: () => toast({ title: "Failed to unpublish page", variant: "destructive" }),

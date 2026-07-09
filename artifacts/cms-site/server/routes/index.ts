@@ -17,15 +17,8 @@ import { storage } from "../storage/index";
 import { isLandscapePublicRoute } from "../public-landscape-routes";
 import { isRetiredPublicPath } from "../retired-public-routes";
 import { DEFAULT_BRANDING_VALUES } from "@shared/branding-defaults";
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+import { getGoogleReviews } from "../services/google-reviews.service";
+import { buildPublicSitemapXml } from "../services/public-sitemap.service";
 
 export function registerApiRoutes(app: Express) {
   app.use("/r2", r2PublicRoutes);
@@ -107,6 +100,22 @@ export function registerApiRoutes(app: Express) {
     }
   });
 
+  app.get("/api/google-reviews", async (_req, res) => {
+    try {
+      const payload = await getGoogleReviews();
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.json(payload);
+    } catch (err) {
+      logger.app.warn("Failed to retrieve Google reviews", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      res.status(502).json({
+        error: "Google reviews are temporarily unavailable",
+        reviews: [],
+      });
+    }
+  });
+
   app.get("/api/seo/global", async (_req, res) => {
     const settings = await storage.seoSettings.get();
     res.json(settings ?? {});
@@ -125,50 +134,20 @@ export function registerApiRoutes(app: Express) {
   });
 
   app.get("/sitemap.xml", async (_req, res) => {
+    const fallbackSiteUrl = "https://carolinaexteriorlandscapes.com";
     try {
-      const [seoSettings, pages] = await Promise.all([
-        storage.seoSettings.get(),
-        storage.cmsPages.getAllPages(),
-      ]);
-
-      const base = seoSettings?.siteUrl?.replace(/\/$/, "") || "";
-      const urls: Array<{ loc: string; lastmod?: string; changefreq?: string; priority?: string }> = [
-        { loc: base || "/", changefreq: "weekly", priority: "1.0" },
-      ];
-
-      for (const page of pages) {
-        if (page.status !== "published" || page.noindex) continue;
-        if (page.slug === "home" || isRetiredPublicPath(`/${page.slug}`)) continue;
-        const canonicalPath = page.canonicalUrl?.startsWith("/")
-          ? page.canonicalUrl
-          : `/${page.slug}/`;
-        urls.push({
-          loc: `${base}${canonicalPath}`,
-          lastmod: page.updatedAt ? new Date(page.updatedAt).toISOString().split("T")[0] : undefined,
-          changefreq: "monthly",
-          priority: "0.6",
-        });
-      }
-
-      const xml = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-        ...urls.map((url) => {
-          const parts = [`  <url>`, `    <loc>${escapeXml(url.loc)}</loc>`];
-          if (url.lastmod) parts.push(`    <lastmod>${url.lastmod}</lastmod>`);
-          if (url.changefreq) parts.push(`    <changefreq>${url.changefreq}</changefreq>`);
-          if (url.priority) parts.push(`    <priority>${url.priority}</priority>`);
-          parts.push("  </url>");
-          return parts.join("\n");
-        }),
-        "</urlset>",
-      ].join("\n");
-
+      const seoSettings = await storage.seoSettings.get();
+      const base = seoSettings?.siteUrl?.replace(/\/$/, "") || fallbackSiteUrl;
       res.set("Content-Type", "application/xml; charset=utf-8");
       res.set("Cache-Control", "public, max-age=3600");
-      res.send(xml);
-    } catch {
-      res.status(500).send("Error generating sitemap");
+      res.send(buildPublicSitemapXml(base));
+    } catch (err) {
+      logger.app.warn("Falling back to the canonical sitemap URL after SEO settings lookup failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      res.set("Content-Type", "application/xml; charset=utf-8");
+      res.set("Cache-Control", "public, max-age=300");
+      res.send(buildPublicSitemapXml(fallbackSiteUrl));
     }
   });
 

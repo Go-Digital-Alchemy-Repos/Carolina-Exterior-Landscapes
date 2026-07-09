@@ -1,4 +1,4 @@
-import { getPage } from "@/features/landscape-site/content/pages";
+import { getPage } from "@/features/landscape-site/content";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BRAND } from "@/features/landscape-site/content/site";

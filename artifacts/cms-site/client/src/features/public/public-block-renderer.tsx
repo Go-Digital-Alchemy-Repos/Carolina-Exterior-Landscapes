@@ -1,9 +1,11 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
+  type CarouselApi,
   CarouselContent,
   CarouselItem,
   CarouselNext,
@@ -12,6 +14,7 @@ import {
 import { useBranding } from "@/components/shared/branding-provider";
 import { GalleryRenderer } from "@/components/shared/gallery-renderer";
 import { PublicFormRenderer } from "@/components/forms/public-form-renderer";
+import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 import type { BlockInstance } from "@/features/admin/cms/builder/block-registry";
 import {
   Accessibility,
@@ -110,7 +113,7 @@ function legacyContactText(value: string) {
 function RichCardBody({ html, className = "" }: { html: string; className?: string }) {
   if (!html) return null;
   return html.includes("<") ? (
-    <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${className}`} dangerouslySetInnerHTML={{ __html: html }} />
+    <div className={`prose prose-slate max-w-none text-sm text-muted-foreground ${className}`} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(html) }} />
   ) : (
     <p className={`${className} text-sm text-muted-foreground`}>{html}</p>
   );
@@ -137,6 +140,39 @@ function positivePixelValue(value: unknown) {
 function optionalBool(value: unknown, fallback: boolean) {
   return typeof value === "boolean" ? value : fallback;
 }
+
+function clampedNumber(value: unknown, fallback: number, min: number, max: number) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.max(min, Math.min(max, numeric));
+}
+
+function truncateText(value: string, maxLength: number) {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 1)).trim()}...`;
+}
+
+type GoogleReview = {
+  authorName: string;
+  authorUrl: string | null;
+  profilePhotoUrl: string | null;
+  rating: number;
+  text: string;
+  relativeTimeDescription: string;
+  publishTime: string | null;
+  source: "Google";
+};
+
+type GoogleReviewsPayload = {
+  configured?: boolean;
+  enabled?: boolean;
+  placeName?: string | null;
+  placeUrl?: string | null;
+  rating?: number | null;
+  userRatingCount?: number | null;
+  reviews?: GoogleReview[];
+  updatedAt?: string | null;
+};
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -211,10 +247,10 @@ function heroContainerClass(forceDesktopLeft = false) {
 }
 
 const MOBILE_HERO_HEADINGS = new Map<string, string[]>([
-  ["Lawn Care and Landscaping Services in Monroe, NC", ["Lawn Care & Landscaping", "Services in Monroe"]],
+  ["Lawn Care and Landscaping Services in Waxhaw, NC", ["Lawn Care & Landscaping", "Services in Waxhaw"]],
   ["Landscaping Services in Matthews, NC", ["Landscaping Services", "Matthews, NC"]],
   ["Landscaping Services in Indian Trail, NC", ["Landscaping Services", "Indian Trail, NC"]],
-  ["Annual Lawn Maintenance in Monroe, NC", ["Annual Lawn", "Maintenance in Monroe"]],
+  ["Annual Lawn Maintenance in Waxhaw, NC", ["Annual Lawn", "Maintenance in Waxhaw"]],
   ["Commercial Grounds Maintenance in Charlotte, NC", ["Commercial Grounds", "Maintenance in Charlotte"]],
   ["Drainage Solutions in Union County, NC", ["Drainage Solutions", "Union County, NC"]],
 ]);
@@ -292,7 +328,7 @@ function renderRichTextWithGalleries(html: string) {
       continue;
     }
     if (part.startsWith("[gallery")) continue;
-    nodes.push(<div key={`html-${index}`} dangerouslySetInnerHTML={{ __html: part }} />);
+    nodes.push(<div key={`html-${index}`} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(part) }} />);
   }
   return nodes;
 }
@@ -396,6 +432,293 @@ function ActionButton({ action, variant }: { action: Record<string, unknown>; va
   return button;
 }
 
+function GoogleSourceIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
+      <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 34 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.3 0 6.3 1.2 8.6 3.3l6-6C34.8 4.9 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.8 0 20.5-7.8 20.5-21 0-1.4-.1-2.7-.3-4Z" />
+      <path fill="#34A853" d="M6.1 14.1 13.1 19.2C15 14.3 19.2 11 24 11c3.3 0 6.3 1.2 8.6 3.3l6-6C34.8 4.9 29.6 3 24 3 16.1 3 9.2 7.5 5.7 14Z" />
+      <path fill="#FBBC05" d="M24 45c5.5 0 10.3-1.8 14-5l-6.5-5.4C29.5 36.1 26.9 37 24 37c-5.9 0-10.9-4-12.6-9.4l-7.1 5.5C7.8 40.1 15.2 45 24 45Z" />
+      <path fill="#EA4335" d="M11.4 27.6A13 13 0 0 1 11 24c0-1.3.2-2.6.6-3.8l-7.3-5.6A21 21 0 0 0 3 24c0 3.3.8 6.4 2.2 9.1Z" />
+    </svg>
+  );
+}
+
+function googleReviewBasisClasses(desktop: number, tablet: number, mobile: number) {
+  const mobileClass = mobile >= 2 ? "basis-1/2" : "basis-full";
+  const tabletClass = tablet >= 3 ? "md:basis-1/3" : tablet >= 2 ? "md:basis-1/2" : "md:basis-full";
+  const desktopClass = desktop >= 4 ? "lg:basis-1/4" : desktop >= 3 ? "lg:basis-1/3" : desktop >= 2 ? "lg:basis-1/2" : "lg:basis-full";
+  return `${mobileClass} ${tabletClass} ${desktopClass}`;
+}
+
+function GoogleReviewsBlock({ props, googleBusinessUrl }: { props: Record<string, unknown>; googleBusinessUrl: string }) {
+  const [payload, setPayload] = useState<GoogleReviewsPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [api, setApi] = useState<CarouselApi>();
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [scrollSnapCount, setScrollSnapCount] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+    setIsLoading(true);
+    setError(null);
+
+    fetch("/api/google-reviews")
+      .then(async (response) => {
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.error || "Google reviews are unavailable");
+        return json as GoogleReviewsPayload;
+      })
+      .then((json) => {
+        if (!ignore) setPayload(json);
+      })
+      .catch((err: Error) => {
+        if (!ignore) setError(err.message);
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!api) return;
+    const update = () => {
+      setSelectedIndex(api.selectedScrollSnap());
+      setScrollSnapCount(api.scrollSnapList().length);
+    };
+    update();
+    api.on("select", update);
+    api.on("reInit", update);
+    return () => {
+      api.off("select", update);
+      api.off("reInit", update);
+    };
+  }, [api]);
+
+  const maxReviews = clampedNumber(props.maxReviews, 5, 1, 5);
+  const reviews = useMemo(() => (payload?.reviews || []).filter((review) => review.rating === 5).slice(0, maxReviews), [payload, maxReviews]);
+  const ctaText = str(props.ctaText, "Read Reviews on Google");
+  const ctaLink = str(props.ctaLink) || payload?.placeUrl || googleBusinessUrl;
+  const ctaIsInternal = ctaLink.startsWith("/");
+  const showArrows = optionalBool(props.showArrows, true);
+  const showDots = optionalBool(props.showDots, false);
+  const showRating = optionalBool(props.showRating, true);
+  const showDate = optionalBool(props.showDate, true);
+  const showSource = optionalBool(props.showSource, true);
+  const showAvatar = optionalBool(props.showAvatar, true);
+  const showPlaceSummary = optionalBool(props.showPlaceSummary, true);
+  const quoteMaxLength = clampedNumber(props.quoteMaxLength, 260, 80, 800);
+  const desktop = clampedNumber(props.columnsDesktop, 3, 1, 4);
+  const tablet = clampedNumber(props.columnsTablet, 2, 1, 3);
+  const mobile = clampedNumber(props.columnsMobile, 1, 1, 2);
+  const cardBackgroundColor = str(props.cardBackgroundColor, "#ffffff") || "#ffffff";
+  const cardTextColor = str(props.cardTextColor, "#2C2C2C") || "#2C2C2C";
+  const starColor = str(props.starColor, "#FACC15") || "#FACC15";
+  const arrowStyle = {
+    color: str(props.arrowIconColor) || undefined,
+    backgroundColor: str(props.arrowBackgroundColor) || undefined,
+  };
+  const emptyMessage = str(props.emptyMessage) || str(props.message) || "Google reviews will display here once the integration is configured.";
+
+  const renderCta = () => {
+    if (!ctaText || !ctaLink) return null;
+    const content = (
+      <>
+        {ctaText}
+        {!ctaIsInternal ? <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" /> : null}
+      </>
+    );
+    return (
+      <div className="mt-7 flex justify-center">
+        <Button asChild variant="outline">
+          {ctaIsInternal ? (
+            <Link href={ctaLink}>{content}</Link>
+          ) : (
+            <a href={ctaLink} target="_blank" rel="noopener noreferrer">
+              {content}
+            </a>
+          )}
+        </Button>
+      </div>
+    );
+  };
+
+  const renderReview = (review: GoogleReview, index: number) => (
+    <Card key={`${review.authorName}-${index}`} className="h-full rounded-lg border-border/70 shadow-sm" style={{ backgroundColor: cardBackgroundColor, color: cardTextColor }}>
+      <CardContent className="flex h-full flex-col p-6">
+        <div className="flex items-start justify-between gap-4">
+          {showRating ? (
+            <div className="flex" style={{ color: starColor }} aria-label="5 star review">
+              {Array.from({ length: 5 }).map((_, starIndex) => (
+                <Star key={starIndex} className="h-4 w-4 fill-current" />
+              ))}
+            </div>
+          ) : null}
+          {showSource ? (
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <GoogleSourceIcon className="h-5 w-5 shrink-0" />
+              <span>Google</span>
+            </div>
+          ) : null}
+        </div>
+        <p className="mt-5 flex-1 text-sm leading-relaxed">&ldquo;{truncateText(review.text, quoteMaxLength)}&rdquo;</p>
+        <div className="mt-5 flex items-center gap-3">
+          {showAvatar ? (
+            review.profilePhotoUrl ? (
+              <img src={review.profilePhotoUrl} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                {review.authorName.charAt(0)}
+              </div>
+            )
+          ) : null}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{review.authorName}</p>
+            {showDate && review.relativeTimeDescription ? <p className="text-xs text-muted-foreground">{review.relativeTimeDescription}</p> : null}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <section className={sectionBackgroundClass(props.background)} data-testid="block-review-widget">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="text-center">
+          {str(props.eyebrow) ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{str(props.eyebrow)}</p> : null}
+          <h2 className="text-3xl font-semibold tracking-normal">{str(props.title, "What Customers Are Saying")}</h2>
+          {plainText(props.subtitle) ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{plainText(props.subtitle)}</p> : null}
+          {showPlaceSummary && payload?.rating && payload.userRatingCount ? (
+            <p className="mt-3 text-sm font-medium text-muted-foreground">
+              {payload.rating.toFixed(1)} Google rating from {payload.userRatingCount.toLocaleString()} reviews
+            </p>
+          ) : null}
+        </div>
+
+        {isLoading ? (
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            {Array.from({ length: Math.min(3, maxReviews) }).map((_, index) => (
+              <div key={index} className="h-56 animate-pulse rounded-lg border bg-muted/40" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="mx-auto mt-8 max-w-2xl rounded-md border bg-muted/40 px-5 py-6 text-center text-sm text-muted-foreground">
+            Google reviews are temporarily unavailable.
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="mx-auto mt-8 max-w-2xl rounded-md border bg-muted/40 px-5 py-6 text-center text-sm text-muted-foreground">
+            {emptyMessage}
+          </div>
+        ) : (
+          <div className="mt-8">
+            <Carousel opts={{ align: "start", loop: optionalBool(props.loop, true) }} setApi={setApi} className="w-full">
+              <CarouselContent className="-ml-5">
+                {reviews.map((review, index) => (
+                  <CarouselItem key={`${review.authorName}-${index}`} className={`pl-5 ${googleReviewBasisClasses(desktop, tablet, mobile)}`}>
+                    {renderReview(review, index)}
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {showArrows && reviews.length > mobile ? (
+                <div className="mt-6 flex items-center justify-center gap-3">
+                  <CarouselPrevious className="static h-9 w-9 translate-x-0 translate-y-0 border-border/70 bg-background/95" style={arrowStyle} />
+                  <CarouselNext className="static h-9 w-9 translate-x-0 translate-y-0 border-border/70 bg-background/95" style={arrowStyle} />
+                </div>
+              ) : null}
+            </Carousel>
+            {showDots && scrollSnapCount > 1 ? (
+              <div className="mt-4 flex justify-center gap-2" aria-label="Review carousel slides">
+                {Array.from({ length: scrollSnapCount }).map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`h-2.5 w-2.5 rounded-full transition-colors ${index === selectedIndex ? "bg-primary" : "bg-muted-foreground/30"}`}
+                    aria-label={`Go to review slide ${index + 1}`}
+                    onClick={() => api?.scrollTo(index)}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {renderCta()}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+type PublicBlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  seoDescription?: string | null;
+  ogImageUrl?: string | null;
+  publishedAt?: string | Date | null;
+  content?: unknown;
+};
+
+function blogPostLandscapeData(page: PublicBlogPost) {
+  const content = record(page.content);
+  const landscape = record(content.landscape);
+  return record(landscape.data);
+}
+
+function BlogListingBlock({ props }: { props: Record<string, unknown> }) {
+  const { data: posts = [], isLoading } = useQuery<PublicBlogPost[]>({
+    queryKey: ["/api/cms/blog-posts"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
+
+  return (
+    <section className={sectionBackgroundClass(props.background)} data-testid="block-blog-listing">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        <div className="mx-auto mb-10 max-w-3xl text-center">
+          <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{str(props.title, "Latest Articles")}</h2>
+          {str(props.subtitle) ? <RichCardBody html={str(props.subtitle)} className="mt-4 text-base" /> : null}
+        </div>
+        {isLoading ? (
+          <p className="text-center text-muted-foreground">Loading articles…</p>
+        ) : posts.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post) => {
+              const data = blogPostLandscapeData(post);
+              const imageUrl = str(post.ogImageUrl) || str(data.imageUrl);
+              const excerpt = str(data.excerpt) || str(post.seoDescription);
+              const dateValue = str(data.date) || (post.publishedAt ? String(post.publishedAt) : "");
+              const formattedDate = dateValue
+                ? new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(new Date(dateValue))
+                : "";
+              return (
+                <article key={post.id} className="overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md">
+                  {imageUrl ? <img src={imageUrl} alt="" loading="lazy" className="aspect-[16/10] w-full object-cover" /> : null}
+                  <div className="p-6">
+                    {formattedDate ? <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{formattedDate}</p> : null}
+                    <h3 className="text-xl font-semibold leading-snug text-foreground">
+                      <Link href={`/blog/${post.slug}`} className="hover:text-primary">{post.title}</Link>
+                    </h3>
+                    {excerpt ? <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{excerpt}</p> : null}
+                    <Link href={`/blog/${post.slug}`} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                      Read Article <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground">No articles have been published yet.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
   const props = block.props ?? {};
   const branding = useBranding();
@@ -405,7 +728,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const heading = plainText(props.heading) || plainText(props.h1, "Website");
     const mobileHeading = props.mobileHeading;
     const eyebrow = str(props.eyebrow) || str(props.sectionEyebrow) || str((props.label as Record<string, unknown> | undefined)?.text);
-    const subheading = str(props.subheading);
+    const subheading = plainText(props.subheading);
     const backgroundImageUrl = str(props.backgroundImageUrl);
     const backgroundPositionX = percent(props.backgroundPositionX);
     const backgroundPositionY = percent(props.backgroundPositionY);
@@ -439,6 +762,8 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
           <img
             src={backgroundImageUrl}
             alt=""
+            width={1365}
+            height={768}
             className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: `${backgroundPositionX}% ${backgroundPositionY}%`, opacity: backgroundImageOpacity / 100 }}
             data-testid="hero-background-image"
@@ -498,7 +823,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <div className={`mx-auto max-w-4xl px-4 pb-4 pt-12 sm:px-6 ${alignmentClass(props.alignment)}`}>
           {eyebrow ? <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white [&_svg]:text-white">{eyebrow}</p> : null}
           <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
-          {str(props.subtitle) ? <p className="mt-4 text-muted-foreground">{str(props.subtitle)}</p> : null}
+          {plainText(props.subtitle) ? <p className="mt-4 text-muted-foreground">{plainText(props.subtitle)}</p> : null}
         </div>
       </section>
     );
@@ -648,7 +973,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const renderBody = (className = "") => {
       if (!body) return null;
       return body.includes("<") ? (
-        <div className={`prose prose-slate max-w-none ${className}`} dangerouslySetInnerHTML={{ __html: body }} />
+        <div className={`prose prose-slate max-w-none ${className}`} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(body) }} />
       ) : (
         <p className={`${className} text-muted-foreground`}>{body}</p>
       );
@@ -771,7 +1096,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
       <section className={sectionBackgroundClass(props.background)} data-testid="block-cards-grid">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           {str(props.title) ? <h2 className="text-center text-3xl font-semibold tracking-normal">{str(props.title)}</h2> : null}
-          {str(props.subtitle) ? <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">{str(props.subtitle)}</p> : null}
+          {plainText(props.subtitle) ? <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">{plainText(props.subtitle)}</p> : null}
           <div className={`mt-8 grid gap-5 ${gridClass}`}>
             {cards.map((card, index) => {
               const cardTitle = str(card.title) || str(card.label);
@@ -782,6 +1107,8 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                     <img
                       src={str(card.imageUrl)}
                       alt={str(card.alt)}
+                      width={1365}
+                      height={768}
                       className="aspect-video w-full rounded-t-md object-cover"
                       style={{ objectPosition: `${percent(card.imagePositionX)}% ${percent(card.imagePositionY)}%` }}
                       data-testid="card-grid-image"
@@ -846,27 +1173,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
   }
 
   if (block.type === "review-widget") {
-    return (
-      <section className="bg-background" data-testid="block-review-widget">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          <div className="rounded-md border bg-muted/40 px-5 py-6 text-center">
-            <p className="text-sm font-semibold text-foreground">Google Reviews</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {str(props.message) || "Google reviews will display here once the review widget is configured."}
-            </p>
-            {googleBusinessUrl ? (
-              <div className="mt-4">
-                <Button asChild size="sm" variant="outline">
-                  <a href={googleBusinessUrl} target="_blank" rel="noreferrer">
-                    View Google Business Profile
-                  </a>
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </section>
-    );
+    return <GoogleReviewsBlock props={props} googleBusinessUrl={googleBusinessUrl} />;
   }
 
   if (block.type === "testimonials") {
@@ -1110,6 +1417,10 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     );
   }
 
+  if (block.type === "blog-listing") {
+    return <BlogListingBlock props={props} />;
+  }
+
   if (block.type === "map-embed") {
     const address = str(props.address);
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -1140,7 +1451,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         <section className={sectionBackgroundClass(props.background)} data-testid="block-cta">
           <div className="mx-auto max-w-4xl px-4 py-8 text-center sm:px-6">
             {str(props.heading) ? <h2 className="text-2xl font-semibold tracking-normal">{str(props.heading)}</h2> : null}
-            {str(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{str(props.subheading)}</p> : null}
+            {plainText(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{plainText(props.subheading)}</p> : null}
             {buttons.length > 0 || (primaryText && primaryLink) ? (
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 {buttons.length > 0 ? (
@@ -1160,7 +1471,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
       <section className="bg-[#2C2C2C] text-white" data-testid="block-cta">
         <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6">
           <h2 className="text-3xl font-semibold tracking-normal">{str(props.heading, "Ready to get started?")}</h2>
-          {str(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-white/75">{str(props.subheading)}</p> : null}
+          {plainText(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-white/75">{plainText(props.subheading)}</p> : null}
           {buttons.length > 0 || (primaryText && primaryLink) ? (
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               {buttons.length > 0 ? (
@@ -1197,11 +1508,14 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 
   if (block.type === "form-embed") {
     return (
-      <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6" data-testid="block-form-embed">
-        <PublicFormRenderer
-          slug={str(props.formSlug) || str(props.formKey, "contact-form")}
-          buttonTextOverride={str(props.submitButtonText) || undefined}
-        />
+      <section className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6" data-testid="block-form-embed">
+        <div className="rounded-xl border border-border bg-card bg-paper p-6 shadow-natural-lg sm:p-10">
+          <PublicFormRenderer
+            slug={str(props.formSlug) || str(props.formKey, "contact-form")}
+            buttonTextOverride={str(props.submitButtonText) || undefined}
+            appearance="quote"
+          />
+        </div>
       </section>
     );
   }

@@ -7,3 +7,6 @@ cms-export.sql
 *.tar.gz
 server/public
 vite.config.ts.*
+client/src/features/landscape-site/assets/**/*.png
+!client/src/features/landscape-site/assets/logo-full.png
+!client/src/features/landscape-site/assets/logo-icon.png

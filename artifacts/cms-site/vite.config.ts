@@ -51,65 +51,76 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          const normalizedId = id.replace(/\\/g, "/");
-          if (!normalizedId.includes("/node_modules/")) return undefined;
+          if (!id.includes("node_modules")) return undefined;
 
-          if (
-            normalizedId.includes("/node_modules/react/") ||
-            normalizedId.includes("/node_modules/react-dom/") ||
-            normalizedId.includes("/node_modules/scheduler/") ||
-            normalizedId.includes("/node_modules/use-sync-external-store/")
-          ) {
-            return "react";
+          if (/\/node_modules\/(react|react-dom|scheduler|use-sync-external-store)\//.test(id)) {
+            return "react-core";
           }
 
-          if (normalizedId.includes("/node_modules/@tanstack/")) {
+          if (id.includes("/wouter/")) {
+            return "routing";
+          }
+
+          if (id.includes("/@tanstack/")) {
             return "query";
           }
 
-          if (
-            normalizedId.includes("/node_modules/@radix-ui/") ||
-            normalizedId.includes("/node_modules/@floating-ui/") ||
-            normalizedId.includes("/node_modules/cmdk/") ||
-            normalizedId.includes("/node_modules/vaul/") ||
-            normalizedId.includes("/node_modules/sonner/")
-          ) {
-            return "ui-primitives";
-          }
-
-          if (normalizedId.includes("/node_modules/lucide-react/")) {
+          if (id.includes("/lucide-react/")) {
             return "icons";
           }
 
           if (
-            normalizedId.includes("/node_modules/leaflet/") ||
-            normalizedId.includes("/node_modules/react-leaflet/") ||
-            normalizedId.includes("/node_modules/@react-leaflet/")
+            id.includes("/@radix-ui/") ||
+            id.includes("/@floating-ui/") ||
+            id.includes("/react-remove-scroll") ||
+            id.includes("/react-style-singleton/") ||
+            id.includes("/aria-hidden/") ||
+            id.includes("/cmdk/") ||
+            id.includes("/vaul/") ||
+            id.includes("/input-otp/")
           ) {
-            return undefined;
+            return "ui-primitives";
           }
 
-          if (normalizedId.includes("/node_modules/@tiptap/")) {
+          if (
+            id.includes("/react-hook-form/") ||
+            id.includes("/@hookform/") ||
+            id.includes("/zod/") ||
+            id.includes("/zod-validation-error/")
+          ) {
+            return "forms";
+          }
+
+          if (id.includes("/framer-motion/")) {
+            return "motion";
+          }
+
+          if (id.includes("/@tiptap/")) {
             return "tiptap";
           }
 
           if (
-            normalizedId.includes("/node_modules/prosemirror-") ||
-            normalizedId.includes("/node_modules/orderedmap/") ||
-            normalizedId.includes("/node_modules/rope-sequence/")
+            id.includes("/prosemirror-") ||
+            id.includes("/orderedmap/") ||
+            id.includes("/rope-sequence/")
           ) {
             return "prosemirror";
           }
 
-          if (normalizedId.includes("/node_modules/recharts/")) {
+          if (
+            id.includes("/recharts/") ||
+            id.includes("/d3-") ||
+            id.includes("/victory-vendor/") ||
+            id.includes("/lodash/")
+          ) {
             return "charts";
           }
 
-          if (normalizedId.includes("/node_modules/embla-carousel")) {
+          if (id.includes("/embla-carousel")) {
             return "carousel";
           }
 
-          return "vendor";
+          return undefined;
         },
       },
     },

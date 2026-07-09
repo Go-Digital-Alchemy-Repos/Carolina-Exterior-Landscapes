@@ -612,15 +612,13 @@ export default function CmsMenusPage() {
               const legacyFallback =
                 location === "main_navigation"
                   ? menusByLocation.get("header")
-                  : location.startsWith("footer_")
-                    ? menusByLocation.get("footer")
-                    : undefined;
+                  : menusByLocation.get("footer");
               const assignedMenu = menusByLocation.get(location);
               const displayMenu = assignedMenu || legacyFallback;
               const isLegacyFallback = !assignedMenu && Boolean(legacyFallback);
               const locationStatus = assignedMenu
-                  ? assignedMenu.name
-                  : isLegacyFallback && displayMenu
+                ? assignedMenu.name
+                : isLegacyFallback && displayMenu
                   ? `${displayMenu.name} (${location === "main_navigation" ? "legacy header menu" : "legacy footer menu"})`
                   : "No menu assigned yet";
               return (

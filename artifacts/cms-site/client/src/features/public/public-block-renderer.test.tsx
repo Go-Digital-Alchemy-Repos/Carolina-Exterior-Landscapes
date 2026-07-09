@@ -39,6 +39,22 @@ function textImageBlock(id: string, props: Record<string, unknown>): BlockInstan
   };
 }
 
+function mockGoogleReviews(reviews: Array<Record<string, unknown>>) {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      configured: true,
+      enabled: true,
+      placeName: "Carolina Exterior Landscapes",
+      placeUrl: "https://example.com/google-business",
+      rating: 5,
+      userRatingCount: 24,
+      reviews,
+      updatedAt: "2026-07-09T12:00:00.000Z",
+    }),
+  }));
+}
+
 describe("PublicBlockRenderer hero", () => {
   let container: HTMLDivElement;
   let root: Root | null = null;
@@ -92,6 +108,7 @@ describe("PublicBlockRenderer hero", () => {
     root = null;
     container.remove();
     document.body.innerHTML = "";
+    vi.unstubAllGlobals();
   });
 
   it("uses hero readability defaults when new props are missing", async () => {
@@ -221,6 +238,18 @@ describe("PublicBlockRenderer hero", () => {
 
     expect(heading?.textContent).toBe("Landscape Design Solutions");
     expect(heading?.textContent).not.toContain("</p>");
+  });
+
+  it("strips saved paragraph tags from hero supporting copy", async () => {
+    await act(async () => {
+      root!.render(React.createElement(PublicBlockRenderer, {
+        block: heroBlock({ subheading: "<p>Landscaping built around your property.</p>" }),
+      }));
+    });
+
+    const content = container.querySelector('[data-testid="hero-content"]');
+    expect(content?.textContent).toContain("Landscaping built around your property.");
+    expect(content?.textContent).not.toContain("<p>");
   });
 
   it("aligns hero subheading and actions with left hero headings", async () => {
@@ -371,7 +400,7 @@ describe("PublicBlockRenderer hero", () => {
       root!.render(
         React.createElement(PublicBlockRenderer, {
           block: heroBlock({
-            heading: "Annual Lawn Maintenance in Monroe, NC",
+            heading: "Annual Lawn Maintenance in Waxhaw, NC",
           }),
         }),
       );
@@ -385,8 +414,8 @@ describe("PublicBlockRenderer hero", () => {
     expect(heading?.className).toContain("max-[640px]:leading-[0.95]");
     expect(heading?.className).toContain("max-[640px]:ml-[1vw]");
     expect(heading?.className).toContain("tracking-normal");
-    expect(desktopText?.textContent).toBe("Annual Lawn Maintenance in Monroe, NC");
-    expect(mobileText?.textContent).toBe("Annual LawnMaintenance in Monroe");
+    expect(desktopText?.textContent).toBe("Annual Lawn Maintenance in Waxhaw, NC");
+    expect(mobileText?.textContent).toBe("Annual LawnMaintenance in Waxhaw");
     expect(mobileText?.querySelector("br")).not.toBeNull();
   });
 
@@ -455,7 +484,7 @@ describe("PublicBlockRenderer hero", () => {
       root!.render(
         React.createElement(PublicBlockRenderer, {
           block: heroBlock({
-            heading: "Annual Lawn Maintenance in Monroe, NC",
+            heading: "Annual Lawn Maintenance in Waxhaw, NC",
           }),
         }),
       );
@@ -473,7 +502,7 @@ describe("PublicBlockRenderer hero", () => {
       root!.render(
         React.createElement(PublicBlockRenderer, {
           block: heroBlock({
-            heading: "Annual Lawn Maintenance in Monroe, NC",
+            heading: "Annual Lawn Maintenance in Waxhaw, NC",
           }),
         }),
       );
@@ -485,7 +514,7 @@ describe("PublicBlockRenderer hero", () => {
     expect(heading?.className).toContain("max-[640px]:ml-[1vw]");
     expect(heading?.className).not.toContain("max-[640px]:ml-[2vw]");
     expect(heading?.className).not.toContain("max-[640px]:ml-0");
-    expect(mobileText?.textContent).toBe("Annual LawnMaintenance in Monroe");
+    expect(mobileText?.textContent).toBe("Annual LawnMaintenance in Waxhaw");
   });
 
   it("moves right aligned hero content to the right side of the hero container", async () => {
@@ -580,7 +609,30 @@ describe("PublicBlockRenderer hero", () => {
     expect(container.querySelector("li")?.textContent).toBe("Holds color longer");
   });
 
-  it("links review widgets to the configured Google Business profile", async () => {
+  it("renders live Google review widgets from the integration feed", async () => {
+    mockGoogleReviews([
+      {
+        authorName: "Jordan",
+        authorUrl: null,
+        profilePhotoUrl: null,
+        rating: 5,
+        text: "Careful work and excellent communication.",
+        relativeTimeDescription: "a week ago",
+        publishTime: "2026-07-01T12:00:00.000Z",
+        source: "Google",
+      },
+      {
+        authorName: "Casey",
+        authorUrl: null,
+        profilePhotoUrl: null,
+        rating: 4,
+        text: "This should be filtered out.",
+        relativeTimeDescription: "2 weeks ago",
+        publishTime: "2026-06-25T12:00:00.000Z",
+        source: "Google",
+      },
+    ]);
+
     await act(async () => {
       root!.render(
         React.createElement(PublicBlockRenderer, {
@@ -588,16 +640,27 @@ describe("PublicBlockRenderer hero", () => {
             id: "reviews-test",
             type: "review-widget",
             props: {
-              message: "Read what customers are saying.",
+              title: "Latest Google Reviews",
+              maxReviews: 5,
+              showPlaceSummary: true,
             },
           },
         }),
       );
     });
 
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     const link = container.querySelector('a[href="https://example.com/google-business"]') as HTMLAnchorElement | null;
 
-    expect(link?.textContent).toContain("View Google Business Profile");
+    expect(container.textContent).toContain("Latest Google Reviews");
+    expect(container.textContent).toContain("5.0 Google rating from 24 reviews");
+    expect(container.textContent).toContain("Careful work and excellent communication.");
+    expect(container.textContent).toContain("Jordan");
+    expect(container.textContent).not.toContain("This should be filtered out.");
+    expect(link?.textContent).toContain("Read Reviews on Google");
     expect(link?.target).toBe("_blank");
   });
 

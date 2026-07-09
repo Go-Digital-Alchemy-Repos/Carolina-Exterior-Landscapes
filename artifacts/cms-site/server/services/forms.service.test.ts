@@ -107,11 +107,66 @@ describe("submitManagedFormBySlug", () => {
       "van@example.com",
       expect.stringContaining("Tell us about your project: Need cameras for a warehouse."),
       "https://carolinaexteriorlandscapes.com/admin/forms",
+      {
+        formName: "Contact Form",
+        phone: "(803) 995-1522",
+        subject: "Security Camera Installation - Fort Mill",
+        sourcePage: "contact-form",
+      },
     );
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Service of Interest: Security Camera Installation");
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Property Type: Commercial");
     expect(mockGetFormNotificationUsers).not.toHaveBeenCalled();
     expect(mockGetUsersByRole).not.toHaveBeenCalled();
+  });
+
+  it("emails residential quote submissions through the contact notification path", async () => {
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "residential-quote-id",
+      name: "Residential Quote Form",
+      slug: "residential-quote",
+      fields: [
+        contactField("name", "Full Name"),
+        contactField("email", "Email Address", "email"),
+        contactField("phone", "Phone Number", "tel"),
+        contactField("servicesInterested", "Services Needed", "checkbox", false),
+        contactField("sourcePage", "Source Page", "hidden", false),
+      ],
+      settings: {
+        successMessage: "Thanks.",
+        notifyAdmins: true,
+        storeAsContactMessage: true,
+      },
+    });
+    mockGetFormNotificationUsers.mockResolvedValue([]);
+
+    const { submitManagedFormBySlug } = await import("./forms.service");
+
+    await submitManagedFormBySlug(
+      "residential-quote",
+      {
+        name: "Jane Homeowner",
+        email: "jane@example.com",
+        phone: "(704) 555-0123",
+        servicesInterested: ["Mulch", "Drainage"],
+        sourcePage: "/get-a-quote",
+      },
+      { baseUrl: "https://carolinaexteriorlandscapes.com" },
+    );
+
+    expect(mockSendContactFormEmail).toHaveBeenCalledWith(
+      ["admin@example.com"],
+      "Jane Homeowner",
+      "jane@example.com",
+      expect.stringContaining("Services Needed: Mulch, Drainage"),
+      "https://carolinaexteriorlandscapes.com/admin/forms",
+      {
+        formName: "Residential Quote Form",
+        phone: "(704) 555-0123",
+        subject: "Mulch, Drainage",
+        sourcePage: "/get-a-quote",
+      },
+    );
   });
 
   it("creates a CRM lead when a managed form enables CRM ingestion", async () => {

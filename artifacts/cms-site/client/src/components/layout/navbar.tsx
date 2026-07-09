@@ -33,7 +33,9 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data } = useQuery<MenuMap>({
     queryKey: ["/api/cms/menus"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
   const items = menuItems(data?.main_navigation);
 
@@ -42,7 +44,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="inline-flex items-center gap-3" data-testid="link-brand">
           {frontendLogoUrl ? (
-            <img src={frontendLogoUrl} alt={label} className="h-[2.86rem] w-auto" />
+            <img src={frontendLogoUrl} alt={label} width={471} height={126} className="h-[2.86rem] w-auto" />
           ) : (
             <span className="text-base font-semibold tracking-normal text-foreground sm:text-lg">{label}</span>
           )}

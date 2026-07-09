@@ -2,12 +2,16 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { Layout } from "@/features/landscape-site/components/Layout";
+import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { PublicBlockRenderer, PublicPageRenderer } from "@/features/public/public-block-renderer";
 import { PublicSidebar } from "@/features/public/public-sidebar";
 import { Loader2 } from "lucide-react";
 import type { BlockInstance, BuilderContent } from "@/features/admin/cms/builder/block-registry";
 import type { CmsPage, SeoSettings } from "@shared/schema";
 import { JsonLd } from "@/components/shared/json-ld";
+import { compactSeoDescription, compactSeoTitle } from "@/lib/seo-text";
 import {
   buildOrganizationLd,
   buildBreadcrumbLd,
@@ -56,6 +60,61 @@ function parseCmsContent(content: unknown): BlockInstance[] {
   if (!content || typeof content !== "object") return [];
   const c = content as BuilderContent;
   return Array.isArray(c.blocks) ? c.blocks : [];
+}
+
+function isLandscapeContent(content: unknown) {
+  return Boolean(content && typeof content === "object" && (content as { source?: unknown }).source === "carolina-landscape-v1");
+}
+
+type LandscapeTone = "dark" | "stone" | "sand" | "white";
+
+function landscapeSectionTone(block: BlockInstance, index: number): LandscapeTone {
+  if (block.type === "hero" || block.type === "cta") return "dark";
+  const background = typeof block.props?.background === "string" ? block.props.background : "";
+  if (background === "dark") return "dark";
+  if (background === "muted" || background === "off-white") return "stone";
+  return index % 2 === 0 ? "sand" : "white";
+}
+
+function landscapeToneColor(tone: LandscapeTone) {
+  if (tone === "dark") return "hsl(var(--foreground))";
+  if (tone === "stone") return "hsl(var(--surface-stone))";
+  if (tone === "sand") return "hsl(var(--surface-sand))";
+  return "hsl(var(--background))";
+}
+
+function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
+  return (
+    <div className="landscape-cms-page w-full">
+      {blocks.map((block, index) => {
+        const tone = landscapeSectionTone(block, index);
+        const previousTone = index > 0 ? landscapeSectionTone(blocks[index - 1], index - 1) : tone;
+        const showBotanical = block.type === "cards-grid" || block.type === "faq" || block.type === "rich-text";
+        return (
+          <div key={block.id}>
+            {index > 0 ? (
+              <SectionDivider
+                variant={index % 3 === 0 ? "leaf" : "hills"}
+                bgColor={landscapeToneColor(previousTone)}
+                fillColor={landscapeToneColor(tone)}
+                heightClassName="h-8 md:h-12 lg:h-16"
+              />
+            ) : null}
+            <div className={`landscape-cms-section landscape-cms-section--${tone} relative overflow-hidden`}>
+              {tone !== "dark" ? <div className="pointer-events-none absolute inset-0 bg-topo opacity-35" aria-hidden="true" /> : null}
+              {showBotanical ? (
+                <BotanicalAccent
+                  variant={index % 2 === 0 ? "sprig" : "fern"}
+                  className="absolute -right-4 bottom-2 hidden h-56 w-auto text-primary/10 lg:block"
+                />
+              ) : null}
+              <PublicBlockRenderer block={block} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function setMeta(name: string, content: string, property = false) {
@@ -133,11 +192,12 @@ function CmsPageSeo({ page, globalSeo }: { page: CmsPage; globalSeo?: SeoSetting
     const titleSuffix = globalSeo?.titleSuffix ?? " | Website";
     const suffixName = titleSuffix.replace(/^\s*\|\s*/, "").trim();
     const hasSuffixName = suffixName && effectiveTitle.includes(suffixName);
-    const documentTitle = effectiveTitle && titleSuffix && !hasSuffixName && !effectiveTitle.endsWith(titleSuffix)
+    const documentTitle = compactSeoTitle(effectiveTitle && titleSuffix && !hasSuffixName && !effectiveTitle.endsWith(titleSuffix)
       ? `${effectiveTitle}${titleSuffix}`
-      : effectiveTitle;
+      : effectiveTitle);
     const effectiveDescription =
       page.seoDescription || globalSeo?.defaultMetaDescription || "";
+    const compactDescription = compactSeoDescription(effectiveDescription);
     const effectiveOgImage = page.ogImageUrl || globalSeo?.defaultOgImageUrl || "";
     const origin =
       globalSeo?.siteUrl || (typeof window !== "undefined" ? window.location.origin : "");
@@ -145,11 +205,11 @@ function CmsPageSeo({ page, globalSeo }: { page: CmsPage; globalSeo?: SeoSetting
     if (effectiveTitle) document.title = documentTitle;
 
     if (effectiveDescription) {
-      setMeta("description", effectiveDescription);
-      setMeta("og:description", effectiveDescription, true);
+      setMeta("description", compactDescription);
+      setMeta("og:description", compactDescription, true);
     }
 
-    if (effectiveTitle) setMeta("og:title", effectiveTitle, true);
+    if (effectiveTitle) setMeta("og:title", documentTitle, true);
 
     if (effectiveOgImage) {
       setMeta("og:image", effectiveOgImage, true);
@@ -208,13 +268,21 @@ function CmsPageSeo({ page, globalSeo }: { page: CmsPage; globalSeo?: SeoSetting
   );
 }
 
-function CmsLoadingPage() {
+function CmsLoadingPage({ landscapeShell = false }: { landscapeShell?: boolean }) {
+  const loader = (
+    <div className="flex min-h-[50vh] items-center justify-center py-24">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  if (landscapeShell) {
+    return <Layout>{loader}</Layout>;
+  }
+
   return (
     <div className="min-h-screen flex flex-col" data-testid="cms-public-loading">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </main>
+      <main className="flex-1">{loader}</main>
       <Footer />
     </div>
   );
@@ -225,41 +293,57 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
   const showSidebar = page.template === "with-sidebar" && Boolean(page.sidebarId);
   const heroBlocks = showSidebar && blocks[0] && /hero/i.test(blocks[0].type) ? [blocks[0]] : [];
   const contentBlocks = heroBlocks.length > 0 ? blocks.slice(1) : blocks;
+  const useLandscapeShell = isLandscapeContent(page.content) || page.slug === "contact";
+
+  const pageBody = blocks.length > 0 ? (
+    showSidebar ? (
+      <>
+        {heroBlocks.length > 0 && <PublicPageRenderer blocks={heroBlocks} />}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+            <div className="space-y-8" data-testid="cms-page-main-with-sidebar">
+              {contentBlocks.map((block) => (
+                <PublicBlockRenderer key={block.id} block={block} />
+              ))}
+            </div>
+            <PublicSidebar sidebarId={page.sidebarId} />
+          </div>
+        </div>
+      </>
+    ) : useLandscapeShell ? (
+      <LandscapeCmsBlocks blocks={blocks} />
+    ) : (
+      <PublicPageRenderer blocks={blocks} />
+    )
+  ) : (
+    <div className="max-w-4xl mx-auto px-4 py-16">
+      <h1 className="text-3xl font-heading font-semibold">{page.title}</h1>
+    </div>
+  );
+
+  const metadata = <CmsPageSeo page={page} globalSeo={globalSeo} />;
+  const previewBanner = previewLabel ? (
+    <div className="border-b border-primary/20 bg-primary/10 px-4 py-2 text-center text-sm font-medium text-primary">
+      {previewLabel}
+    </div>
+  ) : null;
+
+  if (useLandscapeShell) {
+    return (
+      <Layout>
+        {metadata}
+        {previewBanner}
+        {pageBody}
+      </Layout>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" data-testid="cms-public-page">
-      <CmsPageSeo page={page} globalSeo={globalSeo} />
-      {previewLabel ? (
-        <div className="border-b border-primary/20 bg-primary/10 px-4 py-2 text-center text-sm font-medium text-primary">
-          {previewLabel}
-        </div>
-      ) : null}
+      {metadata}
+      {previewBanner}
       <Navbar />
-      <main className="flex-1">
-        {blocks.length > 0 ? (
-          showSidebar ? (
-            <>
-              {heroBlocks.length > 0 && <PublicPageRenderer blocks={heroBlocks} />}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-                <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
-                  <div className="space-y-8" data-testid="cms-page-main-with-sidebar">
-                    {contentBlocks.map((block) => (
-                      <PublicBlockRenderer key={block.id} block={block} />
-                    ))}
-                  </div>
-                  <PublicSidebar sidebarId={page.sidebarId} />
-                </div>
-              </div>
-            </>
-          ) : (
-            <PublicPageRenderer blocks={blocks} />
-          )
-        ) : (
-          <div className="max-w-4xl mx-auto px-4 py-16">
-            <h1 className="text-3xl font-heading font-semibold">{page.title}</h1>
-          </div>
-        )}
-      </main>
+      <main className="flex-1">{pageBody}</main>
       <Footer />
     </div>
   );
@@ -289,7 +373,9 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
       if (err instanceof CmsNotFoundError) return false;
       return failureCount < 2;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const { data: globalSeo } = useQuery<SeoSettings>({
@@ -298,7 +384,7 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
   });
 
   if (isLoading) {
-    return <CmsLoadingPage />;
+    return <CmsLoadingPage landscapeShell={slug === "contact"} />;
   }
 
   if (error) {

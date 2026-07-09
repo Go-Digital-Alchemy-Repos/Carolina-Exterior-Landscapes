@@ -40,6 +40,7 @@ router.get(
 router.get(
   "/landscape/pages",
   asyncHandler(async (_req, res) => {
+    res.set("Cache-Control", "no-store");
     const pages = await storage.cmsPages.getAllPages();
     res.json(
       pages.filter((page) => {
@@ -55,8 +56,26 @@ router.get(
 );
 
 router.get(
+  "/blog-posts",
+  asyncHandler(async (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    const pages = await storage.cmsPages.getAllPages();
+    res.json(
+      pages
+        .filter((page) => page.status === "published" && page.pageType === "blog-post")
+        .sort((a, b) => {
+          const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+          const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+          return bDate - aDate;
+        }),
+    );
+  }),
+);
+
+router.get(
   "/pages/by-slug/:slug",
   asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "no-store");
     const slug = paramString(req.params.slug);
     const result = await getPublicPageBySlug(slug);
     if (!result || result.page.status === "archived" || (!result.allowUnpublished && result.page.status !== "published")) {
@@ -107,6 +126,7 @@ router.get(
 router.get(
   "/menus",
   asyncHandler(async (_req, res) => {
+    res.set("Cache-Control", "no-store");
     const menus = await storage.cmsMenus.getAll();
     const menuMap: Partial<Record<PublicMenuLocation, CmsMenu>> = {};
     for (const menu of menus) {
@@ -123,6 +143,7 @@ router.get(
 router.get(
   "/menus/:location",
   asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "no-store");
     const location = paramString(req.params.location);
     if (!PUBLIC_MENU_LOCATIONS.includes(location as PublicMenuLocation)) {
       return res.status(400).json({ error: "Invalid menu location" });

@@ -13,7 +13,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   DEFAULT_COOKIE_CONSENT_PREFERENCES,
-  ESSENTIAL_ONLY_COOKIE_CONSENT_PREFERENCES,
   buildCookieConsentRecord,
   isCookieConsentRecordActive,
   readCookieConsentRecord,
@@ -94,7 +93,7 @@ export function CookieConsentBanner() {
   }
 
   function essentialOnly() {
-    saveConsent(ESSENTIAL_ONLY_COOKIE_CONSENT_PREFERENCES);
+    saveConsent(DEFAULT_COOKIE_CONSENT_PREFERENCES);
   }
 
   function openSettings() {
@@ -128,6 +127,9 @@ export function CookieConsentBanner() {
             <div className="flex flex-col gap-2 sm:min-w-44">
               <Button type="button" onClick={acceptAll}>
                 Accept All
+              </Button>
+              <Button type="button" variant="outline" onClick={essentialOnly}>
+                Essential Only
               </Button>
               <Button type="button" variant="ghost" onClick={openSettings}>
                 Cookie Settings

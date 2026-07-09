@@ -1,11 +1,5 @@
 import { crmLeadInputSchema, type CrmClient, type CrmLead, type InsertCrmLead } from "@shared/schema";
 import { storage } from "../storage";
-import { logger } from "../utils/logger";
-import { sendCrmLeadNotificationEmail } from "./email.service";
-
-export const DEFAULT_CRM_LEAD_NOTIFICATION_EMAIL = "van@carolinaexteriorlandscapes.com";
-export const CRM_SETTINGS_CATEGORY = "crm";
-export const CRM_LEAD_NOTIFICATION_EMAIL_KEY = "crm_lead_notification_email";
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -26,69 +20,15 @@ export function inferCrmLeadFromFormData(data: Record<string, unknown>) {
   const fullNameObject = object(data.fullName);
   const objectFullName = [text(fullNameObject.firstName), text(fullNameObject.lastName)].filter(Boolean).join(" ") || text(fullNameObject.fullName);
   const splitName = [text(data.firstName), text(data.lastName)].filter(Boolean).join(" ");
-  const messageParts = [
-    text(data.message),
-    text(data.comments),
-    text(data.details),
-    text(data.notes),
-    text(data.projectDetails),
-  ].filter(Boolean);
   const email = text(data.email);
 
   return {
-    name: text(data.name) || text(data.fullName) || text(data.contactName) || objectName || objectFullName || splitName || email || "Website Lead",
+    name: text(data.name) || text(data.fullName) || objectName || objectFullName || splitName || email || "Website Lead",
     email: email || null,
     phone: text(data.phone) || text(data.tel) || null,
-    company: text(data.company) || text(data.companyName) || text(data.organization) || null,
-    message: messageParts.join("\n\n") || null,
+    company: text(data.company) || text(data.organization) || null,
+    message: text(data.message) || text(data.comments) || text(data.details) || null,
   };
-}
-
-function parseNotificationEmails(value: string | null | undefined): string[] {
-  return (value || DEFAULT_CRM_LEAD_NOTIFICATION_EMAIL)
-    .split(/[,\n;]/)
-    .map((email) => email.trim())
-    .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-}
-
-export async function getCrmSettings() {
-  const settings = await storage.settings.getDecryptedCategory(CRM_SETTINGS_CATEGORY);
-  return {
-    leadNotificationEmail: settings[CRM_LEAD_NOTIFICATION_EMAIL_KEY] || DEFAULT_CRM_LEAD_NOTIFICATION_EMAIL,
-  };
-}
-
-export async function updateCrmSettings(input: { leadNotificationEmail: string }) {
-  const value = input.leadNotificationEmail.trim();
-  const emails = parseNotificationEmails(value);
-  if (value && emails.length === 0) {
-    throw new Error("Enter at least one valid CRM lead notification email address.");
-  }
-  await storage.settings.upsertSetting(
-    CRM_LEAD_NOTIFICATION_EMAIL_KEY,
-    value || DEFAULT_CRM_LEAD_NOTIFICATION_EMAIL,
-    CRM_SETTINGS_CATEGORY,
-    false,
-  );
-  storage.settings.invalidateCategory(CRM_SETTINGS_CATEGORY);
-  return getCrmSettings();
-}
-
-async function notifyCrmLeadCreatedOrUpdated(lead: CrmLead, duplicate: boolean) {
-  if (lead.source === "manual") return;
-
-  try {
-    const settings = await getCrmSettings();
-    const recipients = parseNotificationEmails(settings.leadNotificationEmail);
-    if (recipients.length === 0) return;
-    const baseUrl = (process.env.APP_URL || "https://carolinaexteriorlandscapes.com").replace(/\/$/, "");
-    await sendCrmLeadNotificationEmail(recipients, lead, `${baseUrl}/admin/crm`, duplicate);
-  } catch (err) {
-    logger.email.warn("Failed to send CRM lead notification", {
-      leadId: lead.id,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
 }
 
 export async function createOrUpdateCrmLead(input: Partial<InsertCrmLead>, createdById?: string) {
@@ -128,15 +68,11 @@ export async function createOrUpdateCrmLead(input: Partial<InsertCrmLead>, creat
       body: `Duplicate lead received from ${parsed.source}. Existing lead was updated.`,
       createdById,
     });
-    const result = { lead: lead!, duplicate: true };
-    void notifyCrmLeadCreatedOrUpdated(result.lead, result.duplicate);
-    return result;
+    return { lead: lead!, duplicate: true };
   }
 
   const lead = await storage.crm.createLead(parsed);
-  const result = { lead, duplicate: false };
-  void notifyCrmLeadCreatedOrUpdated(result.lead, result.duplicate);
-  return result;
+  return { lead, duplicate: false };
 }
 
 export async function createCrmLeadFromFormSubmission({

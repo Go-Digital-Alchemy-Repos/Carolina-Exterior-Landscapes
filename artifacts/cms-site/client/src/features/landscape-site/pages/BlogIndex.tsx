@@ -1,4 +1,4 @@
-import { getBlogPosts, getBlogImage } from "@/features/landscape-site/content/blog";
+import { getBlogPosts, getBlogImage } from "@/features/landscape-site/content";
 import { useLandscapeCmsBlogPosts } from "@/features/landscape-site/use-landscape-cms";
 import { Seo } from "@/features/landscape-site/components/Seo";
 import { Link } from "wouter";
@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 export default function BlogIndex() {
   const posts = useLandscapeCmsBlogPosts(getBlogPosts());
@@ -59,17 +58,21 @@ export default function BlogIndex() {
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPosts.map(post => (
+          {filteredPosts.map(post => {
+            const coverImage = post.imageUrl || getBlogImage(post.image);
+            return (
             <Link key={post.slug} href={`/blog/${post.slug}`}>
               <Card className="h-full shadow-natural hover:shadow-natural-lg hover:-translate-y-1 hover:border-muted-foreground/40 transition-all duration-500 cursor-pointer group flex flex-col overflow-hidden">
                 <div className="relative aspect-[16/9] overflow-hidden bg-muted">
-                  <LandscapeImage
-                    src={post.imageUrl ?? post.media?.heroImageUrl ?? getBlogImage(post.image)}
-                    alt={post.h1}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                  {coverImage && (
+                    <img
+                      src={coverImage}
+                      alt={post.h1}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
                 </div>
                 <CardHeader>
                   <div className="mb-4">
@@ -98,7 +101,8 @@ export default function BlogIndex() {
                 </CardFooter>
               </Card>
             </Link>
-          ))}
+          );
+          })}
         </div>
         
         {filteredPosts.length === 0 && (

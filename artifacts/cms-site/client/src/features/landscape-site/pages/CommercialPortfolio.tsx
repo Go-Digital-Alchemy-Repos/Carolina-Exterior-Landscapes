@@ -1,19 +1,18 @@
 import { Seo } from "@/features/landscape-site/components/Seo";
-import { useLandscapeCmsData } from "@/features/landscape-site/use-landscape-cms";
-import { LANDSCAPE_IMAGE_BASE, type LandscapeMedia } from "@/features/landscape-site/content/base";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
+import com1 from "@/features/landscape-site/assets/gallery-com-1.webp";
+import com2 from "@/features/landscape-site/assets/gallery-com-2.webp";
+import com3 from "@/features/landscape-site/assets/gallery-com-3.webp";
+import heroCommercial from "@/features/landscape-site/assets/hero-commercial.webp";
 
 export default function CommercialPortfolio() {
-  const fallbackImages = [
-    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-1.png`, alt: "Corporate office park landscaping" },
-    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-2.png`, alt: "HOA community entrance landscaping" },
-    { src: `${LANDSCAPE_IMAGE_BASE}/gallery-com-3.png`, alt: "Commercial property hardscape and walkways" },
-    { src: `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`, alt: "Pristine commercial property grounds" },
+  const images = [
+    { src: com1, alt: "Corporate office park landscaping" },
+    { src: com2, alt: "HOA community entrance landscaping" },
+    { src: com3, alt: "Commercial property hardscape and walkways" },
+    { src: heroCommercial, alt: "Pristine commercial property grounds" },
   ];
-  const page = useLandscapeCmsData<{ media?: LandscapeMedia }>("commercial-portfolio", { media: { images: fallbackImages } });
-  const images = page.media?.images ?? fallbackImages;
 
   return (
     <div className="w-full bg-background min-h-screen pb-24">
@@ -38,11 +37,10 @@ export default function CommercialPortfolio() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
           {images.map((img, i) => (
             <div key={i} className="aspect-video rounded-xl overflow-hidden border border-border shadow-natural hover:shadow-natural-lg hover:-translate-y-1 transition-all duration-500 group">
-              <LandscapeImage 
+              <img 
                 src={img.src} 
                 alt={img.alt} 
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchPriority={i === 0 ? "high" : "auto"}
+                loading="lazy"
                 decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />

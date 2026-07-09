@@ -13,33 +13,12 @@ const EMPTY_SNIPPETS: SiteCodeSnippets = {
   footer: "",
 };
 
-function joinSnippets(...snippets: Array<string | null | undefined>) {
-  return snippets.map((snippet) => snippet?.trim()).filter(Boolean).join("\n");
-}
-
-function extractHeadOnlyTagsFromBodyStart(snippet: string) {
-  const promoted: string[] = [];
-  const body = snippet.replace(/<meta\b[^>]*name=["']google-site-verification["'][^>]*\/?>/gi, (match) => {
-    promoted.push(match);
-    return "";
-  });
-
-  return {
-    head: promoted.join("\n"),
-    body: body.trim(),
-  };
-}
-
 export async function getSiteCodeSnippets(): Promise<SiteCodeSnippets> {
   try {
-    const [settings, seoSettings] = await Promise.all([
-      storage.settings.getDecryptedCategory("code_snippets"),
-      storage.seoSettings.get().catch(() => undefined),
-    ]);
-    const bodyStart = extractHeadOnlyTagsFromBodyStart(settings.header_snippets || "");
+    const settings = await storage.settings.getDecryptedCategory("code_snippets");
     return {
-      head: joinSnippets(settings.head_snippets, seoSettings?.customHeadTags, bodyStart.head),
-      header: bodyStart.body,
+      head: settings.head_snippets || "",
+      header: settings.header_snippets || "",
       footer: settings.footer_snippets || "",
     };
   } catch (err) {
@@ -48,6 +27,18 @@ export async function getSiteCodeSnippets(): Promise<SiteCodeSnippets> {
     });
     return EMPTY_SNIPPETS;
   }
+}
+
+const VERIFICATION_META_PATTERN = /<meta\b(?=[^>]*\bname=["'](?:google-site-verification|msvalidate\.01|yandex-verification)["'])[^>]*>\s*/gi;
+
+function relocateVerificationMeta(snippets: SiteCodeSnippets): SiteCodeSnippets {
+  const verificationTags = snippets.header.match(VERIFICATION_META_PATTERN) ?? [];
+  if (verificationTags.length === 0) return snippets;
+  return {
+    ...snippets,
+    head: [snippets.head.trim(), ...verificationTags.map((tag) => tag.trim())].filter(Boolean).join("\n"),
+    header: snippets.header.replace(VERIFICATION_META_PATTERN, "").trim(),
+  };
 }
 
 function insertBeforeClosingTag(html: string, closingTag: string, snippet: string) {
@@ -66,6 +57,7 @@ function insertAfterOpeningBody(html: string, snippet: string) {
 }
 
 export function injectSiteCodeSnippets(html: string, snippets: SiteCodeSnippets) {
+  snippets = relocateVerificationMeta(snippets);
   let output = html;
   const hasHeadPlaceholder = output.includes("<!--APP_DYNAMIC_HEAD-->");
   if (hasHeadPlaceholder) {

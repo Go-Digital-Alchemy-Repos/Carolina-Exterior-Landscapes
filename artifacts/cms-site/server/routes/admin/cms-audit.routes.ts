@@ -21,6 +21,7 @@ router.get("/seo-audit", async (_req, res) => {
         id: page.id,
         title: page.title,
         slug: page.slug,
+        pageType: page.pageType,
         status: page.status,
         noindex: page.noindex,
         seoTitle: page.seoTitle,

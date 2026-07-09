@@ -24,7 +24,7 @@ export function BotanicalAccent({
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn(className, "pointer-events-none z-0 select-none opacity-[0.39]")}
+      className={cn("pointer-events-none select-none", className)}
     >
       {variant === "fern" && (
         <g>

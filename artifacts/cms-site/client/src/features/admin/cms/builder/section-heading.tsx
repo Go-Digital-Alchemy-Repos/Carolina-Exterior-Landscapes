@@ -1,5 +1,6 @@
 import type { ElementType } from "react";
 import { cn } from "@/lib/utils";
+import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 
 type HeadingLevel = "h1" | "h2";
 type HeadingAlignment = "left" | "center" | "right";
@@ -68,7 +69,7 @@ export function SectionHeading({
             "public-heading-subtext max-w-2xl text-sm leading-relaxed sm:text-base [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:text-primary/80 [&_p]:m-0",
             subtitleClassName
           )}
-          dangerouslySetInnerHTML={{ __html: subtitle }}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(subtitle) }}
         />
       )}
     </div>

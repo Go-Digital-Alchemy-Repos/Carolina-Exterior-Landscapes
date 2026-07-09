@@ -60,8 +60,10 @@ type CmsBuilderBlock = {
 };
 
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
+const LANDSCAPE_CMS_WIRING_VERSION = 2;
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 const CONTACT_PAGE_SLUG = "contact";
+const NOT_FOUND_PAGE_SLUG = "404";
 
 const SECURITY_LOW_VOLTAGE_PATTERNS = [
   "low voltage",
@@ -94,11 +96,16 @@ function canonicalFor(pathname: string) {
 }
 
 function imageUrl(filename: string) {
-  return `${LANDSCAPE_IMAGE_BASE}/${filename}`;
+  return `${LANDSCAPE_IMAGE_BASE}/${modernImageFilename(filename)}`;
 }
 
 function serviceImageUrl(filename: string) {
-  return `${LANDSCAPE_IMAGE_BASE}/services/${filename}.png`;
+  return `${LANDSCAPE_IMAGE_BASE}/services/${filename}.webp`;
+}
+
+function modernImageFilename(filename: string) {
+  if (["logo-full.png", "logo-icon.png"].includes(filename)) return filename;
+  return filename.replace(/\.png$/i, ".webp");
 }
 
 const SERVICE_IMAGE_CONCEPTS: Record<string, Record<string, string>> = {
@@ -183,6 +190,10 @@ const SERVICE_IMAGE_CONCEPTS: Record<string, Record<string, string>> = {
 function serviceImagesForPage(slug: string) {
   const concepts = SERVICE_IMAGE_CONCEPTS[slug];
   if (!concepts) return undefined;
+  if (slug === "residential-pressure-washing" || slug === "commercial-pressure-washing") {
+    const fallback = slug.startsWith("commercial") ? imageUrl("hero-commercial.png") : imageUrl("hero-home.png");
+    return Object.fromEntries(Object.keys(concepts).map((title) => [title, fallback]));
+  }
   return Object.fromEntries(Object.entries(concepts).map(([title, concept]) => [title, serviceImageUrl(concept)]));
 }
 
@@ -193,7 +204,7 @@ const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": imageUrl("hero-home.png"),
   "residential-landscaping": imageUrl("hero-home.png"),
   "residential-hardscape": imageUrl("hero-hardscape.png"),
-  "residential-pressure-washing": imageUrl("hero-residential-pressure-washing.avif"),
+  "residential-pressure-washing": imageUrl("hero-home.png"),
   "mulching-and-planting": imageUrl("hero-mulch.png"),
   "drainage-solutions": imageUrl("hero-drainage.png"),
   commercial: imageUrl("hero-commercial.png"),
@@ -201,9 +212,9 @@ const HERO_IMAGES: Record<string, string> = {
   "commercial-landscaping": imageUrl("hero-commercial-landscaping.png"),
   "commercial-hardscape": imageUrl("hero-commercial-hardscape.png"),
   "commercial-drainage": imageUrl("hero-commercial-drainage.png"),
-  "commercial-pressure-washing": imageUrl("hero-commercial-pressure-washing.avif"),
+  "commercial-pressure-washing": imageUrl("hero-commercial.png"),
   "hoa-services": imageUrl("hero-hoa.png"),
-  "get-a-quote": imageUrl("hero-quote.png"),
+  "get-a-quote": imageUrl("hero-home.png"),
 };
 
 const GALLERY_PROJECTS: NonNullable<LandscapeMedia["projects"]> = [
@@ -323,7 +334,7 @@ function mediaForPage(page: LandscapePage | LandscapeLocation | LandscapeBlogPos
   }
   if (slug === "gallery") {
     return {
-      heroImageUrl: imageUrl("hero-gallery.png"),
+      heroImageUrl: imageUrl("gallery-res-1.png"),
       heroImageAlt: "Manicured residential lawn and landscape beds framing a white brick home",
       projects: GALLERY_PROJECTS,
     };
@@ -343,7 +354,7 @@ function mediaForPage(page: LandscapePage | LandscapeLocation | LandscapeBlogPos
   }
   if ("image" in page && typeof (page as LandscapeBlogPost).image === "string") {
     return {
-      heroImageUrl: `${LANDSCAPE_IMAGE_BASE}/blog/${(page as LandscapeBlogPost).image}`,
+      heroImageUrl: `${LANDSCAPE_IMAGE_BASE}/blog/${modernImageFilename((page as LandscapeBlogPost).image)}`,
       heroImageAlt: (page as LandscapeBlogPost).h1,
     };
   }
@@ -366,7 +377,7 @@ function withMedia<T extends LandscapePage | LandscapeLocation | LandscapeBlogPo
   if (!media) return data;
   const next = { ...data, media };
   if ("image" in next && typeof next.image === "string") {
-    return { ...next, imageUrl: `${LANDSCAPE_IMAGE_BASE}/blog/${next.image}` } as T;
+    return { ...next, imageUrl: `${LANDSCAPE_IMAGE_BASE}/blog/${modernImageFilename(next.image)}` } as T;
   }
   return next as T;
 }
@@ -554,6 +565,34 @@ function buildBuilderBlocks(
     });
   }
 
+  const serviceAreas = Array.isArray((data as { areas?: unknown }).areas)
+    ? ((data as { areas: LandscapeLocation[] }).areas)
+    : [];
+  if (slug === "service-areas" && serviceAreas.length > 0) {
+    blocks.push({
+      id: "service-areas-directory",
+      type: "areas-grid",
+      props: {
+        title: "Communities We Serve",
+        items: serviceAreas.map((area) => ({
+          label: `${area.city}, ${area.state}`,
+          path: `/service-areas/${area.slug}`,
+        })),
+      },
+    });
+  }
+
+  if (slug === "blog") {
+    blocks.push({
+      id: "blog-post-directory",
+      type: "blog-listing",
+      props: {
+        title: "Latest Articles",
+        subtitle: "<p>Practical guidance for healthier lawns, better landscapes, and well-managed commercial properties.</p>",
+      },
+    });
+  }
+
   if (media?.sidebarImageUrl && slug === "home") {
     const intro = sourceBlocks.filter((block) => block.type === "p").slice(0, 2).map((block) => richParagraph(block.text)).join("");
     blocks.push({
@@ -655,19 +694,8 @@ function buildBuilderBlocks(
   return blocks;
 }
 
-function hasBuilderBlocks(content: unknown): boolean {
-  return Boolean(content && typeof content === "object" && Array.isArray((content as { blocks?: unknown }).blocks) && (content as { blocks: unknown[] }).blocks.length > 0);
-}
-
-function mergeLandscapeContent(existingContent: unknown, seededContent: unknown) {
-  const existing = existingContent && typeof existingContent === "object" ? existingContent as Record<string, unknown> : {};
-  const seeded = seededContent && typeof seededContent === "object" ? seededContent as Record<string, unknown> : {};
-  return {
-    ...existing,
-    source: seeded.source,
-    landscape: existing.landscape ?? seeded.landscape,
-    blocks: hasBuilderBlocks(existing) ? existing.blocks : seeded.blocks,
-  };
+function cloneSeedContent(seededContent: unknown) {
+  return JSON.parse(JSON.stringify(seededContent ?? {})) as InsertCmsPage["content"];
 }
 
 function pageRecord(
@@ -694,6 +722,7 @@ function pageRecord(
     sidebarId: null,
     content: {
       source: LANDSCAPE_CONTENT_VERSION,
+      landscapeCmsWiringVersion: LANDSCAPE_CMS_WIRING_VERSION,
       landscape: {
         kind: options.kind,
         path: options.path,
@@ -727,13 +756,135 @@ function containsSecurityLowVoltageCopy(value: unknown): boolean {
   return SECURITY_LOW_VOLTAGE_PATTERNS.some((pattern) => haystack.includes(pattern));
 }
 
+const RETIRED_PUBLIC_LINKS = [
+  "/privacy-policy",
+  "/service-areas/tega-cay-sc",
+  "/service-areas/fort-mill-sc",
+  "/service-areas/lake-wylie-sc",
+  "/service-areas/rock-hill-sc",
+  "/service-areas/pineville-nc",
+];
+
+function containsRetiredPublicLink(value: unknown): boolean {
+  const serialized = JSON.stringify(value ?? "").toLowerCase();
+  return RETIRED_PUBLIC_LINKS.some((pathname) => serialized.includes(pathname));
+}
+
+function hasBuilderBlocks(content: unknown): boolean {
+  if (!content || typeof content !== "object") return false;
+  const blocks = (content as { blocks?: unknown }).blocks;
+  return Array.isArray(blocks) && blocks.length > 0;
+}
+
+function mergeRequiredSeedBlocks(existingContent: unknown, seedContent: unknown, requiredBlockIds: string[]) {
+  const existing = cloneSeedContent(existingContent) as Record<string, unknown>;
+  const seed = cloneSeedContent(seedContent) as Record<string, unknown>;
+  const existingBlocks = Array.isArray(existing.blocks) ? existing.blocks as CmsBuilderBlock[] : [];
+  const seedBlocks = Array.isArray(seed.blocks) ? seed.blocks as CmsBuilderBlock[] : [];
+  const existingIds = new Set(existingBlocks.map((block) => block.id));
+  const requiredBlocks = seedBlocks.filter((block) => requiredBlockIds.includes(block.id) && !existingIds.has(block.id));
+  return {
+    ...existing,
+    landscapeCmsWiringVersion: LANDSCAPE_CMS_WIRING_VERSION,
+    blocks: [...existingBlocks, ...requiredBlocks],
+  } as InsertCmsPage["content"];
+}
+
+function faqBlocksFromPages(pages: Record<string, LandscapePage>, slugs: string[]): LandscapeBlock[] {
+  const blocks: LandscapeBlock[] = [{ type: "h2", text: "Frequently Asked Questions" }];
+  for (const slug of slugs) {
+    const page = pages[slug];
+    if (!page) continue;
+    let inFaq = false;
+    for (let index = 0; index < page.blocks.length; index += 1) {
+      const block = page.blocks[index];
+      if (block.type === "h2") {
+        inFaq = /frequently asked|faq/i.test(block.text);
+        continue;
+      }
+      const answer = page.blocks[index + 1];
+      if (inFaq && block.type === "h3" && answer?.type === "p") {
+        blocks.push(block, answer);
+        index += 1;
+      }
+    }
+  }
+  return blocks;
+}
+
+function pressureWashingPages(): LandscapePage[] {
+  return [
+    {
+      slug: "residential-pressure-washing",
+      h1: "Residential Pressure Washing",
+      titleTag: "Residential Pressure Washing | Carolina Exterior Landscapes",
+      metaDescription: "Professional pressure washing for driveways, walkways, patios, home exteriors, fences, and hardscape throughout Waxhaw and the greater Charlotte area.",
+      primaryKeyword: "residential pressure washing",
+      secondaryKeywords: ["driveway cleaning", "patio pressure washing", "house washing Waxhaw NC"],
+      schemaType: "Service",
+      wordCountTarget: "800",
+      blocks: [
+        { type: "p", text: "Restore a clean, well-kept appearance to the outdoor surfaces around your home with careful, property-specific pressure washing." },
+        { type: "h2", text: "Residential Pressure Washing Services" },
+        { type: "h3", text: "Driveway Pressure Washing" },
+        { type: "p", text: "We remove built-up dirt, organic staining, and surface grime from concrete driveways while using the appropriate pressure for the material." },
+        { type: "h3", text: "Sidewalks, Walkways & Front Entries" },
+        { type: "p", text: "Clean paths and entry areas improve curb appeal and create a more welcoming approach to your home." },
+        { type: "h3", text: "Patio, Porch & Outdoor Living Area Cleaning" },
+        { type: "p", text: "We clean patios, porches, and outdoor gathering spaces so they are ready for everyday use and entertaining." },
+        { type: "h3", text: "House Washing & Exterior Surface Cleaning" },
+        { type: "p", text: "Our team selects a suitable cleaning method for siding and exterior finishes to lift dirt without unnecessary surface damage." },
+        { type: "h3", text: "Fence, Wall & Hardscape Cleaning" },
+        { type: "p", text: "Fences, landscape walls, and masonry features can be cleaned as part of a coordinated exterior refresh." },
+        { type: "h2", text: "Frequently Asked Questions" },
+        { type: "h3", text: "How often should residential surfaces be pressure washed?" },
+        { type: "p", text: "Most properties benefit from cleaning every one to two years, though shaded areas and surfaces exposed to heavy organic growth may need attention sooner." },
+        { type: "h3", text: "Can pressure washing damage concrete or siding?" },
+        { type: "p", text: "Incorrect pressure can cause damage. We match the cleaning method, pressure, and distance to the surface being cleaned." },
+      ],
+    },
+    {
+      slug: "commercial-pressure-washing",
+      h1: "Commercial Pressure Washing",
+      titleTag: "Commercial Pressure Washing | Carolina Exterior Landscapes",
+      metaDescription: "Scheduled commercial pressure washing for sidewalks, storefronts, concrete, dumpster pads, and HOA common areas across the greater Charlotte region.",
+      primaryKeyword: "commercial pressure washing",
+      secondaryKeywords: ["storefront cleaning", "commercial concrete cleaning", "HOA pressure washing"],
+      schemaType: "Service",
+      wordCountTarget: "800",
+      blocks: [
+        { type: "p", text: "Keep customer-facing and common areas cleaner with pressure washing planned around your property's traffic, materials, and operating schedule." },
+        { type: "h2", text: "Commercial Pressure Washing Services" },
+        { type: "h3", text: "Sidewalk & Walkway Cleaning" },
+        { type: "p", text: "Routine cleaning helps maintain a professional appearance across pedestrian approaches and shared paths." },
+        { type: "h3", text: "Storefront, Entryway & Common Area Cleaning" },
+        { type: "p", text: "We clean high-visibility entrances and common areas with scheduling designed to minimize disruption." },
+        { type: "h3", text: "Concrete, Curb & Parking Island Cleaning" },
+        { type: "p", text: "Concrete edges, curbs, and parking-lot islands can be included in a broader exterior maintenance plan." },
+        { type: "h3", text: "Dumpster Pad & Service Area Cleaning" },
+        { type: "p", text: "Cleaning service areas helps property teams manage appearance and recurring buildup in back-of-house zones." },
+        { type: "h3", text: "HOA Amenity & Community Area Washing" },
+        { type: "p", text: "Community entrances, pool decks, sidewalks, and amenity areas can be scheduled as individual projects or recurring service." },
+        { type: "h2", text: "Frequently Asked Questions" },
+        { type: "h3", text: "Can commercial cleaning be scheduled outside business hours?" },
+        { type: "p", text: "Scheduling depends on property access and scope, but we work with managers to reduce disruption to tenants, residents, and customers." },
+        { type: "h3", text: "Do you offer recurring commercial pressure washing?" },
+        { type: "p", text: "Yes. Recurring frequency can be tailored to traffic, exposure, budget, and the standards required for the property." },
+      ],
+    },
+  ];
+}
+
 function buildLandscapePages(): InsertCmsPage[] {
   const pages = readJson<Record<string, LandscapePage>>("client/src/features/landscape-site/content/pages.json");
   const locations = readJson<LandscapeLocation[]>("client/src/features/landscape-site/content/locations.json");
   const blogPosts = readJson<LandscapeBlogPost[]>("client/src/features/landscape-site/content/blog.json");
 
-  const records: InsertCmsPage[] = Object.values(pages).map((page) =>
-    pageRecord(page, {
+  const contentPages = [...Object.values(pages), ...pressureWashingPages()];
+  const allPagesBySlug = Object.fromEntries(contentPages.map((page) => [page.slug, page]));
+  const records: InsertCmsPage[] = contentPages.map((page) => {
+    const data = page.slug === "service-areas" ? { ...page, areas: locations } : page;
+    return pageRecord(data, {
       slug: page.slug,
       title: page.h1,
       path: pagePath(page.slug),
@@ -742,8 +893,8 @@ function buildLandscapePages(): InsertCmsPage[] {
       seoTitle: page.titleTag,
       seoDescription: page.metaDescription,
       seoKeywords: [page.primaryKeyword, ...page.secondaryKeywords].filter(Boolean).join(", "),
-    }),
-  );
+    });
+  });
 
   records.push(
     ...locations.map((location) =>
@@ -767,7 +918,7 @@ function buildLandscapePages(): InsertCmsPage[] {
         h1: "The Landscape Journal",
         titleTag: "Landscaping & Lawn Care Blog | Carolina Exterior",
         metaDescription: "Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region.",
-        posts: blogPosts.map((post) => post.slug),
+        posts: blogPosts,
       },
       {
         slug: "blog",
@@ -834,7 +985,11 @@ function buildLandscapePages(): InsertCmsPage[] {
           h1: page.title,
           titleTag: `${page.title} | Carolina Exterior Landscapes`,
           metaDescription: page.description,
-          blocks: [],
+          blocks: page.slug === "faq"
+            ? faqBlocksFromPages(allPagesBySlug, ["residential-lawn-maintenance", "residential-landscaping", "residential-hardscape", "residential-pressure-washing", "mulching-and-planting", "drainage-solutions"])
+            : page.slug === "commercial-faq"
+              ? faqBlocksFromPages(allPagesBySlug, ["commercial", "commercial-grounds-maintenance", "commercial-landscaping", "commercial-hardscape", "commercial-drainage", "commercial-pressure-washing", "hoa-services"])
+              : [],
         },
         {
           slug: page.slug,
@@ -854,6 +1009,7 @@ function buildLandscapePages(): InsertCmsPage[] {
 
 function buildMenus(): InsertCmsMenu[] {
   const pages = readJson<Record<string, LandscapePage>>("client/src/features/landscape-site/content/pages.json");
+  const locations = readJson<LandscapeLocation[]>("client/src/features/landscape-site/content/locations.json");
   const menuLabelOverrides: Record<string, string> = {
     "residential-pressure-washing": "Pressure Washing",
     "commercial-pressure-washing": "Pressure Washing",
@@ -925,6 +1081,13 @@ function buildMenus(): InsertCmsMenu[] {
       items: footerCommercial,
     },
     {
+      name: "Footer Service Areas",
+      location: "footer_resources",
+      items: locations.map((location) =>
+        menuItem(location.slug, `${location.city}, ${location.state}`, `/service-areas/${location.slug}`),
+      ),
+    },
+    {
       name: "Footer Company",
       location: "footer_company",
       items: [
@@ -934,6 +1097,11 @@ function buildMenus(): InsertCmsMenu[] {
         menuItem("blog", "Blog", "/blog"),
         menuItem("faq", "FAQ", "/faq"),
       ],
+    },
+    {
+      name: "Footer Legal",
+      location: "footer_legal",
+      items: [],
     },
   ];
 }
@@ -993,9 +1161,9 @@ function contactCmsPageRecord(): InsertCmsPage {
         },
       ],
     },
-    seoTitle: "Contact Carolina Exterior Landscapes | Monroe NC",
-    seoDescription: "Contact Carolina Exterior Landscapes for lawn care, landscaping, hardscape, mulching, planting, and drainage services in Monroe, Union County, and the greater Charlotte area.",
-    seoKeywords: "contact Carolina Exterior Landscapes, landscaping quote Monroe NC, lawn care estimate Monroe NC",
+    seoTitle: "Contact Carolina Exterior Landscapes | Waxhaw NC",
+    seoDescription: "Contact Carolina Exterior Landscapes for lawn care, landscaping, hardscape, mulching, planting, and drainage services in Waxhaw, Union County, and the greater Charlotte area.",
+    seoKeywords: "contact Carolina Exterior Landscapes, landscaping quote Waxhaw NC, lawn care estimate Waxhaw NC",
     ogImageUrl: imageUrl("hero-home.png"),
     canonicalUrl: canonicalFor("/contact"),
     noindex: false,
@@ -1003,26 +1171,88 @@ function contactCmsPageRecord(): InsertCmsPage {
   };
 }
 
-function contactSeoPatch() {
-  const seeded = contactCmsPageRecord();
+function notFoundCmsPageRecord(): InsertCmsPage {
   return {
-    title: seeded.title,
-    seoTitle: seeded.seoTitle,
-    seoDescription: seeded.seoDescription,
-    seoKeywords: seeded.seoKeywords,
-    ogImageUrl: seeded.ogImageUrl,
-    canonicalUrl: seeded.canonicalUrl,
+    title: "Page Not Found",
+    slug: NOT_FOUND_PAGE_SLUG,
+    status: "published",
+    pageType: "custom",
+    template: "full-width",
+    sidebarId: null,
+    content: {
+      blocks: [
+        {
+          id: "not-found-hero",
+          type: "hero",
+          props: {
+            eyebrow: "404",
+            heading: "We could not find that page",
+            subheading:
+              "The page may have moved, or the link may be out of date. Here are a few helpful places to get back on track.",
+            ctaText: "Back to Home",
+            ctaLink: "/",
+            backgroundImageUrl: imageUrl("hero-home.png"),
+            backgroundPositionX: 50,
+            backgroundPositionY: 50,
+            backgroundImageOpacity: 80,
+            alignment: "center",
+            overlayColor: "#000000",
+            overlayOpacity: 45,
+            gradientEnabled: true,
+            gradientColor: "#102234",
+            gradientOpacity: 70,
+            gradientHeight: 45,
+            heroHeightPx: 500,
+          },
+        },
+        {
+          id: "not-found-links",
+          type: "cards-grid",
+          props: {
+            title: "Popular Pages",
+            subtitle: "Jump to one of our most visited lawn care and landscaping pages.",
+            variant: "link-list",
+            columns: "3",
+            cards: [
+              { title: "Residential Landscaping", path: "/residential-landscaping" },
+              { title: "Lawn Maintenance", path: "/residential-lawn-maintenance" },
+              { title: "Hardscape", path: "/residential-hardscape" },
+              { title: "Drainage Solutions", path: "/drainage-solutions" },
+              { title: "Service Areas", path: "/service-areas" },
+              { title: "Get a Quote", path: "/get-a-quote" },
+            ],
+          },
+        },
+        {
+          id: "not-found-help",
+          type: "rich-text",
+          props: {
+            alignment: "center",
+            content:
+              "<p>Still not finding what you need? Call Carolina Exterior Landscapes at <a href=\"tel:+17049755867\">(704) 975-5867</a> and we will point you in the right direction.</p>",
+          },
+        },
+      ],
+    },
+    seoTitle: "Page Not Found | Carolina Exterior Landscapes",
+    seoDescription: "The page you are looking for could not be found.",
+    seoKeywords: "",
+    ogImageUrl: imageUrl("hero-home.png"),
+    canonicalUrl: canonicalFor("/404"),
+    noindex: true,
+    publishedAt: new Date(),
   };
 }
 
 export function getLandscapeCmsSlugs() {
-  return new Set([...buildLandscapePages().map((page) => page.slug), CONTACT_PAGE_SLUG]);
+  return new Set([...buildLandscapePages().map((page) => page.slug), CONTACT_PAGE_SLUG, NOT_FOUND_PAGE_SLUG]);
 }
 
 export async function ensureLandscapeCmsContent() {
   const landscapePages = buildLandscapePages();
   const activeSlugs = new Set(landscapePages.map((page) => page.slug));
   activeSlugs.add(CONTACT_PAGE_SLUG);
+  activeSlugs.add(NOT_FOUND_PAGE_SLUG);
   const existingPages = await storage.cmsPages.getAllPages();
 
   for (const page of existingPages) {
@@ -1043,43 +1273,58 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
 
-    await storage.cmsPages.updatePage(existing.id, {
-      ...page,
-      title: existing.title || page.title,
-      status: existing.status || page.status,
-      pageType: existing.pageType || page.pageType,
-      template: existing.template === "landscape-site" ? page.template : existing.template || page.template,
-      sidebarId: existing.sidebarId ?? page.sidebarId,
-      seoTitle: existing.seoTitle ?? page.seoTitle,
-      seoDescription: existing.seoDescription ?? page.seoDescription,
-      seoKeywords: existing.seoKeywords ?? page.seoKeywords,
-      ogImageUrl: existing.ogImageUrl ?? page.ogImageUrl,
-      canonicalUrl: existing.canonicalUrl ?? page.canonicalUrl,
-      noindex: existing.noindex ?? page.noindex,
-      publishedAt: existing.publishedAt ?? page.publishedAt,
-      content: mergeLandscapeContent(existing.content, page.content),
-    });
+    // Seeded content is only a bootstrap/migration source. Once a page has a
+    // valid builder document, the CMS is authoritative and startup must never
+    // replace an administrator's edits.
+    if (!hasBuilderBlocks(existing.content) || containsSecurityLowVoltageCopy(existing)) {
+      await storage.cmsPages.updatePage(existing.id, {
+        ...page,
+        publishedAt: existing.publishedAt ?? page.publishedAt,
+        content: cloneSeedContent(page.content),
+      });
+      continue;
+    }
+
+    const existingContent = existing.content && typeof existing.content === "object"
+      ? existing.content as Record<string, unknown>
+      : {};
+    const wiringVersion = Number(existingContent.landscapeCmsWiringVersion ?? 0);
+    if (wiringVersion < LANDSCAPE_CMS_WIRING_VERSION) {
+      const requiredBlockIdsBySlug: Record<string, string[]> = {
+        blog: ["blog-post-directory"],
+        "service-areas": ["service-areas-directory"],
+        faq: ["faq-content-1"],
+        "commercial-faq": ["commercial-faq-content-1"],
+      };
+      await storage.cmsPages.updatePage(existing.id, {
+        content: mergeRequiredSeedBlocks(existing.content, page.content, requiredBlockIdsBySlug[page.slug] ?? []),
+      });
+    }
   }
 
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
   if (!existingContactPage) {
     await storage.cmsPages.createPage(contactCmsPageRecord());
-  } else if (
-    existingContactPage.status !== "published" ||
-    existingContactPage.noindex ||
-    containsSecurityLowVoltageCopy({
-      title: existingContactPage.title,
-      seoTitle: existingContactPage.seoTitle,
-      seoDescription: existingContactPage.seoDescription,
-      seoKeywords: existingContactPage.seoKeywords,
-    })
-  ) {
+  } else if (!hasBuilderBlocks(existingContactPage.content) || containsSecurityLowVoltageCopy(existingContactPage)) {
+    const contactSeed = contactCmsPageRecord();
     await storage.cmsPages.updatePage(existingContactPage.id, {
-      ...(hasBuilderBlocks(existingContactPage.content) ? {} : contactCmsPageRecord()),
-      ...contactSeoPatch(),
+      ...contactSeed,
       status: "published",
       noindex: false,
       publishedAt: existingContactPage.publishedAt ?? new Date(),
+    });
+  }
+
+  const existingNotFoundPage = await storage.cmsPages.getPageBySlug(NOT_FOUND_PAGE_SLUG);
+  if (!existingNotFoundPage) {
+    await storage.cmsPages.createPage(notFoundCmsPageRecord());
+  } else if (!hasBuilderBlocks(existingNotFoundPage.content) || containsSecurityLowVoltageCopy(existingNotFoundPage)) {
+    const notFoundSeed = notFoundCmsPageRecord();
+    await storage.cmsPages.updatePage(existingNotFoundPage.id, {
+      ...notFoundSeed,
+      status: "published",
+      noindex: true,
+      publishedAt: existingNotFoundPage.publishedAt ?? new Date(),
     });
   }
 
@@ -1089,6 +1334,8 @@ export async function ensureLandscapeCmsContent() {
       await storage.cmsMenus.create(menu);
       continue;
     }
-    await storage.cmsMenus.update(existing.id, menu);
+    if (containsSecurityLowVoltageCopy(existing) || containsRetiredPublicLink(existing)) {
+      await storage.cmsMenus.update(existing.id, menu);
+    }
   }
 }

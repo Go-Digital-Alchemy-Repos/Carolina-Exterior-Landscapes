@@ -46,6 +46,15 @@ function objectValue(value: unknown) {
     : {};
 }
 
+function firstStringValue(data: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const raw = data[key];
+    const value = Array.isArray(raw) ? raw.map((item) => stringValue(item)).filter(Boolean).join(", ") : stringValue(raw);
+    if (value) return value;
+  }
+  return "";
+}
+
 function normalizeUrl(value: string) {
   if (!value) return value;
   if (/^https?:\/\//i.test(value)) return value;
@@ -186,9 +195,10 @@ async function handleContactFormEffects(form: CmsForm, data: Record<string, unkn
   const settings = normalizeFormSettings(form);
   if (!settings.storeAsContactMessage) return;
 
-  const name = stringValue(data.name) || stringValue(data.fullName);
-  const email = stringValue(data.email);
-  const service = stringValue(data.service);
+  const name = firstStringValue(data, ["name", "fullName", "contactName"]);
+  const email = firstStringValue(data, ["email", "senderEmail", "contactEmail"]);
+  const phone = firstStringValue(data, ["phone", "contactPhone", "primaryPhone"]);
+  const service = firstStringValue(data, ["service", "servicesInterested", "servicesNeeded"]);
   const city = stringValue(data.city);
   const legacySubject = stringValue(data.subject);
   const subject = legacySubject || [service, city].filter(Boolean).join(" - ") || "Contact form submission";
@@ -208,7 +218,12 @@ async function handleContactFormEffects(form: CmsForm, data: Record<string, unkn
       : (await storage.users.getUsersByRole("admin")).map((admin) => admin.email).filter(Boolean);
   if (adminEmails.length === 0) return;
 
-  sendContactFormEmail(adminEmails, name, email, message, `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`).catch((err) => {
+  sendContactFormEmail(adminEmails, name, email, message, `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`, {
+    formName: form.name,
+    phone,
+    subject,
+    sourcePage: stringValue(data.sourcePage) || form.slug,
+  }).catch((err) => {
     logger.email.warn("Failed to send contact form notification", {
       formSlug: form.slug,
       error: err instanceof Error ? err.message : String(err),
@@ -246,6 +261,13 @@ async function notifyAssignedUsers(form: CmsForm, data: Record<string, unknown>,
     form.name,
     buildSubmissionSummary(form, data),
     `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`,
+    {
+      senderName: firstStringValue(data, ["name", "fullName", "contactName"]),
+      senderEmail: firstStringValue(data, ["email", "senderEmail", "contactEmail"]),
+      senderPhone: firstStringValue(data, ["phone", "contactPhone", "primaryPhone"]),
+      subject: stringValue(data.subject) || "Form submission",
+      sourcePage: stringValue(data.sourcePage) || form.slug,
+    },
   ).catch((err) => {
     logger.email.warn("Failed to send managed form notification", {
       formSlug: form.slug,

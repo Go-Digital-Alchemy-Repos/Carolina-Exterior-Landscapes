@@ -1,5 +1,4 @@
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
-import { getPage } from "@/features/landscape-site/content/pages";
+import { getPage } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -7,13 +6,12 @@ import { ServiceAreaMap } from "@/features/landscape-site/components/ServiceArea
 import { MapPin } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
+import heroImg from "@/features/landscape-site/assets/community-aerial.webp";
 
 export default function ServiceAreas() {
   const page = useLandscapeCmsPage("service-areas", getPage("service-areas"));
 
   if (!page) return null;
-  const heroImg = page.media?.heroImageUrl ?? `${LANDSCAPE_IMAGE_BASE}/community-aerial.png`;
 
   return (
     <div className="w-full bg-background pb-24">
@@ -21,9 +19,9 @@ export default function ServiceAreas() {
       
       <div className="relative w-full h-[50vh] min-h-[400px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <LandscapeImage src={heroImg} alt="Carolina service areas" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
-          <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
+          <img src={heroImg} alt="Carolina service areas" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
 
         <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />
@@ -47,7 +45,7 @@ export default function ServiceAreas() {
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -right-4 bottom-32 h-72 w-auto text-brand-leaf/10 rotate-6 scale-x-[-1]" />
-        <div className="relative z-10 max-w-5xl mx-auto px-4 py-24">
+        <div className="max-w-5xl mx-auto px-4 py-24 relative">
         <div className="mb-24">
           <h2 className="text-3xl font-extrabold text-center mb-4 tracking-tight">Communities We Serve</h2>
           <p className="text-center text-muted-foreground font-medium mb-12 max-w-2xl mx-auto">

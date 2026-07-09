@@ -1,4 +1,4 @@
-import { getBlogPost, getBlogPosts, getBlogImage } from "@/features/landscape-site/content/blog";
+import { getBlogPost, getBlogPosts, getBlogImage } from "@/features/landscape-site/content";
 import { useLandscapeCmsBlogPost, useLandscapeCmsBlogPosts } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -7,7 +7,6 @@ import NotFound from "@/features/landscape-site/pages/not-found";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, ArrowLeft, Phone } from "lucide-react";
 import { BRAND } from "@/features/landscape-site/content/site";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -22,7 +21,7 @@ export default function BlogPost() {
   const relatedPosts = allPosts
     .filter((p) => p.slug !== post.slug && p.category === post.category)
     .slice(0, 4);
-  const heroImage = post.imageUrl ?? post.media?.heroImageUrl ?? getBlogImage(post.image);
+  const heroImage = post.imageUrl || getBlogImage(post.image);
 
   const blogJsonLd = {
     "@context": "https://schema.org",
@@ -38,6 +37,7 @@ export default function BlogPost() {
       name: BRAND.name,
       url: BRAND.domain,
     },
+    ...(heroImage ? { image: heroImage } : {}),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `${BRAND.domain}/blog/${post.slug}`,
@@ -96,10 +96,11 @@ export default function BlogPost() {
 
             {heroImage && (
               <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted mb-12">
-                <LandscapeImage
+                <img
                   src={heroImage}
                   alt={post.h1}
-                  loading="eager"
+                  width={1408}
+                  height={768}
                   fetchPriority="high"
                   decoding="async"
                   className="h-full w-full object-cover"
@@ -123,7 +124,7 @@ export default function BlogPost() {
                     Get a Free Estimate
                   </h3>
                   <p className="text-sm text-white/80 font-medium mb-5">
-                    Serving Monroe, Union County, and the greater Charlotte region
+                    Serving Waxhaw, Union County, and the greater Charlotte region
                     with residential and commercial landscaping.
                   </p>
                   <Link
@@ -148,26 +149,33 @@ export default function BlogPost() {
                     Related Articles
                   </h3>
                   <div className="space-y-5">
-                    {relatedPosts.map((p) => (
-                      <Link
-                        key={p.slug}
-                        href={`/blog/${p.slug}`}
-                        className="flex gap-3 group"
-                      >
-                        <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                          <LandscapeImage
-                            src={p.imageUrl ?? p.media?.heroImageUrl ?? getBlogImage(p.image)}
-                            alt={p.h1}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          />
-                        </div>
-                        <span className="text-sm font-bold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-3">
-                          {p.h1}
-                        </span>
-                      </Link>
-                    ))}
+                    {relatedPosts.map((p) => {
+                      const relatedImage = p.imageUrl || getBlogImage(p.image);
+                      return (
+                        <Link
+                          key={p.slug}
+                          href={`/blog/${p.slug}`}
+                          className="flex gap-3 group"
+                        >
+                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                            {relatedImage && (
+                              <img
+                                src={relatedImage}
+                                alt={p.h1}
+                                width={200}
+                                height={112}
+                                loading="lazy"
+                                decoding="async"
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                            )}
+                          </div>
+                          <span className="text-sm font-bold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-3">
+                            {p.h1}
+                          </span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               )}

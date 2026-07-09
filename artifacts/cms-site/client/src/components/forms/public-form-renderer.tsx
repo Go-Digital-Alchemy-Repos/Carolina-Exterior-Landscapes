@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 
 interface PublicFormRendererProps {
   slug: string;
@@ -25,6 +26,7 @@ interface PublicFormRendererProps {
   descriptionOverride?: string;
   buttonTextOverride?: string;
   compact?: boolean;
+  appearance?: "default" | "quote";
   onSubmitSuccess?: () => void;
 }
 
@@ -185,6 +187,7 @@ function ChoiceGroup({
     : field.config?.choiceLayout === "inline"
       ? "flex flex-wrap gap-4"
       : "space-y-3";
+  const unframedGridChoices = field.config?.choiceLayout === "grid";
   const multiple = field.type === "checkbox" || field.type === "multiselect" || (field.type === "image-choice" && field.config?.selectionMode === "multiple");
   const selectedValues = multiple ? arrayValue(value).map((item) => text(item)) : [];
   const selectedValue = multiple ? "" : text(value);
@@ -227,9 +230,15 @@ function ChoiceGroup({
 
         if (multiple) {
           return (
-            <label key={option.value} className="flex items-start gap-3 rounded-lg border px-3 py-2">
+            <label
+              key={option.value}
+              className={cn(
+                "flex cursor-pointer items-start gap-3",
+                unframedGridChoices ? "py-1" : "rounded-lg border px-3 py-2",
+              )}
+            >
               <Checkbox checked={checked} onCheckedChange={(next) => toggle(Boolean(next))} />
-              <span className="text-sm">{option.label}</span>
+              <span className="text-sm font-medium text-foreground">{option.label}</span>
             </label>
           );
         }
@@ -316,13 +325,14 @@ function renderFieldInput(
   field: CmsFormField,
   value: unknown,
   setValue: (next: unknown) => void,
-  compact: boolean
+  compact: boolean,
+  appearance: "default" | "quote",
 ) {
   if (field.type === "html") {
     return (
       <div
         className="rounded-xl border bg-muted/20 p-4 text-sm"
-        dangerouslySetInnerHTML={{ __html: text(field.config?.htmlContent) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(text(field.config?.htmlContent)) }}
       />
     );
   }
@@ -346,6 +356,7 @@ function renderFieldInput(
         onChange={(event) => setValue(event.target.value)}
         placeholder={field.placeholder}
         rows={compact ? 3 : 5}
+        className={appearance === "quote" ? "min-h-40 bg-background" : undefined}
       />
     );
   }
@@ -353,7 +364,7 @@ function renderFieldInput(
   if (field.type === "select") {
     return (
       <Select value={text(value)} onValueChange={setValue}>
-        <SelectTrigger>
+        <SelectTrigger className={appearance === "quote" ? "h-11 bg-background" : undefined}>
           <SelectValue placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
@@ -368,6 +379,10 @@ function renderFieldInput(
   }
 
   if (field.type === "multiselect") {
+    if (field.config?.selectionMode === "multiple" && field.config?.choiceLayout === "grid") {
+      return <ChoiceGroup field={field} value={value} onChange={setValue} />;
+    }
+
     const current = arrayValue(value).map((item) => text(item));
     return (
       <select
@@ -431,6 +446,7 @@ function renderFieldInput(
         value={text(record.fullName)}
         onChange={(event) => setValue({ fullName: event.target.value })}
         placeholder={field.placeholder || "Full name"}
+        className={appearance === "quote" ? "h-11 bg-background" : undefined}
       />
     );
   }
@@ -474,6 +490,7 @@ function renderFieldInput(
       onChange={(event) => setValue(event.target.value)}
       placeholder={field.placeholder}
       autoPrependHttps={field.type === "website"}
+      className={appearance === "quote" ? "h-11 bg-background" : undefined}
     />
   );
 }
@@ -485,6 +502,7 @@ export function PublicFormRenderer({
   descriptionOverride,
   buttonTextOverride,
   compact = false,
+  appearance = "default",
   onSubmitSuccess,
 }: PublicFormRendererProps) {
   const { toast } = useToast();
@@ -585,7 +603,7 @@ export function PublicFormRenderer({
   const previousButtonText = text(activePage.meta?.config?.previousButtonText) || "Previous";
 
   return (
-    <div className={cn("space-y-4", className)} data-testid={`public-form-${slug}`}>
+    <div className={cn(appearance === "quote" ? "space-y-6" : "space-y-4", className)} data-testid={`public-form-${slug}`}>
       {showHeader && (
         <div className="space-y-1">
           <h3 className="font-semibold public-heading-3">{form.name}</h3>
@@ -612,13 +630,13 @@ export function PublicFormRenderer({
       ) : null}
 
       <form
-        className={cn("space-y-4", compact ? "space-y-3" : "space-y-4")}
+        className={cn(compact ? "space-y-3" : appearance === "quote" ? "space-y-8" : "space-y-4")}
         onSubmit={(event) => {
           event.preventDefault();
           mutation.mutate();
         }}
       >
-        <div className={cn("grid gap-4", compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+        <div className={cn("grid", appearance === "quote" ? "gap-6" : "gap-4", compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
           {visibleFields.map((field) => {
             if (field.type === "hidden") return null;
             const structural = isStructuralField(field.type);
@@ -628,13 +646,22 @@ export function PublicFormRenderer({
                 className={cn("space-y-1.5", fieldSpanClass(field, compact))}
               >
                 {!["html", "section"].includes(field.type) ? (
-                  <Label htmlFor={`${slug}-${field.key}`}>{field.label}</Label>
+                  <Label
+                    htmlFor={`${slug}-${field.key}`}
+                    className={appearance === "quote" ? "font-bold text-foreground" : undefined}
+                  >
+                    {field.label}
+                    {field.type === "multiselect" && field.config?.selectionMode === "multiple"
+                      ? " (Select all that apply)"
+                      : ""}
+                  </Label>
                 ) : null}
                 {renderFieldInput(
                   field,
                   values[field.key],
                   (next) => setValues((current) => ({ ...current, [field.key]: next })),
-                  compact
+                  compact,
+                  appearance,
                 )}
                 {!structural && field.helpText ? <p className="text-xs public-helper-text">{field.helpText}</p> : null}
               </div>
@@ -664,7 +691,14 @@ export function PublicFormRenderer({
               {nextButtonText}
             </Button>
           ) : (
-            <Button type="submit" disabled={mutation.isPending} className={compact ? "w-full" : undefined}>
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className={cn(
+                compact ? "w-full" : undefined,
+                appearance === "quote" ? "h-12 w-full text-base font-bold uppercase tracking-wide" : undefined,
+              )}
+            >
               {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {submitLabel}
             </Button>

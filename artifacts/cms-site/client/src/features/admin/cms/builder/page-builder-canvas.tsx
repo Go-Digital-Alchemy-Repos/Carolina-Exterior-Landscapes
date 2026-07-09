@@ -50,37 +50,6 @@ interface CanvasBlockFrameProps {
   onBlockDragEnd: () => void;
 }
 
-function CanvasInsertDropZone({
-  index,
-  isActive,
-  onDragOver,
-  onDrop,
-}: {
-  index: number;
-  isActive: boolean;
-  onDragOver: (event: DragEvent, index: number) => void;
-  onDrop: (event: DragEvent, index: number) => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "relative h-4 transition-all",
-        isActive && "h-10",
-      )}
-      onDragOver={(event) => onDragOver(event, index)}
-      onDrop={(event) => onDrop(event, index)}
-      data-testid={`canvas-insert-dropzone-${index}`}
-    >
-      <div
-        className={cn(
-          "absolute left-6 right-6 top-1/2 h-px -translate-y-1/2 rounded-full border border-dashed border-transparent transition-all",
-          isActive && "h-3 border-violet-400 bg-violet-100/80 shadow-[0_0_0_3px_rgba(139,92,246,0.12)] dark:bg-violet-950/40",
-        )}
-      />
-    </div>
-  );
-}
-
 function BlockPreviewFallback({
   blockType,
   summary,
@@ -354,11 +323,8 @@ export interface VisualCanvasProps {
   draggedBlockId: string | null;
   hasActiveDragPayload: boolean;
   dropTarget: { id: string; position: "before" | "after" } | null;
-  insertDropIndex: number | null;
   onBlockDragOver: (event: DragEvent, targetId: string) => void;
   onBlockDrop: (event: DragEvent, targetId: string) => void;
-  onInsertDragOver: (event: DragEvent, index: number) => void;
-  onInsertDrop: (event: DragEvent, index: number) => void;
   onBlockDragEnd: () => void;
   desktopFrameClassName?: string;
 }
@@ -378,11 +344,8 @@ export function VisualCanvas({
   draggedBlockId,
   hasActiveDragPayload,
   dropTarget,
-  insertDropIndex,
   onBlockDragOver,
   onBlockDrop,
-  onInsertDragOver,
-  onInsertDrop,
   onBlockDragEnd,
   desktopFrameClassName,
 }: VisualCanvasProps) {
@@ -402,19 +365,8 @@ export function VisualCanvas({
 
         <ScrollArea className="min-h-0 flex-1">
           {blocks.length === 0 ? (
-            <div
-              className={cn(
-                "flex min-h-[640px] items-center justify-center p-10 transition-colors",
-                insertDropIndex === 0 && "bg-violet-50/70 dark:bg-violet-950/20",
-              )}
-              onDragOver={(event) => onInsertDragOver(event, 0)}
-              onDrop={(event) => onInsertDrop(event, 0)}
-              data-testid="canvas-empty-dropzone"
-            >
-              <div className={cn(
-                "max-w-md rounded-2xl border border-dashed border-border/80 bg-background/90 p-8 text-center shadow-sm transition-all",
-                insertDropIndex === 0 && "border-violet-400 shadow-[0_0_0_4px_rgba(139,92,246,0.12)]",
-              )}>
+            <div className="flex min-h-[640px] items-center justify-center p-10">
+              <div className="max-w-md rounded-2xl border border-dashed border-border/80 bg-background/90 p-8 text-center shadow-sm">
                 <Layers className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
                 <p className="text-base font-semibold">Your page canvas is empty</p>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -424,12 +376,6 @@ export function VisualCanvas({
             </div>
           ) : (
             <div className="space-y-0">
-              <CanvasInsertDropZone
-                index={0}
-                isActive={insertDropIndex === 0}
-                onDragOver={onInsertDragOver}
-                onDrop={onInsertDrop}
-              />
               {blocks.map((block, index) => {
                 const isFullWidth = FULL_WIDTH_BLOCK_TYPES.has(block.type);
                 const sectionStyleConfig = getSectionStyleConfig(block.props);
@@ -462,60 +408,36 @@ export function VisualCanvas({
 
                 if (hasCustomSectionStyle) {
                   return (
-                    <div key={block.id}>
-                      <SectionStyleWrapper
-                        props={block.props}
-                        className="rounded-none"
-                        contentClassName={isFullWidth ? undefined : getSectionPaddingClasses(block.props)}
-                      >
-                        {isFullWidth ? (
-                          framedBlock
-                        ) : (
-                          <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-                            {framedBlock}
-                          </div>
-                        )}
-                      </SectionStyleWrapper>
-                      <CanvasInsertDropZone
-                        index={index + 1}
-                        isActive={insertDropIndex === index + 1}
-                        onDragOver={onInsertDragOver}
-                        onDrop={onInsertDrop}
-                      />
-                    </div>
+                    <SectionStyleWrapper
+                      key={block.id}
+                      props={block.props}
+                      className="rounded-none"
+                      contentClassName={isFullWidth ? undefined : getSectionPaddingClasses(block.props)}
+                    >
+                      {isFullWidth ? (
+                        framedBlock
+                      ) : (
+                        <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+                          {framedBlock}
+                        </div>
+                      )}
+                    </SectionStyleWrapper>
                   );
                 }
 
                 if (isFullWidth) {
-                  return (
-                    <div key={block.id}>
-                      {framedBlock}
-                      <CanvasInsertDropZone
-                        index={index + 1}
-                        isActive={insertDropIndex === index + 1}
-                        onDragOver={onInsertDragOver}
-                        onDrop={onInsertDrop}
-                      />
-                    </div>
-                  );
+                  return <div key={block.id}>{framedBlock}</div>;
                 }
 
                 return (
-                  <div key={block.id}>
-                    <section
-                      className={cn("relative", isAlternate && "bg-muted/30")}
-                    >
-                      <div className={cn("relative mx-auto max-w-7xl px-4 sm:px-6", getSectionPaddingClasses(block.props))}>
-                        {framedBlock}
-                      </div>
-                    </section>
-                    <CanvasInsertDropZone
-                      index={index + 1}
-                      isActive={insertDropIndex === index + 1}
-                      onDragOver={onInsertDragOver}
-                      onDrop={onInsertDrop}
-                    />
-                  </div>
+                  <section
+                    key={block.id}
+                    className={cn("relative", isAlternate && "bg-muted/30")}
+                  >
+                    <div className={cn("relative mx-auto max-w-7xl px-4 sm:px-6", getSectionPaddingClasses(block.props))}>
+                      {framedBlock}
+                    </div>
+                  </section>
                 );
               })}
               <div aria-hidden className="h-28 sm:h-40 xl:h-56 2xl:h-72" />

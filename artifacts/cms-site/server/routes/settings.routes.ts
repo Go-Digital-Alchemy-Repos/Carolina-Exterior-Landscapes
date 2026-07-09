@@ -17,6 +17,7 @@ import {
 import * as r2Service from "../services/r2.service";
 import { ensureSystemEmailTemplates } from "../services/system-email-templates.service";
 import { BRANDING_OPTIONS, isImageMime, optimizeImage } from "../services/image-optimizer";
+import { getGoogleReviews, resetGoogleReviewsCache } from "../services/google-reviews.service";
 
 const router = Router();
 
@@ -117,6 +118,10 @@ router.put(
       resetEmailBrandingCache();
     }
 
+    if (data.category === "google_reviews") {
+      resetGoogleReviewsCache();
+    }
+
     storage.settings.invalidateCategory(data.category);
 
     res.json({
@@ -187,7 +192,7 @@ router.delete(
 );
 
 const testConnectionSchema = z.object({
-  integration: z.enum(["mailgun", "cloudflare_r2"]),
+  integration: z.enum(["mailgun", "cloudflare_r2", "google_reviews"]),
 });
 
 router.post(
@@ -204,6 +209,26 @@ router.post(
     if (integration === "cloudflare_r2") {
       const result = await r2Service.testConnection();
       res.json(result);
+      return;
+    }
+
+    if (integration === "google_reviews") {
+      try {
+        const result = await getGoogleReviews({ forceRefresh: true });
+        res.json({
+          success: result.enabled && result.configured,
+          message:
+            result.enabled && result.configured
+              ? `Connected to ${result.placeName || "Google Places"}. Found ${result.reviews.length} five-star review${result.reviews.length === 1 ? "" : "s"}.`
+              : "Google Reviews is not fully configured.",
+          details: result,
+        });
+      } catch (err) {
+        res.json({
+          success: false,
+          message: err instanceof Error ? err.message : "Google Reviews connection failed.",
+        });
+      }
       return;
     }
 

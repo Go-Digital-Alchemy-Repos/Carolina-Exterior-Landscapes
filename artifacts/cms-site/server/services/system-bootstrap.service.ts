@@ -6,7 +6,7 @@ import { ensureSystemForms } from "./system-forms.service";
 import { ensureSystemCmsMedia } from "./system-cms-media.service";
 import { ensureLandscapeCmsContent } from "./landscape-cms-content.service";
 import { ensureSystemBranding } from "./system-branding.service";
-import { ensureSystemCrmSettings } from "./system-crm-settings.service";
+import { populateCmsSeoMetadata } from "./cms-seo-metadata-populator.service";
 
 export async function runSystemBootstrap() {
   logger.app.info("Running system bootstrap");
@@ -14,9 +14,9 @@ export async function runSystemBootstrap() {
   await ensureLandscapeCmsContent();
   await ensureSystemBranding();
   await ensureSystemCmsMedia();
+  await populateCmsSeoMetadata();
   await ensureSystemCmsSections();
   await ensureSystemForms();
-  await ensureSystemCrmSettings();
   await ensureSystemDocs({ refreshExisting: false });
   await ensureSystemEmailTemplates(false);
 

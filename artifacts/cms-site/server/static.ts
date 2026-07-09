@@ -75,17 +75,18 @@ export function serveStatic(app: Express) {
   app.use("/{*path}", async (req, res) => {
     const parsed = new URL(req.originalUrl || req.url || "/", "http://localhost");
     const pathname = parsed.pathname || "/";
-    if (req.method === "GET" && !pathname.startsWith("/api") && !pathname.startsWith("/uploads") && isRetiredPublicPath(pathname)) {
+    const isReadRequest = req.method === "GET" || req.method === "HEAD";
+    if (isReadRequest && !pathname.startsWith("/api") && !pathname.startsWith("/uploads") && isRetiredPublicPath(pathname)) {
       res.status(410).type("text").set("Cache-Control", "no-cache").send("Gone");
       return;
     }
 
-    if (!isLandscapePublicRoute(pathname) && await sendPrerenderedPublicHtml(pathname, res)) {
+    if (await sendPrerenderedPublicHtml(pathname, res)) {
       return;
     }
 
     if (
-      req.method === "GET" &&
+      isReadRequest &&
       !isClientOnlyRoute(pathname) &&
       !isLandscapePublicRoute(pathname) &&
       !pathname.startsWith("/api") &&

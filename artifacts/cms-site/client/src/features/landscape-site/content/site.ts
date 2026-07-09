@@ -8,13 +8,13 @@ export const BRAND = {
   email: "info@carolinaexteriorlandscapes.com",
   website: "CarolinaExteriorLandscapes.com",
   domain: "https://carolinaexteriorlandscapes.com",
-  city: "Monroe",
+  city: "Waxhaw",
   state: "NC",
   county: "Union County",
   region: "greater Charlotte region",
-  addressLocality: "Monroe",
+  addressLocality: "Waxhaw",
   addressRegion: "NC",
-  postalCode: "28110",
+  postalCode: "28173",
   founded: "Locally owned, licensed & insured",
 } as const;
 
@@ -51,12 +51,6 @@ export const RESIDENTIAL_SERVICES: ServiceSummary[] = [
     name: "Hardscape",
     short:
       "Patios, walkways, retaining walls and steps in pavers, natural stone, concrete and brick \u2014 built to last decades.",
-  },
-  {
-    slug: "residential-pressure-washing",
-    name: "Pressure Washing",
-    short:
-      "Driveways, walkways, patios, porches, siding and hardscape surfaces cleaned with the right pressure and care for your landscape.",
   },
   {
     slug: "mulching-and-planting",
@@ -96,12 +90,6 @@ export const COMMERCIAL_SERVICES: ServiceSummary[] = [
     name: "Drainage & Site Work",
     short:
       "Parking lot, common area and site drainage solutions that protect your property and reduce liability.",
-  },
-  {
-    slug: "commercial-pressure-washing",
-    name: "Pressure Washing",
-    short:
-      "Sidewalks, storefronts, dumpster pads, entrances and common areas cleaned around your property's schedule.",
   },
   {
     slug: "hoa-services",

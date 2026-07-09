@@ -34,7 +34,7 @@ function settings(overrides: Partial<CmsFormSettings>): CmsFormSettings {
     successRedirect: "",
     notifyAdmins: false,
     storeAsContactMessage: false,
-    createCrmLead: true,
+    createCrmLead: false,
     ...overrides,
   };
 }
@@ -48,13 +48,12 @@ const RESIDENTIAL_QUOTE_FIELDS = [
   field("phone", "phone", "Phone Number", "tel", { placeholder: "(704) 975-5867", required: true, width: "half" }),
   field("email", "email", "Email Address", "email", { placeholder: "you@example.com", required: true }),
   field("address", "address", "Street Address", "text", { placeholder: "123 Main St", width: "half" }),
-  field("city", "city", "City", "text", { placeholder: "Monroe", width: "half" }),
+  field("city", "city", "City", "text", { placeholder: "Waxhaw", width: "half" }),
   field("services-interested", "servicesInterested", "Services Needed", "multiselect", {
     options: [
       choice("Lawn Maintenance (Annual Contract)"),
       choice("Landscaping Design & Installation"),
       choice("Hardscape (Patios, Walkways, Walls)"),
-      choice("Pressure Washing"),
       choice("Mulching & Planting"),
       choice("Drainage Solutions"),
       choice("Aeration & Overseeding"),
@@ -68,43 +67,13 @@ const RESIDENTIAL_QUOTE_FIELDS = [
   }),
 ];
 
-const CONTACT_FORM_FIELDS = [
-  field("full-name", "fullName", "Full Name", "text", { placeholder: "Your full name", required: true, width: "half" }),
-  field("phone", "phone", "Phone Number", "tel", { placeholder: "(704) 975-5867", width: "half" }),
-  field("email", "email", "Email Address", "email", { placeholder: "you@example.com", required: true }),
-  field("service", "service", "Service of Interest", "select", {
-    options: [
-      choice("Residential Landscaping"),
-      choice("Residential Lawn Maintenance"),
-      choice("Residential Pressure Washing"),
-      choice("Commercial Grounds Maintenance"),
-      choice("Commercial Landscaping"),
-      choice("Commercial Pressure Washing"),
-      choice("Drainage & Site Work"),
-      choice("Hardscape"),
-      choice("Other / Not Sure"),
-    ],
-  }),
-  field("property-type", "propertyType", "Property Type", "radio", {
-    options: [
-      choice("Residential"),
-      choice("Commercial"),
-      choice("HOA / Community"),
-    ],
-  }),
-  field("city", "city", "City / Location", "text", { placeholder: "Monroe" }),
-  field("message", "message", "Tell us about your project", "textarea", {
-    placeholder: "Tell us what you need and when you would like to get started.",
-  }),
-];
-
 const COMMERCIAL_QUOTE_FIELDS = [
   field("contact-name", "contactName", "Contact Name", "text", { placeholder: "Your full name", required: true, width: "half" }),
   field("title", "title", "Title / Role", "text", { placeholder: "Property Manager", width: "half" }),
   field("company-name", "companyName", "Company / HOA Name", "text", { placeholder: "Acme Properties", required: true }),
   field("email", "email", "Email Address", "email", { placeholder: "you@example.com", required: true, width: "half" }),
   field("phone", "phone", "Phone Number", "tel", { placeholder: "(704) 975-5867", required: true, width: "half" }),
-  field("property-address", "propertyAddress", "Primary Property Address", "text", { placeholder: "123 Main St, Monroe NC" }),
+  field("property-address", "propertyAddress", "Primary Property Address", "text", { placeholder: "123 Main St, Waxhaw NC" }),
   field("property-type", "propertyType", "Property Type", "select", {
     required: true,
     options: [
@@ -125,7 +94,6 @@ const COMMERCIAL_QUOTE_FIELDS = [
       choice("Commercial Landscaping"),
       choice("Commercial Hardscape"),
       choice("Drainage & Site Work"),
-      choice("Commercial Pressure Washing"),
       choice("HOA Community Services"),
       choice("Seasonal Color Program"),
       choice("Snow & Ice (Inquire)"),
@@ -140,23 +108,6 @@ const COMMERCIAL_QUOTE_FIELDS = [
 
 const SYSTEM_FORMS: InsertCmsForm[] = [
   {
-    name: "Contact Form",
-    slug: "contact-form",
-    description: "General landscaping, lawn care, and pressure washing contact form.",
-    kind: "contact",
-    isSystem: true,
-    isActive: true,
-    fields: CONTACT_FORM_FIELDS,
-    settings: settings({
-      submitButtonText: "Send Message",
-      successMessage: "Thank you for reaching out. We will be in touch shortly.",
-      successRedirect: "/thank-you/",
-      notifyAdmins: true,
-      storeAsContactMessage: true,
-      createCrmLead: true,
-    }),
-  },
-  {
     name: "Residential Quote Form",
     slug: "residential-quote",
     description: "Request a residential landscaping, lawn maintenance, hardscape, or drainage estimate.",
@@ -170,7 +121,6 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
       successRedirect: "/thank-you/",
       notifyAdmins: true,
       storeAsContactMessage: true,
-      createCrmLead: true,
     }),
   },
   {
@@ -187,43 +137,9 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
       successRedirect: "/thank-you/",
       notifyAdmins: true,
       storeAsContactMessage: true,
-      createCrmLead: true,
     }),
   },
 ];
-
-function isStarterContactForm(fields: CmsFormField[]) {
-  const keys = fields.map((fieldItem) => fieldItem.key).sort();
-  return JSON.stringify(keys) === JSON.stringify(["email", "message", "name", "subject"]);
-}
-
-function isSystemCcaContactForm(fields: CmsFormField[]) {
-  const keys = fields.map((fieldItem) => fieldItem.key).sort();
-  return JSON.stringify(keys) === JSON.stringify(["city", "email", "fullName", "message", "phone", "propertyType", "service"]);
-}
-
-function isLandscapeResidentialQuoteForm(fields: CmsFormField[]) {
-  const keys = fields.map((fieldItem) => fieldItem.key).sort();
-  return JSON.stringify(keys) === JSON.stringify(["address", "city", "email", "message", "name", "phone", "servicesInterested"]);
-}
-
-function isLandscapeCommercialQuoteForm(fields: CmsFormField[]) {
-  const keys = fields.map((fieldItem) => fieldItem.key).sort();
-  return JSON.stringify(keys) === JSON.stringify([
-    "bestTimeToReach",
-    "companyName",
-    "contactName",
-    "currentProvider",
-    "email",
-    "notes",
-    "numberOfProperties",
-    "phone",
-    "propertyAddress",
-    "propertyType",
-    "servicesNeeded",
-    "title",
-  ]);
-}
 
 export async function ensureSystemForms() {
   logger.app.info("Ensuring generic system forms");
@@ -231,29 +147,14 @@ export async function ensureSystemForms() {
   for (const systemForm of SYSTEM_FORMS) {
     const existing = await storage.forms.getBySlug(systemForm.slug);
     if (existing) {
-      const existingSettings = typeof existing.settings === "object" && existing.settings ? { ...(existing.settings as Record<string, unknown>) } : {};
-      delete existingSettings.mailchimpEnabled;
-      delete existingSettings.mailchimpTag;
-      const useSystemFields =
-        !Array.isArray(existing.fields) ||
-        existing.fields.length === 0 ||
-        isStarterContactForm(existing.fields) ||
-        isSystemCcaContactForm(existing.fields) ||
-        isLandscapeResidentialQuoteForm(existing.fields) ||
-        isLandscapeCommercialQuoteForm(existing.fields);
-      const settingsData = {
-        ...(useSystemFields ? systemForm.settings : { ...systemForm.settings, ...existingSettings }),
-        createCrmLead: true,
-      };
-
       await storage.forms.update(existing.id, {
-        name: existing.name || systemForm.name,
-        description: existing.description ?? systemForm.description ?? "",
+        name: systemForm.name,
+        description: systemForm.description ?? "",
         kind: "contact",
         isSystem: true,
-        isActive: existing.isActive ?? true,
-        fields: useSystemFields ? systemForm.fields : existing.fields,
-        settings: settingsData,
+        isActive: true,
+        fields: systemForm.fields,
+        settings: systemForm.settings,
       });
       continue;
     }

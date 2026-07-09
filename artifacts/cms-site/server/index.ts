@@ -14,7 +14,10 @@ import { logger, requestIdMiddleware } from "./utils/logger";
 import { recordRequest, getMetricsSnapshot } from "./utils/metrics";
 import { startScheduledPublishService } from "./services/scheduled-publish.service";
 import { startSystemBackupService } from "./services/system-backup.service";
-import { resolveBestLocalCmsImagePath } from "./services/cms-image-variants.service";
+import {
+  CANONICAL_SITE_HOST,
+  getCanonicalPublicRedirect,
+} from "./seo-routing";
 
 declare const __APP_VERSION__: string;
 const pkgVersion = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
@@ -24,11 +27,26 @@ enforceRequiredSecrets();
 const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
-const landscapeAssetsPath = path.resolve(process.cwd(), "client", "src", "features", "landscape-site", "assets");
-const cmsUploadsPath = path.resolve(process.cwd(), "uploads", "cms");
 
 app.use(securityHeaders());
 app.use(requestIdMiddleware);
+
+app.use((req, res, next) => {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+
+  const hostname = req.hostname.toLowerCase();
+  if (hostname === `www.${CANONICAL_SITE_HOST}`) {
+    return res.redirect(301, `https://${CANONICAL_SITE_HOST}${req.originalUrl}`);
+  }
+
+  if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) return next();
+  const canonicalPath = getCanonicalPublicRedirect(req.path);
+  if (!canonicalPath) return next();
+
+  const queryIndex = req.originalUrl.indexOf("?");
+  const query = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : "";
+  return res.redirect(301, `${canonicalPath}${query}`);
+});
 
 declare module "http" {
   interface IncomingMessage {
@@ -96,56 +114,7 @@ app.get("/api/health/metrics", (req, res) => {
 app.use("/api", apiLimiter);
 app.use(originCheck);
 
-function negotiateLocalCmsUploadImageFormat(req: Request, res: Response, next: NextFunction) {
-  if (req.method !== "GET" && req.method !== "HEAD") return next();
-  if (!/\.(webp|png|jpe?g)$/i.test(req.path)) return next();
-
-  const requestedPath = path.resolve(cmsUploadsPath, `.${req.path}`);
-  if (!requestedPath.startsWith(cmsUploadsPath)) return next();
-
-  const bestVariant = resolveBestLocalCmsImagePath(requestedPath, req.headers.accept);
-  if (!bestVariant || bestVariant.filePath === requestedPath) return next();
-
-  res.vary("Accept");
-  res.setHeader("Content-Type", bestVariant.mimeType);
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-  return res.sendFile(bestVariant.filePath);
-}
-
-app.use(
-  "/uploads/cms",
-  negotiateLocalCmsUploadImageFormat,
-  express.static(cmsUploadsPath, {
-    immutable: true,
-    maxAge: "1y",
-  }),
-);
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
-
-function negotiateLandscapeImageFormat(req: Request, res: Response, next: NextFunction) {
-  if (req.method !== "GET" && req.method !== "HEAD") return next();
-  if (!/\.(webp|png|jpe?g)$/i.test(req.path)) return next();
-
-  const requestedPath = path.resolve(landscapeAssetsPath, `.${req.path}`);
-  if (!requestedPath.startsWith(landscapeAssetsPath)) return next();
-
-  const bestVariant = resolveBestLocalCmsImagePath(requestedPath, req.headers.accept);
-  if (!bestVariant || bestVariant.filePath === requestedPath) return next();
-
-  res.vary("Accept");
-  res.setHeader("Content-Type", bestVariant.mimeType);
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-  return res.sendFile(bestVariant.filePath);
-}
-
-app.use(
-  "/images/landscape",
-  negotiateLandscapeImageFormat,
-  express.static(landscapeAssetsPath, {
-    immutable: true,
-    maxAge: "1y",
-  }),
-);
 
 const REDACTED_KEYS = [
   "password", "currentPassword", "newPassword",
@@ -221,15 +190,6 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV === "production") {
     const { runMigrations } = await import("./migrate");
     await runMigrations();
-  }
-
-  {
-    const { db } = await import("./db");
-    const { sql } = await import("drizzle-orm");
-    await db.execute(sql`ALTER TABLE IF EXISTS "cms_media" ADD COLUMN IF NOT EXISTS "variants" jsonb`);
-    await db.execute(sql`ALTER TABLE IF EXISTS "seo_settings" ADD COLUMN IF NOT EXISTS "custom_head_tags" text`);
-    await db.execute(sql`ALTER TABLE IF EXISTS "seo_settings" ADD COLUMN IF NOT EXISTS "custom_body_start_tags" text`);
-    await db.execute(sql`ALTER TABLE IF EXISTS "seo_settings" ADD COLUMN IF NOT EXISTS "custom_body_end_tags" text`);
   }
 
   const { runSystemBootstrap } = await import("./services/system-bootstrap.service");

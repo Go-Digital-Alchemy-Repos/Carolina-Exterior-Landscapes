@@ -1,7 +1,14 @@
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
+// Maps each service page's core "services" grid items to a representative
+// generated image. Only grids whose every item has an entry here are rendered
+// as alternating image/text sections; all other grids stay as cards.
+const modules = import.meta.glob("../assets/services/*.webp", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
 
 function url(concept: string): string {
-  return `${LANDSCAPE_IMAGE_BASE}/services/${concept}.png`;
+  const key = Object.keys(modules).find((k) => k.endsWith(`/${concept}.webp`));
+  return key ? modules[key] : "";
 }
 
 // slug -> (service item title -> image concept filename, without extension)
@@ -19,13 +26,6 @@ const SERVICE_CONCEPTS: Record<string, Record<string, string>> = {
     "Retaining Walls": "retaining-wall",
     "Decorative Borders & Edging": "edging",
     "Steps & Stairs": "steps",
-  },
-  "residential-pressure-washing": {
-    "Driveway Pressure Washing": "hero-residential-pressure-washing",
-    "Sidewalks, Walkways & Front Entries": "hero-residential-pressure-washing",
-    "Patio, Porch & Outdoor Living Area Cleaning": "hero-residential-pressure-washing",
-    "House Washing & Exterior Surface Cleaning": "hero-residential-pressure-washing",
-    "Fence, Wall & Hardscape Cleaning": "hero-residential-pressure-washing",
   },
   "drainage-solutions": {
     "French Drain Installation": "french-drain",
@@ -65,13 +65,6 @@ const SERVICE_CONCEPTS: Record<string, Record<string, string>> = {
     "Stormwater Management Solutions": "stormwater",
     "Downspout & Roof Drainage Management": "commercial-downspout",
     "Erosion Control & Stabilization": "commercial-erosion",
-  },
-  "commercial-pressure-washing": {
-    "Sidewalk & Walkway Cleaning": "hero-commercial-pressure-washing",
-    "Storefront, Entryway & Common Area Cleaning": "hero-commercial-pressure-washing",
-    "Concrete, Curb & Parking Island Cleaning": "hero-commercial-pressure-washing",
-    "Dumpster Pad & Service Area Cleaning": "hero-commercial-pressure-washing",
-    "HOA Amenity & Community Area Washing": "hero-commercial-pressure-washing",
   },
   "hoa-services": {
     "Common Area Grounds Maintenance": "commercial-grounds-maintenance",

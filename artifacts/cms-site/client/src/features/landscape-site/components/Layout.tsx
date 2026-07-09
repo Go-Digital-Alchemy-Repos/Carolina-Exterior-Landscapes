@@ -1,33 +1,23 @@
 import { Link, useLocation } from "wouter";
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES } from "@/features/landscape-site/content/site";
+import headerLogoHorizontal from "@/features/landscape-site/assets/header-logo-horizontal.svg";
+import footerLogoHorizontal from "@/features/landscape-site/assets/footer-logo-horizontal.svg";
+import digitalAlchemyLogo from "@/features/landscape-site/assets/da-logo.svg";
 import { Phone, Menu, X, ArrowRight, MapPin, Mail, ChevronDown, Leaf } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BotanicalAccent } from "./nature/BotanicalAccent";
 import { useBranding } from "@/components/shared/branding-provider";
 
-function phoneHref(phoneDisplay: string | null | undefined) {
-  const digits = (phoneDisplay ?? "").replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return BRAND.phoneTel;
-}
-
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(92);
-  const headerRef = useRef<HTMLElement | null>(null);
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState<"residential" | "commercial" | null>(null);
   const [location] = useLocation();
-  const { frontendLogoUrl, footerLogoUrl, companyName, companyAddress, companyPhoneNumbers } = useBranding();
-  const headerLogo = frontendLogoUrl || `${LANDSCAPE_IMAGE_BASE}/header-logo-horizontal.svg`;
-  const footerLogo = footerLogoUrl || `${LANDSCAPE_IMAGE_BASE}/footer-logo-horizontal.svg`;
+  const { frontendLogoUrl, footerLogoUrl, companyName } = useBranding();
+  const headerLogo = frontendLogoUrl || headerLogoHorizontal;
+  const footerLogo = footerLogoUrl || footerLogoHorizontal;
   const logoAlt = companyName || BRAND.name;
-  const displayName = companyName || BRAND.name;
-  const displayAddress = companyAddress || `${BRAND.city}, ${BRAND.state}`;
-  const displayPhone = companyPhoneNumbers || BRAND.phoneDisplay;
-  const telHref = phoneHref(displayPhone);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,43 +27,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
-
-    const updateHeaderHeight = () => {
-      setHeaderHeight(Math.ceil(header.getBoundingClientRect().height));
-    };
-
-    updateHeaderHeight();
-
-    const resizeObserver = new ResizeObserver(updateHeaderHeight);
-    resizeObserver.observe(header);
-    window.addEventListener("resize", updateHeaderHeight);
-    window.addEventListener("scroll", updateHeaderHeight, { passive: true });
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateHeaderHeight);
-      window.removeEventListener("scroll", updateHeaderHeight);
-    };
-  }, []);
-
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    setDesktopMenuOpen(null);
     window.scrollTo(0, 0);
   }, [location]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
     };
   }, [mobileMenuOpen]);
 
   return (
     <div className="landscape-site min-h-screen flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-foreground focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        Skip to main content
+      </a>
       {/* Top Bar */}
       <div className="bg-primary text-primary-foreground py-2.5 px-4 hidden md:block text-sm font-medium tracking-wide">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -95,25 +77,45 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Header */}
       <header
-        ref={headerRef}
-        className={`sticky top-0 z-[10000] w-full transition-all duration-300 border-b ${
+        className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
           isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm py-3 border-border/50" : "bg-background py-5 border-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center group z-50">
-            <img src={headerLogo} alt={logoAlt} className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
+            <img src={headerLogo} alt={logoAlt} width={471} height={126} fetchPriority="high" decoding="async" className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8 font-bold text-sm text-foreground/80">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             
-            <div className="relative group">
-              <button className="flex items-center gap-1 hover:text-primary transition-colors py-2">
+            <div
+              className="relative group"
+              onMouseEnter={() => setDesktopMenuOpen("residential")}
+              onMouseLeave={() => setDesktopMenuOpen(null)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setDesktopMenuOpen(null);
+              }}
+            >
+              <button
+                type="button"
+                className="flex items-center gap-1 hover:text-primary transition-colors py-2"
+                aria-haspopup="true"
+                aria-expanded={desktopMenuOpen === "residential"}
+                aria-controls="residential-menu"
+                onClick={() => setDesktopMenuOpen("residential")}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setDesktopMenuOpen(null);
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setDesktopMenuOpen("residential");
+                  }
+                }}
+              >
                 Residential <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
               </button>
-              <div className="absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
+              <div id="residential-menu" className={`absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl transition-all duration-200 overflow-hidden ${desktopMenuOpen === "residential" ? "visible translate-y-0 opacity-100" : "invisible translate-y-2 opacity-0"}`}>
                 <div className="p-3 flex flex-col gap-1">
                   {RESIDENTIAL_SERVICES.map(s => (
                     <Link key={s.slug} href={`/${s.slug}`} className="p-3 hover:bg-muted/50 rounded-lg transition-colors text-sm group/link flex items-center justify-between">
@@ -130,12 +132,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="relative group">
-              <button className="flex items-center gap-1 hover:text-primary transition-colors py-2">
+            <div
+              className="relative group"
+              onMouseEnter={() => setDesktopMenuOpen("commercial")}
+              onMouseLeave={() => setDesktopMenuOpen(null)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setDesktopMenuOpen(null);
+              }}
+            >
+              <button
+                type="button"
+                className="flex items-center gap-1 hover:text-primary transition-colors py-2"
+                aria-haspopup="true"
+                aria-expanded={desktopMenuOpen === "commercial"}
+                aria-controls="commercial-menu"
+                onClick={() => setDesktopMenuOpen("commercial")}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setDesktopMenuOpen(null);
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    setDesktopMenuOpen("commercial");
+                  }
+                }}
+              >
                 Commercial <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
               </button>
-              <div className="absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 overflow-hidden">
+              <div id="commercial-menu" className={`absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl transition-all duration-200 overflow-hidden ${desktopMenuOpen === "commercial" ? "visible translate-y-0 opacity-100" : "invisible translate-y-2 opacity-0"}`}>
                 <div className="p-3 flex flex-col gap-1">
+                  <Link href="/commercial" className="p-3 bg-muted/30 hover:bg-muted/80 rounded-lg transition-colors text-sm font-extrabold flex items-center justify-between group/link">
+                    Commercial Hub
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-primary" />
+                  </Link>
                   {COMMERCIAL_SERVICES.map(s => (
                     <Link key={s.slug} href={`/${s.slug}`} className="p-3 hover:bg-muted/50 rounded-lg transition-colors text-sm group/link flex items-center justify-between">
                       {s.name}
@@ -158,83 +185,79 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden lg:flex items-center gap-6">
-            <a href={`tel:${telHref}`} className="flex items-center gap-2 font-extrabold text-foreground hover:text-primary transition-colors">
+            <a href={`tel:${BRAND.phoneTel}`} className="flex items-center gap-2 font-extrabold text-foreground hover:text-primary transition-colors">
               <Phone className="h-5 w-5 text-primary" />
-              {displayPhone}
+              {BRAND.phoneDisplay}
             </a>
-            <Link href="/get-a-quote">
-              <Button className="font-extrabold tracking-wide rounded-full px-6 h-11 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">
+            <Button asChild className="font-extrabold tracking-wide rounded-full px-6 h-11 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">
+              <Link href="/get-a-quote">
                 GET A QUOTE
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Mobile Menu Toggle */}
           <button 
-            className="lg:hidden p-2 text-foreground z-50 relative bg-muted/80 rounded-full border border-border/70 shadow-sm"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            type="button"
+            className="lg:hidden p-2 text-foreground z-50 relative bg-muted/50 rounded-full"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
+        {/* Mobile Nav Overlay */}
+        {mobileMenuOpen ? <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Site navigation" className="fixed inset-0 bg-background/98 backdrop-blur-xl z-40 pt-28 px-6 overflow-y-auto">
+          <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
+            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+            <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
+            <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
+            
+            <div className="h-px bg-border/50 my-2" />
+            
+            <span className="text-primary text-sm tracking-widest uppercase">Residential</span>
+            <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
+              {RESIDENTIAL_SERVICES.map(s => (
+                <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
+              ))}
+              <Link href="/gallery" className="text-primary hover:text-primary/80 transition-colors">Gallery</Link>
+            </div>
+
+            <div className="h-px bg-border/50 my-2" />
+
+            <span className="text-primary text-sm tracking-widest uppercase">Commercial</span>
+            <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
+              <Link href="/commercial" className="hover:text-primary transition-colors text-foreground">Commercial Hub</Link>
+              {COMMERCIAL_SERVICES.map(s => (
+                <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
+              ))}
+              <Link href="/commercial-portfolio" className="text-primary hover:text-primary/80 transition-colors">Portfolio</Link>
+            </div>
+
+            <div className="h-px bg-border/50 my-2" />
+            
+            <Link href="/service-areas" className="hover:text-primary transition-colors">Service Areas</Link>
+            <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
+            <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
+
+            <div className="mt-8 flex flex-col gap-4">
+              <a href={`tel:${BRAND.phoneTel}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
+                <Phone className="h-6 w-6 text-primary" />
+                {BRAND.phoneDisplay}
+              </a>
+              <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">
+                <Link href="/get-a-quote">GET A QUOTE</Link>
+              </Button>
+            </div>
+          </div>
+        </div> : null}
       </header>
 
-      {/* Mobile Nav Overlay */}
-      <div
-        className={`fixed inset-x-0 bottom-0 z-[9999] bg-[#f8f7f6] text-foreground pointer-events-auto transition-transform duration-300 overflow-y-auto overscroll-contain shadow-2xl border-t border-border/70 lg:hidden ${
-          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-        style={{ top: headerHeight }}
-        aria-hidden={!mobileMenuOpen}
-      >
-        <nav className="flex flex-col gap-5 px-6 py-6 font-extrabold text-2xl pb-8" aria-label="Mobile navigation">
-          <a href={`tel:${telHref}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
-            <Phone className="h-6 w-6 text-primary" />
-            {displayPhone}
-          </a>
-
-          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-
-          <div className="h-px bg-border/50 my-2" />
-
-          <span className="text-primary text-sm tracking-widest uppercase">Residential Services</span>
-          <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
-            {RESIDENTIAL_SERVICES.map(s => (
-              <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
-            ))}
-          </div>
-
-          <div className="h-px bg-border/50 my-2" />
-
-          <span className="text-primary text-sm tracking-widest uppercase">Commercial Services</span>
-          <div className="flex flex-col gap-4 text-xl text-foreground font-bold ml-3">
-            {COMMERCIAL_SERVICES.map(s => (
-              <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
-            ))}
-            <Link href="/commercial-portfolio" className="text-primary hover:text-primary/80 transition-colors">Portfolio</Link>
-          </div>
-
-          <div className="h-px bg-border/50 my-2" />
-
-          <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
-          <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
-          <Link href="/service-areas" className="hover:text-primary transition-colors">Service Areas</Link>
-          <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
-          <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
-
-          <div className="mt-8 flex flex-col gap-4">
-            <Link href="/get-a-quote">
-              <Button size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">GET A QUOTE</Button>
-            </Link>
-          </div>
-        </nav>
-      </div>
-
       {/* Main Content */}
-      <main className="flex-1 w-full flex flex-col relative z-10">
+      <main id="main-content" className="flex-1 w-full flex flex-col relative z-10" tabIndex={-1}>
         {children}
       </main>
 
@@ -249,15 +272,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
             
             <div className="lg:col-span-4 space-y-8">
-              <img src={footerLogo} alt={logoAlt} className="h-16 w-auto max-w-full" />
+              <img src={footerLogo} alt={logoAlt} width={486} height={135} loading="lazy" decoding="async" className="h-16 w-auto max-w-full" />
               <p className="text-background/70 text-base leading-relaxed font-medium max-w-sm">
                 {BRAND.tagline} {BRAND.subTagline}.<br/>
                 We are proud to serve {BRAND.county} and the {BRAND.region} with premium landscaping and lawn care services.
               </p>
               <div className="space-y-4 font-bold text-sm">
-                <a href={`tel:${telHref}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
+                <a href={`tel:${BRAND.phoneTel}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Phone className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{displayPhone}</span>
+                  <span className="text-base tracking-wide">{BRAND.phoneDisplay}</span>
                 </a>
                 <a href={`mailto:${BRAND.email}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Mail className="h-4 w-4" /></div>
@@ -265,7 +288,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </a>
                 <div className="flex items-center gap-4 group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background"><MapPin className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide whitespace-pre-line">{displayAddress}</span>
+                  <span className="text-base tracking-wide">{BRAND.city}, {BRAND.state}</span>
                 </div>
               </div>
             </div>
@@ -310,18 +333,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </ul>
               
               <div className="mt-10">
-                <Link href="/get-a-quote">
-                  <Button variant="outline" className="w-full bg-transparent border-white/20 text-white hover:bg-white hover:text-foreground h-12 rounded-full font-bold tracking-wide">
+                <Button asChild variant="outline" className="w-full bg-transparent border-white/20 text-white hover:bg-white hover:text-foreground h-12 rounded-full font-bold tracking-wide">
+                  <Link href="/get-a-quote">
                     REQUEST A QUOTE
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
 
           </div>
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm font-medium text-background/50">
-            <p>&copy; {new Date().getFullYear()} {displayName}. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-6">
               <span className="flex items-center gap-2"><Leaf className="h-3 w-3" /> {BRAND.founded}</span>
               <Link href="/about" className="hover:text-white transition-colors">About Us</Link>
@@ -338,7 +361,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-2 text-background/40 hover:text-background/70 transition-colors"
             >
               <span className="text-xs font-medium tracking-wide">Site by</span>
-              <img src={`${LANDSCAPE_IMAGE_BASE}/da-logo.svg`} alt="Digital Alchemy" className="h-4 w-auto" />
+              <img src={digitalAlchemyLogo} alt="Digital Alchemy" width={124} height={22} loading="lazy" decoding="async" className="h-4 w-auto" />
             </a>
           </div>
         </div>

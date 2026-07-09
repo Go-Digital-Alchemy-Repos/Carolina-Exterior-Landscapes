@@ -11,18 +11,18 @@ import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 
-import heroHome from "@/features/landscape-site/assets/hero-home.png";
-import heroCommercial from "@/features/landscape-site/assets/hero-commercial.png";
-import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.png";
-import heroMulch from "@/features/landscape-site/assets/hero-mulch.png";
-import heroDrainage from "@/features/landscape-site/assets/hero-drainage.png";
-import heroCommercialGrounds from "@/features/landscape-site/assets/hero-commercial-grounds.png";
-import heroCommercialLandscaping from "@/features/landscape-site/assets/hero-commercial-landscaping.png";
-import heroCommercialHardscape from "@/features/landscape-site/assets/hero-commercial-hardscape.png";
-import heroCommercialDrainage from "@/features/landscape-site/assets/hero-commercial-drainage.png";
-import heroHoa from "@/features/landscape-site/assets/hero-hoa.png";
-import galleryRes from "@/features/landscape-site/assets/gallery-res-1.png";
-import galleryCom from "@/features/landscape-site/assets/gallery-com-1.png";
+import heroHome from "@/features/landscape-site/assets/hero-home.webp";
+import heroCommercial from "@/features/landscape-site/assets/hero-commercial.webp";
+import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.webp";
+import heroMulch from "@/features/landscape-site/assets/hero-mulch.webp";
+import heroDrainage from "@/features/landscape-site/assets/hero-drainage.webp";
+import heroCommercialGrounds from "@/features/landscape-site/assets/hero-commercial-grounds.webp";
+import heroCommercialLandscaping from "@/features/landscape-site/assets/hero-commercial-landscaping.webp";
+import heroCommercialHardscape from "@/features/landscape-site/assets/hero-commercial-hardscape.webp";
+import heroCommercialDrainage from "@/features/landscape-site/assets/hero-commercial-drainage.webp";
+import heroHoa from "@/features/landscape-site/assets/hero-hoa.webp";
+import galleryRes from "@/features/landscape-site/assets/gallery-res-1.webp";
+import galleryCom from "@/features/landscape-site/assets/gallery-com-1.webp";
 
 const HERO_IMAGES: Record<string, string> = {
   "residential-lawn-maintenance": heroHome,
@@ -83,7 +83,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       {/* Hero Section */}
       <div className="relative w-full h-[60vh] min-h-[500px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover opacity-75" />
+          <img src={heroImage} alt={page.h1} fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-75" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
           <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
@@ -130,18 +130,18 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
               <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
                 Contact us today for a free, no-obligation estimate for your property in {BRAND.region}.
               </p>
-              <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"} className="block mb-4">
-                <Button size="lg" className="w-full font-bold h-14 rounded-full shadow-md shadow-primary/10 group">
+              <Button asChild size="lg" className="w-full font-bold h-14 rounded-full shadow-md shadow-primary/10 group mb-4">
+                <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"}>
                   REQUEST A QUOTE
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <a href={`tel:${BRAND.phoneTel}`} className="block">
-                <Button variant="outline" size="lg" className="w-full font-bold h-14 rounded-full bg-background group">
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="w-full font-bold h-14 rounded-full bg-background group">
+                <a href={`tel:${BRAND.phoneTel}`}>
                   <Phone className="mr-2 h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
                   {BRAND.phoneDisplay}
-                </Button>
-              </a>
+                </a>
+              </Button>
             </div>
 
             <div className="bg-primary/5 border border-primary/20 p-8 rounded-3xl">
@@ -152,7 +152,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
               <ul className="space-y-4 text-sm font-medium text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                  Locally owned & operated in Monroe, NC
+                  Locally owned & operated in Waxhaw, NC
                 </li>
                 <li className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
@@ -170,7 +170,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             </div>
 
             <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
-              <img src={isCommercial ? galleryCom : galleryRes} alt={`${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
+              <img src={isCommercial ? galleryCom : galleryRes} alt={`${page.h1} project by ${BRAND.shortName}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
             </div>
@@ -190,11 +190,11 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
           <p className="text-lg md:text-xl font-medium opacity-90 mb-10 max-w-2xl mx-auto leading-relaxed">
             Contact {BRAND.name} for a free, no-obligation estimate for your property in {BRAND.county}.
           </p>
-          <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"}>
-            <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-bold rounded-full hover:-translate-y-1 transition-transform text-background">
+          <Button asChild size="lg" variant="secondary" className="h-14 px-10 text-lg font-bold rounded-full hover:-translate-y-1 transition-transform text-background">
+            <Link href={isCommercial ? "/commercial-quote" : "/get-a-quote"}>
               REQUEST A QUOTE
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
