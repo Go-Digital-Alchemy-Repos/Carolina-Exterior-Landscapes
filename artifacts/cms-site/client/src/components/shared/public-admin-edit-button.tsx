@@ -64,7 +64,7 @@ export function PublicAdminEditButton() {
     <Button
       asChild
       size="sm"
-      className="fixed bottom-4 right-4 z-[70] rounded-full border border-white/20 bg-slate-950 px-3 py-2 text-white shadow-xl shadow-slate-950/20 hover:bg-slate-800 md:bottom-5 md:right-5"
+      className="fixed bottom-4 left-4 z-[70] rounded-full border border-white/20 bg-slate-950 px-3 py-2 text-white shadow-xl shadow-slate-950/20 hover:bg-slate-800 md:bottom-5 md:left-5"
     >
       <Link href={getEditorHref(page)} aria-label={`Edit ${page.title} in CMS`}>
         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
