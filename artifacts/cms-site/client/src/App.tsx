@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrandingProvider } from "@/components/shared/branding-provider";
 import { CookieConsentBanner } from "@/components/shared/cookie-consent-banner";
 import { ProtectedRoute } from "@/components/shared/protected-route";
+import { PublicAdminEditButton } from "@/components/shared/public-admin-edit-button";
 import { loadGa4IfConsented } from "@/lib/analytics-runtime";
 import { subscribeToCookieConsent } from "@/lib/cookie-consent";
 import NotFound from "@/pages/not-found";
@@ -372,6 +373,7 @@ function App() {
             <RouteAdminModeManager />
             <RouteScrollManager />
             <Router />
+            <PublicAdminEditButton />
             <CookieConsentBanner />
           </SetupGuard>
         </TooltipProvider>
