@@ -1034,21 +1034,18 @@ function buildMenus(): InsertCmsMenu[] {
     "hoa-services",
   ].map((slug) => menuItem(slug, serviceLabel(slug, /^Commercial\s+/i), `/${slug}`));
 
-  const mainCommercial = commercialServices;
+  const residentialFooter = [
+    ...residential,
+    menuItem("gallery", "View Gallery", "/gallery"),
+  ];
+  const mainCommercial = [
+    menuItem("commercial", "Commercial Hub", "/commercial"),
+    ...commercialServices,
+    menuItem("commercial-portfolio", "View Portfolio", "/commercial-portfolio"),
+  ];
   const footerCommercial = [
     menuItem("commercial", "Commercial Hub", "/commercial"),
     ...commercialServices,
-  ];
-  const mobileNavigation = [
-    menuItem("home", "Home", "/"),
-    menuItem("residential", "Residential Services", "/residential-landscaping", residential),
-    menuItem("commercial", "Commercial Services", "/commercial", mainCommercial),
-    menuItem("gallery", "Gallery", "/gallery"),
-    menuItem("about", "About Us", "/about"),
-    menuItem("service-areas", "Service Areas", "/service-areas"),
-    menuItem("blog", "Blog", "/blog"),
-    menuItem("faq", "FAQ", "/faq"),
-    menuItem("get-a-quote", "Get A Quote", "/get-a-quote"),
   ];
 
   return [
@@ -1057,7 +1054,7 @@ function buildMenus(): InsertCmsMenu[] {
       location: "main_navigation",
       items: [
         menuItem("home", "Home", "/"),
-        menuItem("residential", "Residential", "/residential-landscaping", residential),
+        menuItem("residential", "Residential", "/residential-landscaping", residentialFooter),
         menuItem("commercial", "Commercial", "/commercial", mainCommercial),
         menuItem("gallery", "Gallery", "/gallery"),
         menuItem("service-areas", "Service Areas", "/service-areas"),
@@ -1066,14 +1063,9 @@ function buildMenus(): InsertCmsMenu[] {
       ],
     },
     {
-      name: "Mobile Navigation",
-      location: "mobile_navigation",
-      items: mobileNavigation,
-    },
-    {
       name: "Footer Residential",
       location: "footer_platform",
-      items: residential,
+      items: residentialFooter,
     },
     {
       name: "Footer Commercial",
@@ -1101,7 +1093,11 @@ function buildMenus(): InsertCmsMenu[] {
     {
       name: "Footer Legal",
       location: "footer_legal",
-      items: [],
+      items: [
+        menuItem("about", "About Us", "/about"),
+        menuItem("service-areas", "Service Areas", "/service-areas"),
+        menuItem("blog", "Blog", "/blog"),
+      ],
     },
   ];
 }

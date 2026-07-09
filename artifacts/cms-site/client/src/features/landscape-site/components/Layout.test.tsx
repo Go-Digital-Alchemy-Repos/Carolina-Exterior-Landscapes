@@ -3,6 +3,7 @@
 import React, { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Layout } from "./Layout";
 
 describe("landscape Layout", () => {
@@ -25,12 +26,41 @@ describe("landscape Layout", () => {
   });
 
   it("keeps a desktop service menu open when a pointer enters and clicks its trigger", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(["/api/cms/menus"], {
+      main_navigation: {
+        id: "menu-1",
+        name: "Main Navigation",
+        location: "main_navigation",
+        items: [
+          {
+            id: "managed-residential",
+            label: "Managed Residential",
+            url: "/residential-landscaping",
+            openInNewTab: false,
+            children: [
+              {
+                id: "managed-service",
+                label: "Managed Service",
+                url: "/residential-landscaping",
+                openInNewTab: false,
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    });
     root = createRoot(container);
     await act(async () => {
-      root!.render(<Layout><div>Content</div></Layout>);
+      root!.render(
+        <QueryClientProvider client={queryClient}>
+          <Layout><div>Content</div></Layout>
+        </QueryClientProvider>,
+      );
     });
 
-    const trigger = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Residential"));
+    const trigger = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Managed Residential"));
     expect(trigger).toBeTruthy();
 
     await act(async () => {
@@ -39,6 +69,7 @@ describe("landscape Layout", () => {
     });
 
     expect(trigger!.getAttribute("aria-expanded")).toBe("true");
-    expect(container.querySelector("#residential-menu")?.className).toContain("visible");
+    expect(container.querySelector("#desktop-menu-managed-residential")?.className).toContain("visible");
+    expect(container.textContent).toContain("Managed Service");
   });
 });

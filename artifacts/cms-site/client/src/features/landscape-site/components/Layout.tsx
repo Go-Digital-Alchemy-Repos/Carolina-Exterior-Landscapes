@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES } from "@/features/landscape-site/content/site";
 import headerLogoHorizontal from "@/features/landscape-site/assets/header-logo-horizontal.svg";
 import footerLogoHorizontal from "@/features/landscape-site/assets/footer-logo-horizontal.svg";
@@ -8,16 +9,98 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BotanicalAccent } from "./nature/BotanicalAccent";
 import { useBranding } from "@/components/shared/branding-provider";
+import type { CmsMenu, MenuItem } from "@shared/schema";
+
+type PublicMenuMap = Partial<Record<string, CmsMenu>>;
+
+function menuItem(id: string, label: string, url: string, children: MenuItem[] = []): MenuItem {
+  return { id, label, url, openInNewTab: false, children };
+}
+
+const FALLBACK_RESIDENTIAL_ITEMS = [
+  ...RESIDENTIAL_SERVICES.map((service) => menuItem(service.slug, service.name, `/${service.slug}`)),
+  menuItem("gallery", "View Gallery", "/gallery"),
+];
+
+const FALLBACK_COMMERCIAL_ITEMS = [
+  menuItem("commercial", "Commercial Hub", "/commercial"),
+  ...COMMERCIAL_SERVICES.map((service) => menuItem(service.slug, service.name, `/${service.slug}`)),
+  menuItem("commercial-portfolio", "View Portfolio", "/commercial-portfolio"),
+];
+
+const FALLBACK_FOOTER_COMMERCIAL_ITEMS = FALLBACK_COMMERCIAL_ITEMS.filter((item) => item.id !== "commercial-portfolio");
+
+const FALLBACK_FOOTER_LINKS = [
+  menuItem("about", "About Us", "/about"),
+  menuItem("service-areas", "Service Areas", "/service-areas"),
+  menuItem("blog", "Blog", "/blog"),
+];
+
+const FALLBACK_MAIN_NAVIGATION = [
+  menuItem("home", "Home", "/"),
+  menuItem("residential", "Residential", "/residential-landscaping", FALLBACK_RESIDENTIAL_ITEMS),
+  menuItem("commercial", "Commercial", "/commercial", FALLBACK_COMMERCIAL_ITEMS),
+  menuItem("gallery", "Gallery", "/gallery"),
+  menuItem("service-areas", "Service Areas", "/service-areas"),
+  menuItem("about", "About", "/about"),
+  menuItem("blog", "Blog", "/blog"),
+];
+
+function menuItems(menu: CmsMenu | undefined, fallback: MenuItem[] = []): MenuItem[] {
+  if (!Array.isArray(menu?.items) || menu.items.length === 0) return fallback;
+  return (menu.items as MenuItem[]).map((item) => ({ ...item, children: item.children ?? [] }));
+}
+
+function MenuLink({ item, className, onClick }: { item: MenuItem; className?: string; onClick?: () => void }) {
+  if (item.openInNewTab || /^https?:\/\//i.test(item.url)) {
+    return (
+      <a href={item.url} target={item.openInNewTab ? "_blank" : undefined} rel={item.openInNewTab ? "noopener noreferrer" : undefined} className={className} onClick={onClick}>
+        {item.label}
+      </a>
+    );
+  }
+  return <Link href={item.url} className={className} onClick={onClick}>{item.label}</Link>;
+}
+
+function FooterMenuColumn({ title, items, className }: { title: string; items: MenuItem[]; className: string }) {
+  if (items.length === 0) return null;
+  return (
+    <div className={className}>
+      <h4 className="font-extrabold text-xl mb-6 text-white">{title}</h4>
+      <ul className="space-y-4 text-sm font-medium text-background/70">
+        {items.map((item) => (
+          <li key={item.id}>
+            <div className="flex items-center gap-3 group text-base">
+              <ArrowRight className="h-4 w-4 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+              <MenuLink
+                item={item}
+                className={`hover:text-primary transition-colors ${item.id === "commercial" ? "text-white font-bold" : ""} ${item.id === "gallery" ? "text-primary font-bold hover:text-primary/80" : ""}`}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [desktopMenuOpen, setDesktopMenuOpen] = useState<"residential" | "commercial" | null>(null);
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState<string | null>(null);
   const [location] = useLocation();
   const { frontendLogoUrl, footerLogoUrl, companyName } = useBranding();
   const headerLogo = frontendLogoUrl || headerLogoHorizontal;
   const footerLogo = footerLogoUrl || footerLogoHorizontal;
   const logoAlt = companyName || BRAND.name;
+  const { data: publicMenus } = useQuery<PublicMenuMap>({
+    queryKey: ["/api/cms/menus"],
+    staleTime: 60_000,
+  });
+  const mainNavigation = menuItems(publicMenus?.main_navigation, FALLBACK_MAIN_NAVIGATION);
+  const footerResidential = menuItems(publicMenus?.footer_platform, FALLBACK_RESIDENTIAL_ITEMS);
+  const footerCommercial = menuItems(publicMenus?.footer_secondary, FALLBACK_FOOTER_COMMERCIAL_ITEMS);
+  const footerLinks = menuItems(publicMenus?.footer_legal, FALLBACK_FOOTER_LINKS);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,100 +171,52 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8 font-bold text-sm text-foreground/80">
-            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-            
-            <div
-              className="relative group"
-              onMouseEnter={() => setDesktopMenuOpen("residential")}
-              onMouseLeave={() => setDesktopMenuOpen(null)}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) setDesktopMenuOpen(null);
-              }}
-            >
-              <button
-                type="button"
-                className="flex items-center gap-1 hover:text-primary transition-colors py-2"
-                aria-haspopup="true"
-                aria-expanded={desktopMenuOpen === "residential"}
-                aria-controls="residential-menu"
-                onClick={() => setDesktopMenuOpen("residential")}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setDesktopMenuOpen(null);
-                  if (event.key === "ArrowDown") {
-                    event.preventDefault();
-                    setDesktopMenuOpen("residential");
-                  }
-                }}
-              >
-                Residential <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
-              </button>
-              <div id="residential-menu" className={`absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl transition-all duration-200 overflow-hidden ${desktopMenuOpen === "residential" ? "visible translate-y-0 opacity-100" : "invisible translate-y-2 opacity-0"}`}>
-                <div className="p-3 flex flex-col gap-1">
-                  {RESIDENTIAL_SERVICES.map(s => (
-                    <Link key={s.slug} href={`/${s.slug}`} className="p-3 hover:bg-muted/50 rounded-lg transition-colors text-sm group/link flex items-center justify-between">
-                      {s.name}
-                      <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-primary" />
-                    </Link>
-                  ))}
-                  <div className="h-px bg-border/50 my-2" />
-                  <Link href="/gallery" className="p-3 hover:bg-primary/5 rounded-lg transition-colors text-sm text-primary flex items-center justify-between group/link">
-                    View Gallery
-                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all" />
-                  </Link>
-                </div>
-              </div>
-            </div>
+            {mainNavigation.map((item) => {
+              if (item.children.length === 0) {
+                return <MenuLink key={item.id} item={item} className="hover:text-primary transition-colors" />;
+              }
 
-            <div
-              className="relative group"
-              onMouseEnter={() => setDesktopMenuOpen("commercial")}
-              onMouseLeave={() => setDesktopMenuOpen(null)}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) setDesktopMenuOpen(null);
-              }}
-            >
-              <button
-                type="button"
-                className="flex items-center gap-1 hover:text-primary transition-colors py-2"
-                aria-haspopup="true"
-                aria-expanded={desktopMenuOpen === "commercial"}
-                aria-controls="commercial-menu"
-                onClick={() => setDesktopMenuOpen("commercial")}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setDesktopMenuOpen(null);
-                  if (event.key === "ArrowDown") {
-                    event.preventDefault();
-                    setDesktopMenuOpen("commercial");
-                  }
-                }}
-              >
-                Commercial <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
-              </button>
-              <div id="commercial-menu" className={`absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl transition-all duration-200 overflow-hidden ${desktopMenuOpen === "commercial" ? "visible translate-y-0 opacity-100" : "invisible translate-y-2 opacity-0"}`}>
-                <div className="p-3 flex flex-col gap-1">
-                  <Link href="/commercial" className="p-3 bg-muted/30 hover:bg-muted/80 rounded-lg transition-colors text-sm font-extrabold flex items-center justify-between group/link">
-                    Commercial Hub
-                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-primary" />
-                  </Link>
-                  {COMMERCIAL_SERVICES.map(s => (
-                    <Link key={s.slug} href={`/${s.slug}`} className="p-3 hover:bg-muted/50 rounded-lg transition-colors text-sm group/link flex items-center justify-between">
-                      {s.name}
-                      <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-primary" />
-                    </Link>
-                  ))}
-                  <div className="h-px bg-border/50 my-2" />
-                  <Link href="/commercial-portfolio" className="p-3 hover:bg-primary/5 rounded-lg transition-colors text-sm text-primary flex items-center justify-between group/link">
-                    View Portfolio
-                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all" />
-                  </Link>
+              const menuId = `desktop-menu-${item.id.replace(/[^a-z0-9_-]/gi, "-")}`;
+              return (
+                <div
+                  key={item.id}
+                  className="relative group"
+                  onMouseEnter={() => setDesktopMenuOpen(item.id)}
+                  onMouseLeave={() => setDesktopMenuOpen(null)}
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) setDesktopMenuOpen(null);
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 hover:text-primary transition-colors py-2"
+                    aria-haspopup="true"
+                    aria-expanded={desktopMenuOpen === item.id}
+                    aria-controls={menuId}
+                    onClick={() => setDesktopMenuOpen(item.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setDesktopMenuOpen(null);
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        setDesktopMenuOpen(item.id);
+                      }
+                    }}
+                  >
+                    {item.label} <ChevronDown className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
+                  </button>
+                  <div id={menuId} className={`absolute top-full left-0 w-72 bg-background border border-border/60 shadow-xl rounded-xl transition-all duration-200 overflow-hidden ${desktopMenuOpen === item.id ? "visible translate-y-0 opacity-100" : "invisible translate-y-2 opacity-0"}`}>
+                    <div className="p-3 flex flex-col gap-1">
+                      {item.children.map((child) => (
+                        <div key={child.id} className="group/link flex items-center rounded-lg hover:bg-muted/50">
+                          <MenuLink item={child} className={`flex-1 p-3 text-sm transition-colors ${child.id === "commercial" ? "font-extrabold" : ""}`} />
+                          <ArrowRight className="mr-3 h-4 w-4 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-primary" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
-            <Link href="/service-areas" className="hover:text-primary transition-colors">Service Areas</Link>
-            <Link href="/about" className="hover:text-primary transition-colors">About</Link>
-            <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
+              );
+            })}
           </nav>
 
           <div className="hidden lg:flex items-center gap-6">
@@ -212,36 +247,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Mobile Nav Overlay */}
         {mobileMenuOpen ? <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Site navigation" className="fixed inset-0 bg-background z-40 pt-28 px-6 overflow-y-auto">
           <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
-            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-            <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
-            <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
-            
-            <div className="h-px bg-border/50 my-2" />
-            
-            <span className="text-primary text-sm tracking-widest uppercase">Residential</span>
-            <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
-              {RESIDENTIAL_SERVICES.map(s => (
-                <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
-              ))}
-              <Link href="/gallery" className="text-primary hover:text-primary/80 transition-colors">Gallery</Link>
-            </div>
+            {mainNavigation.map((item) => {
+              if (item.children.length === 0) {
+                return (
+                  <MenuLink
+                    key={item.id}
+                    item={item}
+                    className="hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  />
+                );
+              }
 
-            <div className="h-px bg-border/50 my-2" />
-
-            <span className="text-primary text-sm tracking-widest uppercase">Commercial</span>
-            <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
-              <Link href="/commercial" className="hover:text-primary transition-colors text-foreground">Commercial Hub</Link>
-              {COMMERCIAL_SERVICES.map(s => (
-                <Link key={s.slug} href={`/${s.slug}`} className="hover:text-primary transition-colors">{s.name}</Link>
-              ))}
-              <Link href="/commercial-portfolio" className="text-primary hover:text-primary/80 transition-colors">Portfolio</Link>
-            </div>
-
-            <div className="h-px bg-border/50 my-2" />
-            
-            <Link href="/service-areas" className="hover:text-primary transition-colors">Service Areas</Link>
-            <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
-            <Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link>
+              return (
+                <div key={item.id} className="contents">
+                  <div className="h-px bg-border/50 my-2" />
+                  <span className="text-primary text-sm tracking-widest uppercase">{item.label}</span>
+                  <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
+                    {item.children.map((child) => (
+                      <MenuLink key={child.id} item={child} className="hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
 
             <div className="mt-8 flex flex-col gap-4">
               <a href={`tel:${BRAND.phoneTel}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
@@ -293,44 +322,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="lg:col-span-3 lg:col-start-6">
-              <h4 className="font-extrabold text-xl mb-6 text-white">Residential</h4>
-              <ul className="space-y-4 text-sm font-medium text-background/70">
-                {RESIDENTIAL_SERVICES.map(s => (
-                  <li key={s.slug}>
-                    <Link href={`/${s.slug}`} className="hover:text-primary transition-colors flex items-center gap-3 group text-base">
-                      <ArrowRight className="h-4 w-4 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                      {s.name}
-                    </Link>
-                  </li>
-                ))}
-                <li className="pt-2">
-                  <Link href="/gallery" className="text-primary hover:text-primary/80 transition-colors flex items-center gap-3 group text-base font-bold">
-                    <ArrowRight className="h-4 w-4 opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                    View Gallery
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
+            <FooterMenuColumn title="Residential" items={footerResidential} className="lg:col-span-3 lg:col-start-6" />
             <div className="lg:col-span-4 lg:col-start-9">
-              <h4 className="font-extrabold text-xl mb-6 text-white">Commercial</h4>
-              <ul className="space-y-4 text-sm font-medium text-background/70">
-                <li>
-                  <Link href="/commercial" className="text-white hover:text-primary transition-colors flex items-center gap-3 group text-base font-bold">
-                    <ArrowRight className="h-4 w-4 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                    Commercial Hub
-                  </Link>
-                </li>
-                {COMMERCIAL_SERVICES.map(s => (
-                  <li key={s.slug}>
-                    <Link href={`/${s.slug}`} className="hover:text-primary transition-colors flex items-center gap-3 group text-base">
-                      <ArrowRight className="h-4 w-4 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                      {s.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <FooterMenuColumn title="Commercial" items={footerCommercial} className="" />
               
               <div className="mt-10">
                 <Button asChild variant="outline" className="w-full bg-transparent border-white/20 text-white hover:bg-white hover:text-foreground h-12 rounded-full font-bold tracking-wide">
@@ -347,9 +341,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-6">
               <span className="flex items-center gap-2"><Leaf className="h-3 w-3" /> {BRAND.founded}</span>
-              <Link href="/about" className="hover:text-white transition-colors">About Us</Link>
-              <Link href="/service-areas" className="hover:text-white transition-colors">Service Areas</Link>
-              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+              {footerLinks.map((item) => (
+                <MenuLink key={item.id} item={item} className="hover:text-white transition-colors" />
+              ))}
             </div>
           </div>
 
