@@ -61,6 +61,7 @@ type CmsBuilderBlock = {
 
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
+const CONTACT_PAGE_SLUG = "contact";
 
 const SECURITY_LOW_VOLTAGE_PATTERNS = [
   "low voltage",
@@ -937,13 +938,79 @@ function buildMenus(): InsertCmsMenu[] {
   ];
 }
 
+function contactCmsPageRecord(): InsertCmsPage {
+  return {
+    title: "Contact Carolina Exterior Landscapes",
+    slug: CONTACT_PAGE_SLUG,
+    status: "published",
+    pageType: "custom",
+    template: "full-width",
+    sidebarId: null,
+    content: {
+      blocks: [
+        {
+          id: "contact-hero",
+          type: "hero",
+          props: {
+            eyebrow: "Contact",
+            heading: "Contact Carolina Exterior Landscapes",
+            subheading: "Tell us about your lawn care, landscaping, hardscape, mulching, or drainage needs. We respond to inquiries within one business day.",
+            ctaText: "Call (704) 975-5867",
+            ctaLink: "tel:+17049755867",
+            imageUrl: imageUrl("hero-home.png"),
+            alignment: "left",
+            overlayColor: "#000000",
+            overlayOpacity: 45,
+            gradientEnabled: true,
+            gradientColor: "#102234",
+            gradientOpacity: 70,
+            gradientHeight: 45,
+            heroHeightPx: 520,
+          },
+        },
+        {
+          id: "contact-intro",
+          type: "rich-text",
+          props: {
+            alignment: "left",
+            content:
+              "<p>Call us directly at <a href=\"tel:+17049755867\">(704) 975-5867</a> or fill out the form below and we will follow up within one business day.</p>",
+          },
+        },
+        {
+          id: "contact-details",
+          type: "contact-nap",
+          props: {
+            background: "white",
+          },
+        },
+        {
+          id: "contact-form",
+          type: "form-embed",
+          props: {
+            formSlug: "residential-quote",
+          },
+        },
+      ],
+    },
+    seoTitle: "Contact Carolina Exterior Landscapes | Monroe NC",
+    seoDescription: "Contact Carolina Exterior Landscapes for lawn care, landscaping, hardscape, mulching, planting, and drainage services in Monroe, Union County, and the greater Charlotte area.",
+    seoKeywords: "contact Carolina Exterior Landscapes, landscaping quote Monroe NC, lawn care estimate Monroe NC",
+    ogImageUrl: imageUrl("hero-home.png"),
+    canonicalUrl: canonicalFor("/contact"),
+    noindex: false,
+    publishedAt: new Date(),
+  };
+}
+
 export function getLandscapeCmsSlugs() {
-  return new Set(buildLandscapePages().map((page) => page.slug));
+  return new Set([...buildLandscapePages().map((page) => page.slug), CONTACT_PAGE_SLUG]);
 }
 
 export async function ensureLandscapeCmsContent() {
   const landscapePages = buildLandscapePages();
   const activeSlugs = new Set(landscapePages.map((page) => page.slug));
+  activeSlugs.add(CONTACT_PAGE_SLUG);
   const existingPages = await storage.cmsPages.getAllPages();
 
   for (const page of existingPages) {
@@ -979,6 +1046,18 @@ export async function ensureLandscapeCmsContent() {
       noindex: existing.noindex ?? page.noindex,
       publishedAt: existing.publishedAt ?? page.publishedAt,
       content: mergeLandscapeContent(existing.content, page.content),
+    });
+  }
+
+  const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
+  if (!existingContactPage) {
+    await storage.cmsPages.createPage(contactCmsPageRecord());
+  } else if (existingContactPage.status !== "published" || existingContactPage.noindex) {
+    await storage.cmsPages.updatePage(existingContactPage.id, {
+      ...(hasBuilderBlocks(existingContactPage.content) ? {} : contactCmsPageRecord()),
+      status: "published",
+      noindex: false,
+      publishedAt: existingContactPage.publishedAt ?? new Date(),
     });
   }
 
