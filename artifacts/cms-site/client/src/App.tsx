@@ -41,6 +41,7 @@ const AdminDesignPage = lazy(() => import("@/features/admin/design-page"));
 const CmsOverviewPage = lazy(() => import("@/features/admin/cms/cms-overview-page"));
 const CmsPagesPage = lazy(() => import("@/features/admin/cms/cms-pages-page"));
 const CmsPageEditorPage = lazy(() => import("@/features/admin/cms/cms-page-editor-page"));
+const CmsBlogPage = lazy(() => import("@/features/admin/cms/cms-blog-page"));
 const CmsGalleriesPage = lazy(() => import("@/features/admin/cms/cms-galleries-page"));
 const CmsGalleryEditorPage = lazy(() => import("@/features/admin/cms/cms-gallery-editor-page"));
 const CmsMediaPage = lazy(() => import("@/features/admin/cms/cms-media-page"));
@@ -155,6 +156,21 @@ function Router() {
         <Route path="/admin/cms/pages">
           <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
             <CmsPagesPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/cms/blog/new">
+          <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
+            <CmsPageEditorPage mode="blog" />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/cms/blog/:id">
+          <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
+            <CmsPageEditorPage mode="blog" />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/cms/blog">
+          <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["content"]}>
+            <CmsBlogPage />
           </ProtectedRoute>
         </Route>
         <Route path="/admin/cms/galleries/new">

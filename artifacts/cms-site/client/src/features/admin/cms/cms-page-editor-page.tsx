@@ -114,6 +114,88 @@ function slugify(text: string): string {
 }
 
 const EMPTY_CONTENT: BuilderContent = { blocks: [] };
+const LANDSCAPE_SOURCE = "carolina-landscape-v1";
+
+type EditorMode = "page" | "blog";
+type BlogMeta = {
+  category: "residential" | "commercial";
+  date: string;
+  excerpt: string;
+  readMinutes: number;
+  imageUrl: string;
+};
+
+function todayInputDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getContentRecord(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
+
+function getLandscapeData(raw: unknown): Record<string, unknown> {
+  const content = getContentRecord(raw);
+  const landscape = getContentRecord(content.landscape);
+  return getContentRecord(landscape.data);
+}
+
+function getBlogMetaFromContent(raw: unknown): BlogMeta {
+  const data = getLandscapeData(raw);
+  const category = data.category === "commercial" ? "commercial" : "residential";
+  return {
+    category,
+    date: typeof data.date === "string" && data.date ? data.date : todayInputDate(),
+    excerpt: typeof data.excerpt === "string" ? data.excerpt : "",
+    readMinutes: typeof data.readMinutes === "number" && Number.isFinite(data.readMinutes) ? data.readMinutes : 5,
+    imageUrl: typeof data.imageUrl === "string"
+      ? data.imageUrl
+      : (typeof getContentRecord(data.media).heroImageUrl === "string" ? getContentRecord(data.media).heroImageUrl as string : ""),
+  };
+}
+
+function buildBlogLandscapeContent(
+  existingContent: unknown,
+  builderContent: BuilderContent,
+  formData: EditorForm,
+  blogMeta: BlogMeta,
+): Record<string, unknown> {
+  const existing = getContentRecord(existingContent);
+  const landscape = getContentRecord(existing.landscape);
+  const existingData = getContentRecord(landscape.data);
+  const media = {
+    ...getContentRecord(existingData.media),
+    ...(blogMeta.imageUrl ? { heroImageUrl: blogMeta.imageUrl, heroImageAlt: formData.title } : {}),
+  };
+
+  return {
+    ...existing,
+    source: LANDSCAPE_SOURCE,
+    landscape: {
+      ...landscape,
+      kind: "blog",
+      path: `/blog/${formData.slug}`,
+      data: {
+        ...existingData,
+        slug: formData.slug,
+        h1: formData.title,
+        titleTag: formData.seoTitle || `${formData.title} | Carolina Exterior`,
+        metaDescription: formData.seoDescription || blogMeta.excerpt,
+        primaryKeyword: typeof existingData.primaryKeyword === "string" ? existingData.primaryKeyword : "",
+        secondaryKeywords: Array.isArray(existingData.secondaryKeywords) ? existingData.secondaryKeywords : [],
+        schemaType: "BlogPosting",
+        wordCountTarget: typeof existingData.wordCountTarget === "string" ? existingData.wordCountTarget : "",
+        category: blogMeta.category,
+        date: blogMeta.date,
+        readMinutes: blogMeta.readMinutes,
+        excerpt: blogMeta.excerpt,
+        image: typeof existingData.image === "string" ? existingData.image : "",
+        imageUrl: blogMeta.imageUrl,
+        media,
+      },
+    },
+    blocks: builderContent.blocks,
+  };
+}
 
 function parseBuilderContent(raw: unknown): BuilderContent {
   if (!raw || typeof raw !== "object") return EMPTY_CONTENT;
@@ -134,10 +216,14 @@ function mergeBuilderContentForSave(existingContent: unknown, builderContent: Bu
   };
 }
 
-export default function CmsPageEditorPage() {
+export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const isNew = !id || id === "new";
+  const isBlogMode = mode === "blog";
+  const collectionPath = isBlogMode ? "/admin/cms/blog" : "/admin/cms/pages";
+  const contentLabel = isBlogMode ? "Blog Post" : "Page";
+  const contentLabelLower = isBlogMode ? "blog post" : "page";
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const titleRef = useRef<string>("");
@@ -150,6 +236,10 @@ export default function CmsPageEditorPage() {
   const [activeTab, setActiveTab] = useState("builder");
   const [templatePickerOpen, setTemplatePickerOpen] = useState(isNew);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [blogMeta, setBlogMeta] = useState<BlogMeta>(() => getBlogMetaFromContent(null));
+  const [savedBlogMetaSnapshot, setSavedBlogMetaSnapshot] = useState(() =>
+    JSON.stringify(getBlogMetaFromContent(null))
+  );
 
   const { data: page, isLoading: pageLoading } = useQuery<CmsPage>({
     queryKey: ["/api/admin/cms/pages", id],
@@ -178,7 +268,7 @@ export default function CmsPageEditorPage() {
     defaultValues: {
       title: "",
       slug: "",
-      pageType: "custom",
+      pageType: isBlogMode ? "blog-post" : "custom",
       template: "full-width",
       sidebarId: "",
       status: "draft",
@@ -210,15 +300,20 @@ export default function CmsPageEditorPage() {
       const parsedContent = parseBuilderContent(page.content);
       setBuilderContent(parsedContent);
       setSavedBuilderSnapshot(JSON.stringify(parsedContent));
+      if (isBlogMode || page.pageType === "blog-post") {
+        const nextBlogMeta = getBlogMetaFromContent(page.content);
+        setBlogMeta(nextBlogMeta);
+        setSavedBlogMetaSnapshot(JSON.stringify(nextBlogMeta));
+      }
     }
-  }, [page, form]);
+  }, [page, form, isBlogMode]);
 
   useLockConflictGuard({
     active: !isNew,
     resourceId: isNew ? null : (page?.id ?? id ?? null),
-    resourceLabel: "page",
+    resourceLabel: contentLabelLower,
     editorLock,
-    onConflict: () => navigate("/admin/cms/pages"),
+    onConflict: () => navigate(collectionPath),
   });
 
   const watchTitle = form.watch("title");
@@ -258,7 +353,7 @@ export default function CmsPageEditorPage() {
     onSuccess: async (res, variables) => {
       const created: CmsPage = await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
-      toast({ title: "Page created successfully" });
+      toast({ title: `${contentLabel} created successfully` });
       setDraftPreviewUrl("");
       applySavedState(
         {
@@ -277,11 +372,12 @@ export default function CmsPageEditorPage() {
         },
         parseBuilderContent(variables.content)
       );
+      setSavedBlogMetaSnapshot(JSON.stringify(getBlogMetaFromContent(variables.content)));
       saveState.markSaved();
-      navTimerRef.current = setTimeout(() => navigate(`/admin/cms/pages/${created.id}`), 1500);
+      navTimerRef.current = setTimeout(() => navigate(`${collectionPath}/${created.id}`), 1500);
     },
     onError: (err: Error) => {
-      toast({ title: err.message || "Failed to create page", variant: "destructive" });
+      toast({ title: err.message || `Failed to create ${contentLabelLower}`, variant: "destructive" });
       saveState.markError();
     },
   });
@@ -293,7 +389,7 @@ export default function CmsPageEditorPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id, "revisions"] });
-      toast({ title: "Page saved" });
+      toast({ title: `${contentLabel} saved` });
       setDraftPreviewUrl("");
       applySavedState(
         {
@@ -312,6 +408,7 @@ export default function CmsPageEditorPage() {
         },
         parseBuilderContent(variables.content)
       );
+      setSavedBlogMetaSnapshot(JSON.stringify(getBlogMetaFromContent(variables.content)));
       saveState.markSaved();
     },
     onError: (err: Error) => {
@@ -325,7 +422,7 @@ export default function CmsPageEditorPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
-      toast({ title: "Page published" });
+      toast({ title: `${contentLabel} published` });
     },
     onError: () => toast({ title: "Failed to publish page", variant: "destructive" }),
   });
@@ -335,7 +432,7 @@ export default function CmsPageEditorPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
-      toast({ title: "Page unpublished — reverted to draft" });
+      toast({ title: `${contentLabel} unpublished — reverted to draft` });
     },
     onError: () => toast({ title: "Failed to unpublish page", variant: "destructive" }),
   });
@@ -352,7 +449,7 @@ export default function CmsPageEditorPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages", id] });
       setSchedulePopoverOpen(false);
       setScheduleDate("");
-      toast({ title: "Page scheduled for publishing" });
+      toast({ title: `${contentLabel} scheduled for publishing` });
     },
     onError: () => toast({ title: "Failed to schedule page", variant: "destructive" }),
   });
@@ -423,8 +520,11 @@ export default function CmsPageEditorPage() {
         const normalizedContent = normalizeBuilderPlainTextFields(builderContent);
         const payload = {
           ...formData,
+          pageType: isBlogMode ? "blog-post" as const : formData.pageType,
           sidebarId: formData.template === "with-sidebar" ? formData.sidebarId || "" : "",
-          content: mergeBuilderContentForSave(page?.content, normalizedContent),
+          content: isBlogMode
+            ? buildBlogLandscapeContent(page?.content, normalizedContent, { ...formData, pageType: "blog-post" }, blogMeta)
+            : mergeBuilderContentForSave(page?.content, normalizedContent),
         };
         if (isNew) {
           createMutation.mutate(payload);
@@ -434,7 +534,7 @@ export default function CmsPageEditorPage() {
       },
       (errors) => {
         toast({
-          title: "Page could not be saved",
+          title: `${contentLabel} could not be saved`,
           description: firstValidationMessage(errors) ?? "Review the highlighted fields and try again.",
           variant: "destructive",
         });
@@ -448,20 +548,21 @@ export default function CmsPageEditorPage() {
     () => JSON.stringify(builderContent) !== savedBuilderSnapshot,
     [builderContent, savedBuilderSnapshot]
   );
+  const blogMetaDirty = isBlogMode && JSON.stringify(blogMeta) !== savedBlogMetaSnapshot;
   const saveState = useEditorSaveState({
-    isDirty: form.formState.isDirty || builderDirty,
+    isDirty: form.formState.isDirty || builderDirty || blogMetaDirty,
     isSaving: isPending,
   });
   const unsavedChangesGuard = useUnsavedChangesGuard({
-    isDirty: form.formState.isDirty || builderDirty,
-    message: "You have unsaved changes to this page. Leave without saving?",
+    isDirty: form.formState.isDirty || builderDirty || blogMetaDirty,
+    message: `You have unsaved changes to this ${contentLabelLower}. Leave without saving?`,
   });
 
   const confirmPageStatusAction = useCallback(
     (actionLabel: string, onProceed: () => void) =>
       unsavedChangesGuard.confirmIfDirty(
         onProceed,
-        `You have unsaved changes to this page. ${actionLabel} will use the last saved version, not your in-progress edits. Continue?`
+        `You have unsaved changes to this ${contentLabelLower}. ${actionLabel} will use the last saved version, not your in-progress edits. Continue?`
       ),
     [unsavedChangesGuard]
   );
@@ -544,7 +645,7 @@ export default function CmsPageEditorPage() {
               variant="ghost"
               size="icon"
               onClick={() =>
-                unsavedChangesGuard.confirmDiscardChanges(() => navigate("/admin/cms/pages"))
+                unsavedChangesGuard.confirmDiscardChanges(() => navigate(collectionPath))
               }
               data-testid="button-back"
             >
@@ -552,7 +653,7 @@ export default function CmsPageEditorPage() {
             </Button>
             <div>
               <h1 className="text-xl font-heading font-semibold" data-testid="text-editor-title">
-                {isNew ? "Create Page" : (form.watch("title") || "Edit Page")}
+                {isNew ? `Create ${contentLabel}` : (form.watch("title") || `Edit ${contentLabel}`)}
               </h1>
               {!isNew && page && (
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -698,7 +799,7 @@ export default function CmsPageEditorPage() {
                     <div className="space-y-3">
                       <p className="text-sm font-medium">Schedule Publishing</p>
                       <p className="text-xs text-muted-foreground">
-                        Choose a future date and time for this page to go live automatically.
+                        Choose a future date and time for this {contentLabelLower} to go live automatically.
                       </p>
                       <input
                         type="datetime-local"
@@ -744,7 +845,7 @@ export default function CmsPageEditorPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Page
+                  Save {contentLabel}
                 </>
               )}
             </Button>
@@ -758,7 +859,7 @@ export default function CmsPageEditorPage() {
               Builder
             </TabsTrigger>
             <TabsTrigger value="settings" data-testid="tab-settings">
-              Page Settings
+              {contentLabel} Settings
             </TabsTrigger>
             <TabsTrigger value="seo" data-testid="tab-seo">
               <Globe className="h-4 w-4 mr-1.5" />
@@ -774,7 +875,7 @@ export default function CmsPageEditorPage() {
             <div className={cn(editorLock.hasLocking && editorLock.isReadOnly && "pointer-events-none select-none opacity-70")}>
               <div className="mb-4 rounded-md border bg-card p-4">
                 <label htmlFor="builder-page-title" className="text-xs font-medium text-muted-foreground">
-                  Page Title
+                  {contentLabel} Title
                 </label>
                 <Input
                   id="builder-page-title"
@@ -785,7 +886,7 @@ export default function CmsPageEditorPage() {
                       shouldValidate: true,
                     })
                   }
-                  placeholder="Page title"
+                  placeholder={`${contentLabel} title`}
                   className="mt-2 max-w-2xl"
                   data-testid="input-builder-page-title"
                 />
@@ -827,7 +928,7 @@ export default function CmsPageEditorPage() {
                   <form className="space-y-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">Page Details</CardTitle>
+                        <CardTitle className="text-base">{contentLabel} Details</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <FormField
@@ -835,9 +936,9 @@ export default function CmsPageEditorPage() {
                           name="title"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Page Title</FormLabel>
+                              <FormLabel>{contentLabel} Title</FormLabel>
                               <FormControl>
-                                <Input placeholder="Page title" {...field} data-testid="input-title" />
+                                <Input placeholder={`${contentLabel} title`} {...field} data-testid="input-title" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -875,7 +976,7 @@ export default function CmsPageEditorPage() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Page Type</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={isBlogMode}>
                                   <FormControl>
                                     <SelectTrigger data-testid="select-page-type">
                                       <SelectValue placeholder="Select type" />
@@ -893,6 +994,11 @@ export default function CmsPageEditorPage() {
                                     <SelectItem value="custom">Custom</SelectItem>
                                   </SelectContent>
                                 </Select>
+                                {isBlogMode ? (
+                                  <FormDescription className="text-xs">
+                                    Blog editor routes always save as Blog Post.
+                                  </FormDescription>
+                                ) : null}
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -982,6 +1088,74 @@ export default function CmsPageEditorPage() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {isBlogMode ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base">Blog Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <div className="space-y-2">
+                              <FormLabel>Category</FormLabel>
+                              <Select
+                                value={blogMeta.category}
+                                onValueChange={(value) => setBlogMeta((current) => ({ ...current, category: value === "commercial" ? "commercial" : "residential" }))}
+                              >
+                                <SelectTrigger data-testid="select-blog-category">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="residential">Residential</SelectItem>
+                                  <SelectItem value="commercial">Commercial</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <FormLabel htmlFor="blog-published-date">Published Date</FormLabel>
+                              <Input
+                                id="blog-published-date"
+                                type="date"
+                                value={blogMeta.date}
+                                onChange={(event) => setBlogMeta((current) => ({ ...current, date: event.target.value }))}
+                                data-testid="input-blog-date"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <FormLabel htmlFor="blog-read-minutes">Read Minutes</FormLabel>
+                              <Input
+                                id="blog-read-minutes"
+                                type="number"
+                                min={1}
+                                max={60}
+                                value={blogMeta.readMinutes}
+                                onChange={(event) => setBlogMeta((current) => ({ ...current, readMinutes: Math.max(1, Number(event.target.value) || 1) }))}
+                                data-testid="input-blog-read-minutes"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <FormLabel htmlFor="blog-excerpt">Excerpt</FormLabel>
+                            <Textarea
+                              id="blog-excerpt"
+                              value={blogMeta.excerpt}
+                              onChange={(event) => setBlogMeta((current) => ({ ...current, excerpt: event.target.value }))}
+                              placeholder="Short summary shown on the blog index."
+                              data-testid="textarea-blog-excerpt"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <FormLabel>Featured Image</FormLabel>
+                            <CmsImageUpload
+                              value={blogMeta.imageUrl}
+                              onChange={(imageUrl) => setBlogMeta((current) => ({ ...current, imageUrl }))}
+                              helpText="Shown on the blog index and at the top of the article."
+                              data-testid="blog-featured-image-upload"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : null}
                   </form>
                 </Form>
               </div>

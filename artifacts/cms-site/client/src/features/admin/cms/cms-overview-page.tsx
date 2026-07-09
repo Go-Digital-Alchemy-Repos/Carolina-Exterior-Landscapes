@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Blocks, FileCode, Globe, Image, Images, Plus, SearchIcon, SquarePen } from "lucide-react";
+import { Blocks, FileCode, Globe, Image, Images, Newspaper, Plus, SearchIcon, SquarePen } from "lucide-react";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,13 +13,16 @@ export default function CmsOverviewPage() {
     queryKey: ["/api/admin/cms/pages"],
   });
 
-  const totalPages = pages.length;
-  const publishedPages = pages.filter((page) => page.status === "published").length;
-  const draftPages = pages.filter((page) => page.status === "draft").length;
+  const blogPosts = pages.filter((page) => page.pageType === "blog-post");
+  const standardPages = pages.filter((page) => page.pageType !== "blog-post");
+  const totalPages = standardPages.length;
+  const publishedPages = standardPages.filter((page) => page.status === "published").length;
+  const draftPages = standardPages.filter((page) => page.status === "draft").length;
   const recentPages = pages.slice(0, 5);
 
   const quickLinks = [
     { title: "Pages", description: "Create and manage public website pages", icon: FileCode, href: "/admin/cms/pages" },
+    { title: "Blog", description: "Create and manage blog posts", icon: Newspaper, href: "/admin/cms/blog" },
     { title: "Forms", description: "Manage generic public forms and submissions", icon: SquarePen, href: "/admin/forms" },
     { title: "Galleries", description: "Create reusable photo galleries", icon: Images, href: "/admin/cms/galleries" },
     { title: "Media Library", description: "Upload and manage files", icon: Image, href: "/admin/cms/media" },
@@ -41,11 +44,12 @@ export default function CmsOverviewPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ["Total Pages", totalPages],
             ["Published", publishedPages],
             ["Drafts", draftPages],
+            ["Blog Posts", blogPosts.length],
           ].map(([label, value]) => (
             <Card key={label}>
               <CardContent className="pt-5">

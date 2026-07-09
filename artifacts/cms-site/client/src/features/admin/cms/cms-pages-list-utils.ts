@@ -47,6 +47,31 @@ export function getCmsPageSearchText(page: CmsPage): string {
     .join(" ");
 }
 
+export function isBlogPostPage(page: CmsPage): boolean {
+  return page.pageType === "blog-post";
+}
+
+export function isStandardCmsPage(page: CmsPage): boolean {
+  return !isBlogPostPage(page);
+}
+
+export function getCmsBlogPostMetadata(page: CmsPage): {
+  category: string;
+  publishedDate: string;
+  excerpt: string;
+  readMinutes: number | null;
+} {
+  const content = page.content && typeof page.content === "object" ? page.content as Record<string, unknown> : {};
+  const landscape = content.landscape && typeof content.landscape === "object" ? content.landscape as Record<string, unknown> : {};
+  const data = landscape.data && typeof landscape.data === "object" ? landscape.data as Record<string, unknown> : {};
+  const category = typeof data.category === "string" && data.category.trim() ? data.category : "uncategorized";
+  const publishedDate = typeof data.date === "string" ? data.date : "";
+  const excerpt = typeof data.excerpt === "string" ? data.excerpt : "";
+  const readMinutes = typeof data.readMinutes === "number" ? data.readMinutes : null;
+
+  return { category, publishedDate, excerpt, readMinutes };
+}
+
 export function sortCmsPages(pages: CmsPage[], sort: CmsPageSort): CmsPage[] {
   const sorted = [...pages];
   sorted.sort((a, b) => {
@@ -93,4 +118,12 @@ export function filterAndSortCmsPages(pages: CmsPage[], search: string, sort: Cm
       });
 
   return sortCmsPages(filtered, sort);
+}
+
+export function filterAndSortStandardCmsPages(pages: CmsPage[], search: string, sort: CmsPageSort): CmsPage[] {
+  return filterAndSortCmsPages(pages.filter(isStandardCmsPage), search, sort);
+}
+
+export function filterAndSortCmsBlogPosts(pages: CmsPage[], search: string, sort: CmsPageSort): CmsPage[] {
+  return filterAndSortCmsPages(pages.filter(isBlogPostPage), search, sort);
 }

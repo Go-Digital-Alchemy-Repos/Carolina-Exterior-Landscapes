@@ -24,7 +24,7 @@ import type { CmsPage } from "@shared/schema";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { filterAndSortCmsPages, type CmsPageSort } from "./cms-pages-list-utils";
+import { filterAndSortStandardCmsPages, type CmsPageSort } from "./cms-pages-list-utils";
 
 const PAGE_TYPE_COLORS: Record<string, string> = {
   home: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
@@ -83,7 +83,8 @@ export default function CmsPagesPage() {
   });
 
   const pageLocksById = new Map(pageLocks.map((entry) => [entry.resourceId, entry.lock] as const));
-  const visiblePages = useMemo(() => filterAndSortCmsPages(pages, search, sort), [pages, search, sort]);
+  const visiblePages = useMemo(() => filterAndSortStandardCmsPages(pages, search, sort), [pages, search, sort]);
+  const pageCount = useMemo(() => pages.filter((page) => page.pageType !== "blog-post").length, [pages]);
   const currentSort = getSortState(sort);
 
   const setColumnSort = (column: SortableColumn) => {
@@ -168,7 +169,7 @@ export default function CmsPagesPage() {
 
         <Card>
           <CardContent className="space-y-4 pt-6">
-            {pages.length > 0 ? (
+            {pageCount > 0 ? (
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -182,7 +183,7 @@ export default function CmsPagesPage() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-[170px_220px] lg:flex lg:items-center">
                   <div className="text-sm text-muted-foreground" data-testid="text-pages-result-count">
-                    {visiblePages.length} of {pages.length} page{pages.length === 1 ? "" : "s"}
+                    {visiblePages.length} of {pageCount} page{pageCount === 1 ? "" : "s"}
                   </div>
                   <Select value={sort} onValueChange={(value) => setSort(value as CmsPageSort)}>
                     <SelectTrigger data-testid="select-sort-pages">
@@ -210,7 +211,7 @@ export default function CmsPagesPage() {
               <div className="space-y-3 pt-6">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
               </div>
-            ) : pages.length === 0 ? (
+            ) : pageCount === 0 ? (
               <div className="text-center py-16 text-muted-foreground" data-testid="text-empty-pages">
                 <Globe className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No pages yet</p>

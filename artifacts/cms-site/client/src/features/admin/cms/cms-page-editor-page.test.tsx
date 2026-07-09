@@ -10,6 +10,7 @@ const lockGuardMock = vi.fn();
 const useQueryMock = vi.fn();
 const useMutationMock = vi.fn();
 const toastMock = vi.fn();
+let paramsMock: { id: string } = { id: "page-1" };
 let mutationStates: Array<{
   mutate: ReturnType<typeof vi.fn>;
   mutateAsync: ReturnType<typeof vi.fn>;
@@ -49,7 +50,7 @@ vi.mock("wouter", () => ({
   Link: ({ href, children }: { href: string; children: React.ReactNode }) =>
     React.createElement("a", { href }, children),
   useLocation: () => ["/admin/cms/pages/page-1", navigateMock],
-  useParams: () => ({ id: "page-1" }),
+  useParams: () => paramsMock,
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
@@ -218,6 +219,12 @@ describe("CmsPageEditorPage", () => {
     lockGuardMock.mockReset();
     toastMock.mockReset();
     editorLockState.isReadOnly = true;
+    paramsMock = { id: "page-1" };
+    mockPage.title = "Join the Network";
+    mockPage.slug = "join";
+    mockPage.pageType = "landing";
+    mockPage.status = "draft";
+    mockPage.content = { blocks: [] };
     mockPage.seoDescription = "";
     mockPage.canonicalUrl = "";
     mutationStates = [];
@@ -468,5 +475,77 @@ describe("CmsPageEditorPage", () => {
       })
     );
     expect(mutationStates.flatMap((state) => state.mutate.mock.calls)).toHaveLength(0);
+  });
+
+  it("initializes new blog posts as blog-post CMS pages with landscape blog content", async () => {
+    paramsMock = { id: "new" };
+    editorLockState.isReadOnly = false;
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(React.createElement(CmsPageEditorPage, { mode: "blog" }));
+    });
+
+    const titleInput = container.querySelector('[data-testid="input-builder-page-title"]') as HTMLInputElement | null;
+    expect(titleInput).not.toBeNull();
+
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      setValue?.call(titleInput, "Summer Mulching Guide");
+      titleInput!.dispatchEvent(new Event("input", { bubbles: true }));
+      titleInput!.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    const saveButton = container.querySelector('[data-testid="button-save"]') as HTMLButtonElement | null;
+    expect(saveButton).not.toBeNull();
+
+    await act(async () => {
+      saveButton?.click();
+    });
+
+    const createPayload = mutationStates.flatMap((state) => state.mutate.mock.calls).at(-1)?.[0];
+    expect(createPayload).toEqual(
+      expect.objectContaining({
+        title: "Summer Mulching Guide",
+        slug: "summer-mulching-guide",
+        pageType: "blog-post",
+        content: expect.objectContaining({
+          source: "carolina-landscape-v1",
+          landscape: expect.objectContaining({
+            kind: "blog",
+            path: "/blog/summer-mulching-guide",
+            data: expect.objectContaining({
+              slug: "summer-mulching-guide",
+              h1: "Summer Mulching Guide",
+              schemaType: "BlogPosting",
+              category: "residential",
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("uses the Blog library as the conflict return path in blog mode", async () => {
+    editorLockState.isReadOnly = true;
+    mockPage.pageType = "blog-post";
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(React.createElement(CmsPageEditorPage, { mode: "blog" }));
+    });
+
+    expect(lockGuardMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resourceLabel: "blog post",
+      }),
+    );
+
+    const guardArgs = lockGuardMock.mock.calls.at(-1)?.[0] as { onConflict: () => void };
+    await act(async () => {
+      guardArgs.onConflict();
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/admin/cms/blog");
   });
 });

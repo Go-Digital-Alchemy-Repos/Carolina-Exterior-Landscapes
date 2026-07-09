@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu as MenuIcon,
+  Newspaper,
   Palette,
   PanelRight,
   SearchIcon,
@@ -45,7 +46,7 @@ interface NavGroup {
   items: NavItem[];
 }
 
-function buildNavGroups(
+export function buildNavGroups(
   user: AppUser | null,
   hasAdminPermission: (permission: AdminPermission) => boolean,
 ): NavGroup[] {
@@ -65,6 +66,7 @@ function buildNavGroups(
       items: [
         { title: "CMS Overview", href: "/admin/cms", icon: Globe, iconColor: "text-violet-600" },
         { title: "Pages", href: "/admin/cms/pages", icon: FileCode, iconColor: "text-violet-500" },
+        { title: "Blog", href: "/admin/cms/blog", icon: Newspaper, iconColor: "text-violet-500" },
         { title: "Forms", href: "/admin/forms", icon: SquarePen, iconColor: "text-violet-500" },
         { title: "Galleries", href: "/admin/cms/galleries", icon: Images, iconColor: "text-violet-400" },
         { title: "Media", href: "/admin/cms/media", icon: Image, iconColor: "text-violet-400" },

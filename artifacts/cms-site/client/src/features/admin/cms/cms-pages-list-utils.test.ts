@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CmsPage } from "@shared/schema";
-import { filterAndSortCmsPages, sortCmsPages } from "./cms-pages-list-utils";
+import { filterAndSortCmsBlogPosts, filterAndSortCmsPages, filterAndSortStandardCmsPages, getCmsBlogPostMetadata, sortCmsPages } from "./cms-pages-list-utils";
 
 function page(overrides: Partial<CmsPage>): CmsPage {
   return {
@@ -96,5 +96,51 @@ describe("CMS page list helpers", () => {
     expect(sortCmsPages(pages, "slug-desc").map((item) => item.slug)).toEqual(["beta", "alpha"]);
     expect(sortCmsPages(pages, "type-asc").map((item) => item.pageType)).toEqual(["custom", "service"]);
     expect(sortCmsPages(pages, "type-desc").map((item) => item.pageType)).toEqual(["service", "custom"]);
+  });
+
+  it("keeps blog posts out of the standard Pages list", () => {
+    const pages = [
+      page({ title: "About", slug: "about", pageType: "custom" }),
+      page({ title: "Blog Article", slug: "blog-article", pageType: "blog-post" }),
+      page({ title: "Blog Index", slug: "blog", pageType: "blog-index" }),
+    ];
+
+    expect(filterAndSortStandardCmsPages(pages, "", "title-asc").map((item) => item.slug)).toEqual(["about", "blog"]);
+  });
+
+  it("filters and searches only blog post records for the Blog library", () => {
+    const pages = [
+      page({ title: "About", slug: "about", pageType: "custom", content: { blocks: [{ text: "mulching" }] } }),
+      page({ title: "Mulching Guide", slug: "mulching-guide", pageType: "blog-post", content: { blocks: [{ text: "pine straw and mulch" }] } }),
+      page({ title: "Commercial Contract", slug: "commercial-contract", pageType: "blog-post", content: { blocks: [{ text: "property managers" }] } }),
+    ];
+
+    expect(filterAndSortCmsBlogPosts(pages, "", "title-asc").map((item) => item.slug)).toEqual(["commercial-contract", "mulching-guide"]);
+    expect(filterAndSortCmsBlogPosts(pages, "pine straw", "title-asc").map((item) => item.slug)).toEqual(["mulching-guide"]);
+  });
+
+  it("extracts blog metadata from landscape CMS content", () => {
+    const metadata = getCmsBlogPostMetadata(page({
+      pageType: "blog-post",
+      content: {
+        source: "carolina-landscape-v1",
+        landscape: {
+          kind: "blog",
+          data: {
+            category: "commercial",
+            date: "2026-07-09",
+            excerpt: "A short post summary.",
+            readMinutes: 7,
+          },
+        },
+      },
+    }));
+
+    expect(metadata).toEqual({
+      category: "commercial",
+      publishedDate: "2026-07-09",
+      excerpt: "A short post summary.",
+      readMinutes: 7,
+    });
   });
 });
