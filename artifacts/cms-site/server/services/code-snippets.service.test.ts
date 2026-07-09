@@ -5,6 +5,9 @@ vi.mock("../storage/index", () => ({
     settings: {
       getDecryptedCategory: vi.fn(),
     },
+    seoSettings: {
+      get: vi.fn(),
+    },
   },
 }));
 
@@ -34,5 +37,22 @@ describe("code snippets injection", () => {
     expect(result).toContain('<!--APP_DYNAMIC_HEAD-->\n<meta name="google-site-verification" content="abc" />');
     expect(result).toContain('<body>\n<noscript id="tag-manager"></noscript><div id="root"></div>');
     expect(result).toContain('<script src="https://example.com/widget.js"></script>\n</body>');
+  });
+
+  it("promotes Search Console verification meta tags from body-start snippets into the head", async () => {
+    const { storage } = await import("../storage/index");
+    const { getSiteCodeSnippets } = await import("./code-snippets.service");
+    vi.mocked(storage.settings.getDecryptedCategory).mockResolvedValue({
+      head_snippets: "",
+      header_snippets: '<meta name="google-site-verification" content="abc" />\n<noscript id="tag-manager"></noscript>',
+      footer_snippets: "",
+    });
+    vi.mocked(storage.seoSettings.get).mockResolvedValue(undefined);
+
+    const snippets = await getSiteCodeSnippets();
+
+    expect(snippets.head).toContain('name="google-site-verification"');
+    expect(snippets.header).not.toContain("google-site-verification");
+    expect(snippets.header).toContain('<noscript id="tag-manager"></noscript>');
   });
 });

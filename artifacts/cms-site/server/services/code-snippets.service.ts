@@ -13,12 +13,33 @@ const EMPTY_SNIPPETS: SiteCodeSnippets = {
   footer: "",
 };
 
+function joinSnippets(...snippets: Array<string | null | undefined>) {
+  return snippets.map((snippet) => snippet?.trim()).filter(Boolean).join("\n");
+}
+
+function extractHeadOnlyTagsFromBodyStart(snippet: string) {
+  const promoted: string[] = [];
+  const body = snippet.replace(/<meta\b[^>]*name=["']google-site-verification["'][^>]*\/?>/gi, (match) => {
+    promoted.push(match);
+    return "";
+  });
+
+  return {
+    head: promoted.join("\n"),
+    body: body.trim(),
+  };
+}
+
 export async function getSiteCodeSnippets(): Promise<SiteCodeSnippets> {
   try {
-    const settings = await storage.settings.getDecryptedCategory("code_snippets");
+    const [settings, seoSettings] = await Promise.all([
+      storage.settings.getDecryptedCategory("code_snippets"),
+      storage.seoSettings.get().catch(() => undefined),
+    ]);
+    const bodyStart = extractHeadOnlyTagsFromBodyStart(settings.header_snippets || "");
     return {
-      head: settings.head_snippets || "",
-      header: settings.header_snippets || "",
+      head: joinSnippets(settings.head_snippets, seoSettings?.customHeadTags, bodyStart.head),
+      header: bodyStart.body,
       footer: settings.footer_snippets || "",
     };
   } catch (err) {

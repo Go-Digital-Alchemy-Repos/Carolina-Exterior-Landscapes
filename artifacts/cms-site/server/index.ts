@@ -227,6 +227,9 @@ app.use((req, res, next) => {
     const { db } = await import("./db");
     const { sql } = await import("drizzle-orm");
     await db.execute(sql`ALTER TABLE IF EXISTS "cms_media" ADD COLUMN IF NOT EXISTS "variants" jsonb`);
+    await db.execute(sql`ALTER TABLE IF EXISTS "seo_settings" ADD COLUMN IF NOT EXISTS "custom_head_tags" text`);
+    await db.execute(sql`ALTER TABLE IF EXISTS "seo_settings" ADD COLUMN IF NOT EXISTS "custom_body_start_tags" text`);
+    await db.execute(sql`ALTER TABLE IF EXISTS "seo_settings" ADD COLUMN IF NOT EXISTS "custom_body_end_tags" text`);
   }
 
   const { runSystemBootstrap } = await import("./services/system-bootstrap.service");

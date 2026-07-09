@@ -75,6 +75,7 @@ const seoFormSchema = z.object({
     .or(z.literal(""))
     .nullable(),
   defaultRobotsNoindex: z.boolean().default(false),
+  customHeadTags: z.string().max(20000, "Header tags are too long").optional().nullable(),
 });
 
 type SeoFormValues = z.infer<typeof seoFormSchema>;
@@ -156,6 +157,7 @@ export default function CmsSeoPage() {
       linkedinUrl: "",
       instagramUrl: "",
       defaultRobotsNoindex: false,
+      customHeadTags: "",
     },
   });
 
@@ -174,6 +176,7 @@ export default function CmsSeoPage() {
         linkedinUrl: settings.linkedinUrl ?? "",
         instagramUrl: settings.instagramUrl ?? "",
         defaultRobotsNoindex: settings.defaultRobotsNoindex ?? false,
+        customHeadTags: settings.customHeadTags ?? "",
       });
     }
   }, [settings, form]);
@@ -555,6 +558,41 @@ export default function CmsSeoPage() {
                           )}
                         />
                       </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-2">
+                        <Code2 className="h-4 w-4 text-violet-500" />
+                        <CardTitle className="text-base">Header Tags</CardTitle>
+                      </div>
+                      <CardDescription className="text-xs">
+                        Custom verification, analytics, and third-party tags injected inside the public document head.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <FormField
+                        control={form.control}
+                        name="customHeadTags"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                value={field.value ?? ""}
+                                placeholder='<meta name="google-site-verification" content="..." />'
+                                className="min-h-40 font-mono text-xs"
+                                data-testid="textarea-header-tags"
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              These tags are placed before the closing head tag on public pages.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </CardContent>
                   </Card>
 

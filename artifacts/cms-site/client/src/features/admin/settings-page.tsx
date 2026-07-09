@@ -320,7 +320,7 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="header-snippets">Header Tags</Label>
+                    <Label htmlFor="header-snippets">Body Start Tags</Label>
                     <Textarea
                       id="header-snippets"
                       name="headerSnippets"
@@ -330,7 +330,7 @@ export default function AdminSettingsPage() {
                       placeholder="<!-- Tag manager noscript or body-start snippet -->"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Injected immediately after the opening body tag on public pages.
+                      Injected immediately after the opening body tag on public pages. Search Console meta tags belong in Head Tags.
                     </p>
                   </div>
 
