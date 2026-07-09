@@ -210,7 +210,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Mobile Nav Overlay */}
-        {mobileMenuOpen ? <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Site navigation" className="fixed inset-0 bg-background/98 backdrop-blur-xl z-40 pt-28 px-6 overflow-y-auto">
+        {mobileMenuOpen ? <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Site navigation" className="fixed inset-0 bg-background z-40 pt-28 px-6 overflow-y-auto">
           <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
             <Link href="/gallery" className="hover:text-primary transition-colors">Gallery</Link>
