@@ -31,7 +31,9 @@ describe("AdminSettingsPage", () => {
   it("renders Google Reviews API integration settings", () => {
     const html = renderSettingsPage();
 
-    expect(html).toContain("General");
+    expect(html).toContain("Email Delivery");
+    expect(html).toContain("Integrations");
+    expect(html).toContain("Email Templates");
     expect(html).toContain("Google Reviews API");
     expect(html).toContain("Google Place ID");
     expect(html).toContain("Google Places API Key");

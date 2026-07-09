@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, Loader2 } from "lucide-react";
+import type { EmailTemplate } from "@shared/schema";
 
 type SettingsResponse = Record<string, Record<string, { value: string; isSecret: boolean }>>;
 const SECRET_FIELD_MASK = "********";
@@ -99,6 +100,7 @@ export default function AdminSettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings = {} } = useQuery<SettingsResponse>({ queryKey: ["/api/admin/settings"] });
+  const { data: templates = [] } = useQuery<EmailTemplate[]>({ queryKey: ["/api/admin/email-templates"] });
 
   const saveSetting = useMutation({
     mutationFn: async (payload: { category: string; key: string; value: string; isSecret?: boolean }) => {
@@ -114,6 +116,28 @@ export default function AdminSettingsPage() {
         queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/test-connection", "google_reviews"] });
       }
       toast({ title: "Setting saved" });
+    },
+  });
+
+  const updateTemplate = useMutation({
+    mutationFn: async (payload: { slug: string; subject: string; htmlBody: string; isActive: boolean }) => {
+      const res = await apiRequest("PUT", `/api/admin/email-templates/${payload.slug}`, payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      toast({ title: "Template saved" });
+    },
+  });
+
+  const restoreTemplates = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/email-templates/restore");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      toast({ title: "System templates restored" });
     },
   });
 
@@ -215,243 +239,306 @@ export default function AdminSettingsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Generic backend configuration for email, analytics, and integrations.</p>
         </div>
 
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs defaultValue="email-delivery" className="space-y-6">
           <TabsList className="flex h-auto flex-wrap gap-1">
-            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="email-delivery">Email Delivery</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
+            <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
             <TabsTrigger value="code-snippets">Code Snippets</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="mt-0 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Email Delivery</CardTitle>
-            <CardDescription>Configure Mailgun delivery for admin notifications and password resets.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <SetupInstructions
-              title="How to configure Mailgun"
-              links={[
-                { label: "Mailgun Domains", href: "https://app.mailgun.com/app/sending/domains" },
-                { label: "Mailgun API Keys", href: "https://app.mailgun.com/app/account/security/api_keys" },
-              ]}
-            >
-              Use a verified sending domain from Mailgun for the domain field. The from address should use that
-              verified domain, such as <span className="font-medium text-foreground">noreply@mg.example.com</span>.
-              Create or copy a sending API key from Mailgun and paste it into the API key field.
-            </SetupInstructions>
-            <div className="space-y-2">
-              <Label htmlFor="mailgun-domain">Mailgun Domain</Label>
-              <Input
-                id="mailgun-domain"
-                defaultValue={mailgun.mailgun_domain?.value ?? ""}
-                onBlur={(event) => saveSetting.mutate({ category: "mailgun", key: "mailgun_domain", value: event.currentTarget.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mailgun-from">From Address</Label>
-              <Input
-                id="mailgun-from"
-                defaultValue={mailgun.mailgun_from_address?.value ?? ""}
-                onBlur={(event) => saveSetting.mutate({ category: "mailgun", key: "mailgun_from_address", value: event.currentTarget.value })}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="mailgun-key">Mailgun API Key</Label>
-              <Input
-                id="mailgun-key"
-                type="password"
-                defaultValue={mailgun.mailgun_api_key?.value ? SECRET_FIELD_MASK : ""}
-                placeholder={mailgun.mailgun_api_key?.value ? SECRET_FIELD_MASK : ""}
-                onFocus={(event) => {
-                  if (mailgun.mailgun_api_key?.value && event.currentTarget.value === SECRET_FIELD_MASK) {
-                    event.currentTarget.value = "";
-                  }
-                }}
-                onBlur={(event) => {
-                  const value = event.currentTarget.value;
-                  if (value && value !== SECRET_FIELD_MASK && value !== mailgun.mailgun_api_key?.value) {
-                    saveSetting.mutate({ category: "mailgun", key: "mailgun_api_key", value: event.currentTarget.value, isSecret: true });
-                    event.currentTarget.value = "";
-                  } else if (!value && mailgun.mailgun_api_key?.value) {
-                    event.currentTarget.value = SECRET_FIELD_MASK;
-                  }
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Analytics</CardTitle>
-            <CardDescription>Optional public runtime analytics setting.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <SetupInstructions
-              title="How to configure GA4"
-              links={[
-                { label: "Google Analytics Admin", href: "https://analytics.google.com/analytics/web/#/admin" },
-                { label: "Find a Measurement ID", href: "https://support.google.com/analytics/answer/12270356" },
-              ]}
-            >
-              In Google Analytics, open Admin, choose the property for this website, then open Data Streams and select
-              the web stream. Copy the Measurement ID that starts with{" "}
-              <span className="font-medium text-foreground">G-</span> and paste it here.
-            </SetupInstructions>
-            <div className="space-y-2">
-              <Label htmlFor="ga4">GA4 Measurement ID</Label>
-              <Input
-                id="ga4"
-                defaultValue={analytics.ga4_measurement_id?.value ?? ""}
-                onBlur={(event) => saveSetting.mutate({ category: "google_analytics", key: "ga4_measurement_id", value: event.currentTarget.value })}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Integrations</CardTitle>
-            <CardDescription>Configure third-party services used by dynamic website blocks.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-md border p-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <h2 className="font-medium">Google Reviews API</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Store Google Places credentials for pulling review data into review widgets.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                  <IntegrationStatusBadge
-                    status={googleReviewsConnectionStatus}
-                    message={googleReviewsConnectionMessage}
-                  />
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="google-reviews-enabled" className="text-sm">Enabled</Label>
-                    <Switch
-                      id="google-reviews-enabled"
-                      defaultChecked={googleReviews.google_reviews_enabled?.value === "true"}
-                      onCheckedChange={(checked) =>
-                        saveSetting.mutate({
-                          category: "google_reviews",
-                          key: "google_reviews_enabled",
-                          value: checked ? "true" : "false",
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4">
+          <TabsContent value="email-delivery" className="mt-0 space-y-6" forceMount>
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Delivery</CardTitle>
+                <CardDescription>Configure Mailgun delivery for admin notifications and password resets.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
                 <SetupInstructions
-                  title="How to configure Google Reviews"
+                  title="How to configure Mailgun"
                   links={[
-                    { label: "Google Cloud API Credentials", href: "https://console.cloud.google.com/apis/credentials" },
-                    { label: "Enable Places API", href: "https://console.cloud.google.com/apis/library/places-backend.googleapis.com" },
-                    { label: "Find a Place ID", href: "https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" },
+                    { label: "Mailgun Domains", href: "https://app.mailgun.com/app/sending/domains" },
+                    { label: "Mailgun API Keys", href: "https://app.mailgun.com/app/account/security/api_keys" },
                   ]}
                 >
-                  In Google Cloud, enable the Places API for the project and create an API key under APIs & Services.
-                  Restrict the key to the Places API when possible. Use Google&apos;s Place ID Finder to search for the
-                  business listing, then copy the Place ID that starts with{" "}
-                  <span className="font-medium text-foreground">ChIJ</span>.
+                  Use a verified sending domain from Mailgun for the domain field. The from address should use that
+                  verified domain, such as <span className="font-medium text-foreground">noreply@mg.example.com</span>.
+                  Create or copy a sending API key from Mailgun and paste it into the API key field.
                 </SetupInstructions>
-              </div>
-
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="google-reviews-place-id">Google Place ID</Label>
+                  <Label htmlFor="mailgun-domain">Mailgun Domain</Label>
                   <Input
-                    id="google-reviews-place-id"
-                    defaultValue={googleReviews.google_reviews_place_id?.value ?? ""}
-                    placeholder="ChIJ..."
-                    onBlur={(event) =>
-                      saveSetting.mutate({
-                        category: "google_reviews",
-                        key: "google_reviews_place_id",
-                        value: event.currentTarget.value,
-                      })
-                    }
+                    id="mailgun-domain"
+                    defaultValue={mailgun.mailgun_domain?.value ?? ""}
+                    onBlur={(event) => saveSetting.mutate({ category: "mailgun", key: "mailgun_domain", value: event.currentTarget.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="google-reviews-api-key">Google Places API Key</Label>
+                  <Label htmlFor="mailgun-from">From Address</Label>
                   <Input
-                    id="google-reviews-api-key"
+                    id="mailgun-from"
+                    defaultValue={mailgun.mailgun_from_address?.value ?? ""}
+                    onBlur={(event) => saveSetting.mutate({ category: "mailgun", key: "mailgun_from_address", value: event.currentTarget.value })}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="mailgun-key">Mailgun API Key</Label>
+                  <Input
+                    id="mailgun-key"
                     type="password"
-                    defaultValue=""
-                    placeholder={googleReviews.google_reviews_api_key?.value ? "Stored secret" : ""}
-                    onBlur={(event) => {
-                      if (event.currentTarget.value) {
-                        saveSetting.mutate({
-                          category: "google_reviews",
-                          key: "google_reviews_api_key",
-                          value: event.currentTarget.value,
-                          isSecret: true,
-                        });
+                    defaultValue={mailgun.mailgun_api_key?.value ? SECRET_FIELD_MASK : ""}
+                    placeholder={mailgun.mailgun_api_key?.value ? SECRET_FIELD_MASK : ""}
+                    onFocus={(event) => {
+                      if (mailgun.mailgun_api_key?.value && event.currentTarget.value === SECRET_FIELD_MASK) {
                         event.currentTarget.value = "";
+                      }
+                    }}
+                    onBlur={(event) => {
+                      const value = event.currentTarget.value;
+                      if (value && value !== SECRET_FIELD_MASK && value !== mailgun.mailgun_api_key?.value) {
+                        saveSetting.mutate({ category: "mailgun", key: "mailgun_api_key", value, isSecret: true });
+                        event.currentTarget.value = "";
+                      } else if (!value && mailgun.mailgun_api_key?.value) {
+                        event.currentTarget.value = SECRET_FIELD_MASK;
                       }
                     }}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="google-reviews-language-code">Review Language</Label>
-                  <Input
-                    id="google-reviews-language-code"
-                    defaultValue={googleReviews.google_reviews_language_code?.value ?? "en"}
-                    placeholder="en"
-                    onBlur={(event) =>
-                      saveSetting.mutate({
-                        category: "google_reviews",
-                        key: "google_reviews_language_code",
-                        value: event.currentTarget.value || "en",
-                      })
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">Use a Google language code such as en or es.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="google-reviews-cache-minutes">Cache Duration (minutes)</Label>
-                  <Input
-                    id="google-reviews-cache-minutes"
-                    type="number"
-                    min={5}
-                    max={1440}
-                    defaultValue={googleReviews.google_reviews_cache_minutes?.value ?? "60"}
-                    onBlur={(event) =>
-                      saveSetting.mutate({
-                        category: "google_reviews",
-                        key: "google_reviews_cache_minutes",
-                        value: event.currentTarget.value || "60",
-                      })
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">Controls how often the public carousel refreshes from Google.</p>
-                </div>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => testIntegration.mutate("google_reviews")}
-                  disabled={testIntegration.isPending}
-                >
-                  {testIntegration.isPending ? "Testing..." : "Test Google Reviews"}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  The public section only displays reviews returned by Google with a 5-star rating.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="code-snippets" className="mt-0" forceMount>
+          <TabsContent value="integrations" className="mt-0 space-y-6" forceMount>
+            <Card>
+              <CardHeader>
+                <CardTitle>Analytics</CardTitle>
+                <CardDescription>Optional public runtime analytics setting.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <SetupInstructions
+                  title="How to configure GA4"
+                  links={[
+                    { label: "Google Analytics Admin", href: "https://analytics.google.com/analytics/web/#/admin" },
+                    { label: "Find a Measurement ID", href: "https://support.google.com/analytics/answer/12270356" },
+                  ]}
+                >
+                  In Google Analytics, open Admin, choose the property for this website, then open Data Streams and select
+                  the web stream. Copy the Measurement ID that starts with{" "}
+                  <span className="font-medium text-foreground">G-</span> and paste it here.
+                </SetupInstructions>
+                <div className="space-y-2">
+                  <Label htmlFor="ga4">GA4 Measurement ID</Label>
+                  <Input
+                    id="ga4"
+                    defaultValue={analytics.ga4_measurement_id?.value ?? ""}
+                    onBlur={(event) => saveSetting.mutate({ category: "google_analytics", key: "ga4_measurement_id", value: event.currentTarget.value })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Integrations</CardTitle>
+                <CardDescription>Configure third-party services used by dynamic website blocks.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="rounded-md border p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <h2 className="font-medium">Google Reviews API</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Store Google Places credentials for pulling review data into review widgets.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                      <IntegrationStatusBadge
+                        status={googleReviewsConnectionStatus}
+                        message={googleReviewsConnectionMessage}
+                      />
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="google-reviews-enabled" className="text-sm">Enabled</Label>
+                        <Switch
+                          id="google-reviews-enabled"
+                          defaultChecked={googleReviews.google_reviews_enabled?.value === "true"}
+                          onCheckedChange={(checked) =>
+                            saveSetting.mutate({
+                              category: "google_reviews",
+                              key: "google_reviews_enabled",
+                              value: checked ? "true" : "false",
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <SetupInstructions
+                      title="How to configure Google Reviews"
+                      links={[
+                        { label: "Google Cloud API Credentials", href: "https://console.cloud.google.com/apis/credentials" },
+                        { label: "Enable Places API", href: "https://console.cloud.google.com/apis/library/places-backend.googleapis.com" },
+                        { label: "Find a Place ID", href: "https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" },
+                      ]}
+                    >
+                      In Google Cloud, enable the Places API for the project and create an API key under APIs & Services.
+                      Restrict the key to the Places API when possible. Use Google&apos;s Place ID Finder to search for the
+                      business listing, then copy the Place ID that starts with{" "}
+                      <span className="font-medium text-foreground">ChIJ</span>.
+                    </SetupInstructions>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="google-reviews-place-id">Google Place ID</Label>
+                      <Input
+                        id="google-reviews-place-id"
+                        defaultValue={googleReviews.google_reviews_place_id?.value ?? ""}
+                        placeholder="ChIJ..."
+                        onBlur={(event) =>
+                          saveSetting.mutate({
+                            category: "google_reviews",
+                            key: "google_reviews_place_id",
+                            value: event.currentTarget.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="google-reviews-api-key">Google Places API Key</Label>
+                      <Input
+                        id="google-reviews-api-key"
+                        type="password"
+                        defaultValue={googleReviews.google_reviews_api_key?.value ? SECRET_FIELD_MASK : ""}
+                        placeholder={googleReviews.google_reviews_api_key?.value ? SECRET_FIELD_MASK : ""}
+                        onFocus={(event) => {
+                          if (googleReviews.google_reviews_api_key?.value && event.currentTarget.value === SECRET_FIELD_MASK) {
+                            event.currentTarget.value = "";
+                          }
+                        }}
+                        onBlur={(event) => {
+                          const value = event.currentTarget.value;
+                          if (value && value !== SECRET_FIELD_MASK && value !== googleReviews.google_reviews_api_key?.value) {
+                            saveSetting.mutate({
+                              category: "google_reviews",
+                              key: "google_reviews_api_key",
+                              value,
+                              isSecret: true,
+                            });
+                            event.currentTarget.value = "";
+                          } else if (!value && googleReviews.google_reviews_api_key?.value) {
+                            event.currentTarget.value = SECRET_FIELD_MASK;
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="google-reviews-language-code">Review Language</Label>
+                      <Input
+                        id="google-reviews-language-code"
+                        defaultValue={googleReviews.google_reviews_language_code?.value ?? "en"}
+                        placeholder="en"
+                        onBlur={(event) =>
+                          saveSetting.mutate({
+                            category: "google_reviews",
+                            key: "google_reviews_language_code",
+                            value: event.currentTarget.value || "en",
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">Use a Google language code such as en or es.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="google-reviews-cache-minutes">Cache Duration (minutes)</Label>
+                      <Input
+                        id="google-reviews-cache-minutes"
+                        type="number"
+                        min={5}
+                        max={1440}
+                        defaultValue={googleReviews.google_reviews_cache_minutes?.value ?? "60"}
+                        onBlur={(event) =>
+                          saveSetting.mutate({
+                            category: "google_reviews",
+                            key: "google_reviews_cache_minutes",
+                            value: event.currentTarget.value || "60",
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">Controls how often the public carousel refreshes from Google.</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => testIntegration.mutate("google_reviews")}
+                      disabled={testIntegration.isPending}
+                    >
+                      {testIntegration.isPending ? "Testing..." : "Test Google Reviews"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      The public section only displays reviews returned by Google with a 5-star rating.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="email-templates" className="mt-0 space-y-6" forceMount>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Email Templates</CardTitle>
+                  <CardDescription>Password reset, welcome, and form notification templates.</CardDescription>
+                </div>
+                <Button variant="outline" onClick={() => restoreTemplates.mutate()} disabled={restoreTemplates.isPending}>
+                  Restore Defaults
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {templates.map((template) => (
+                  <form
+                    key={template.slug}
+                    className="space-y-3 rounded-md border p-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const formData = new FormData(event.currentTarget);
+                      updateTemplate.mutate({
+                        slug: template.slug,
+                        subject: String(formData.get("subject") ?? ""),
+                        htmlBody: String(formData.get("htmlBody") ?? ""),
+                        isActive: formData.get("isActive") === "on",
+                      });
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h2 className="font-medium">{template.name}</h2>
+                        <p className="text-xs text-muted-foreground">{template.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`${template.slug}-active`} className="text-xs">Active</Label>
+                        <Switch id={`${template.slug}-active`} name="isActive" defaultChecked={template.isActive} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${template.slug}-subject`}>Subject</Label>
+                      <Input id={`${template.slug}-subject`} name="subject" defaultValue={template.subject} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${template.slug}-body`}>HTML Body</Label>
+                      <Textarea id={`${template.slug}-body`} name="htmlBody" defaultValue={template.htmlBody} className="min-h-32 font-mono text-xs" />
+                    </div>
+                    <Button type="submit" disabled={updateTemplate.isPending}>Save Template</Button>
+                  </form>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="code-snippets" className="mt-0 space-y-6" forceMount>
             <Card>
               <CardHeader>
                 <CardTitle>Code Snippets</CardTitle>
