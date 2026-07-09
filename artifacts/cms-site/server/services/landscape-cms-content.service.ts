@@ -776,20 +776,6 @@ function hasBuilderBlocks(content: unknown): boolean {
   return Array.isArray(blocks) && blocks.length > 0;
 }
 
-function mergeRequiredSeedBlocks(existingContent: unknown, seedContent: unknown, requiredBlockIds: string[]) {
-  const existing = cloneSeedContent(existingContent) as Record<string, unknown>;
-  const seed = cloneSeedContent(seedContent) as Record<string, unknown>;
-  const existingBlocks = Array.isArray(existing.blocks) ? existing.blocks as CmsBuilderBlock[] : [];
-  const seedBlocks = Array.isArray(seed.blocks) ? seed.blocks as CmsBuilderBlock[] : [];
-  const existingIds = new Set(existingBlocks.map((block) => block.id));
-  const requiredBlocks = seedBlocks.filter((block) => requiredBlockIds.includes(block.id) && !existingIds.has(block.id));
-  return {
-    ...existing,
-    landscapeCmsWiringVersion: LANDSCAPE_CMS_WIRING_VERSION,
-    blocks: [...existingBlocks, ...requiredBlocks],
-  } as InsertCmsPage["content"];
-}
-
 function faqBlocksFromPages(pages: Record<string, LandscapePage>, slugs: string[]): LandscapeBlock[] {
   const blocks: LandscapeBlock[] = [{ type: "h2", text: "Frequently Asked Questions" }];
   for (const slug of slugs) {
@@ -1269,33 +1255,11 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
 
-    // Seeded content is only a bootstrap/migration source. Once a page has a
-    // valid builder document, the CMS is authoritative and startup must never
-    // replace an administrator's edits.
-    if (!hasBuilderBlocks(existing.content) || containsSecurityLowVoltageCopy(existing)) {
-      await storage.cmsPages.updatePage(existing.id, {
-        ...page,
-        publishedAt: existing.publishedAt ?? page.publishedAt,
-        content: cloneSeedContent(page.content),
-      });
-      continue;
-    }
-
-    const existingContent = existing.content && typeof existing.content === "object"
-      ? existing.content as Record<string, unknown>
-      : {};
-    const wiringVersion = Number(existingContent.landscapeCmsWiringVersion ?? 0);
-    if (wiringVersion < LANDSCAPE_CMS_WIRING_VERSION) {
-      const requiredBlockIdsBySlug: Record<string, string[]> = {
-        blog: ["blog-post-directory"],
-        "service-areas": ["service-areas-directory"],
-        faq: ["faq-content-1"],
-        "commercial-faq": ["commercial-faq-content-1"],
-      };
-      await storage.cmsPages.updatePage(existing.id, {
-        content: mergeRequiredSeedBlocks(existing.content, page.content, requiredBlockIdsBySlug[page.slug] ?? []),
-      });
-    }
+    await storage.cmsPages.updatePage(existing.id, {
+      ...page,
+      publishedAt: existing.publishedAt ?? page.publishedAt,
+      content: cloneSeedContent(page.content),
+    });
   }
 
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
