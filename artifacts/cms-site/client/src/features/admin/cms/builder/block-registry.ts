@@ -560,11 +560,15 @@ export const ALL_BLOCKS: BlockDef[] = [
     description: "Question and answer list",
     category: "content",
     defaultProps: {
+      title: "Frequently Asked Questions",
+      subtext: "",
       items: [
         { question: "Question?", answer: "Answer." },
       ],
     },
     propDefs: [
+      { key: "title", label: "Title", type: "text" },
+      { key: "subtext", label: "Subtext", type: "richtext" },
       {
         key: "items",
         label: "Items",

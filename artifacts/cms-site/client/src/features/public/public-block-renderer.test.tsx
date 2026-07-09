@@ -720,6 +720,36 @@ describe("PublicBlockRenderer hero", () => {
     expect(link?.textContent).toContain("Read Reviews on Google");
   });
 
+  it("renders FAQ title, rich subtext, and rich answers", async () => {
+    await act(async () => {
+      root!.render(
+        React.createElement(PublicBlockRenderer, {
+          block: {
+            id: "faq-rich",
+            type: "faq",
+            props: {
+              title: "Commercial FAQs",
+              subtext: "<p>Answers for <strong>property managers</strong>.</p>",
+              items: [
+                {
+                  question: "Are you insured?",
+                  answer: "<p>Yes. We carry <strong>commercial liability</strong> coverage.</p><script>alert('x')</script>",
+                },
+              ],
+            },
+          },
+        }),
+      );
+    });
+
+    const block = container.querySelector('[data-testid="block-faq"]') as HTMLElement | null;
+    expect(block?.textContent).toContain("Commercial FAQs");
+    expect(block?.textContent).toContain("Answers for property managers.");
+    expect(block?.textContent).toContain("Yes. We carry commercial liability coverage.");
+    expect(block?.querySelector("strong")?.textContent).toBe("property managers");
+    expect(block?.querySelector("script")).toBeNull();
+  });
+
   it("renders a single homepage testimonial with an internal same-window CTA", async () => {
     await act(async () => {
       root!.render(

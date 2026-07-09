@@ -1501,16 +1501,33 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
   }
 
   if (block.type === "faq") {
+    const title = str(props.title);
+    const subtext = str(props.subtext);
+
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-faq">
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+          {title || subtext ? (
+            <div className="mb-8 text-center">
+              {title ? <h2 className="text-3xl font-semibold tracking-normal text-[#2C2C2C] md:text-4xl">{title}</h2> : null}
+              {subtext ? (
+                <div
+                  className="cms-rich-text mx-auto mt-3 max-w-2xl text-base leading-[1.7] text-[#2C2C2C]/75"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(subtext) }}
+                />
+              ) : null}
+            </div>
+          ) : null}
           {items(props.items).map((item, index) => (
             <details key={index} className="group border-b py-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-medium text-[#2C2C2C]">
                 <span>{str(item.question, "Question?")}</span>
                 <ChevronDown className="h-5 w-5 shrink-0 text-primary transition-transform group-open:rotate-180" aria-hidden="true" />
               </summary>
-              <p className="mt-3 text-base leading-[1.6] text-[#2C2C2C]/80">{str(item.answer, "Answer.")}</p>
+              <div
+                className="cms-rich-text mt-3 text-base leading-[1.6] text-[#2C2C2C]/80"
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(str(item.answer, "Answer.")) }}
+              />
             </details>
           ))}
         </div>

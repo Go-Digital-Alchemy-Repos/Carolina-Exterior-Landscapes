@@ -125,6 +125,22 @@ describe("ResilientBlockEditor", () => {
     );
   });
 
+  it("exposes FAQ title and rich subtext controls", () => {
+    const faqDef = ALL_BLOCKS.find((blockDef) => blockDef.type === "faq");
+    expect(faqDef?.defaultProps).toEqual(
+      expect.objectContaining({
+        title: "Frequently Asked Questions",
+        subtext: "",
+      }),
+    );
+    expect(faqDef?.propDefs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "title", label: "Title", type: "text" }),
+        expect.objectContaining({ key: "subtext", label: "Subtext", type: "richtext" }),
+      ]),
+    );
+  });
+
   it("edits hero subheading as rich text", async () => {
     const client = new QueryClient({
       defaultOptions: {
