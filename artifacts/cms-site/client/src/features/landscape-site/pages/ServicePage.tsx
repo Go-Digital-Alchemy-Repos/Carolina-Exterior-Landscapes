@@ -10,6 +10,7 @@ import { getServiceImages } from "@/features/landscape-site/lib/serviceImages";
 import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
 
 import heroHome from "@/features/landscape-site/assets/hero-home.webp";
 import heroCommercial from "@/features/landscape-site/assets/hero-commercial.webp";
@@ -100,24 +101,21 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Breadcrumbs */}
-      <div className="hidden border-b border-border bg-background md:block">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-2">
-          <Link href={isCommercial ? "/commercial" : "/"} className="text-primary hover:text-foreground transition-colors text-sm font-bold tracking-wide uppercase">
-            {isCommercial ? "Commercial Services" : "Residential Services"}
-          </Link>
-          <span className="text-muted-foreground text-sm">/</span>
-          <span className="text-muted-foreground text-sm font-bold tracking-wide uppercase">{page.h1}</span>
-        </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       {/* Main Content */}
       <div className="relative surface-stone bg-paper overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
-        <div className="max-w-7xl mx-auto px-4 pb-24 pt-14 md:pt-10 lg:pt-12 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
+        <nav aria-label="Breadcrumb" className="relative z-10 hidden max-w-7xl mx-auto px-4 pt-10 md:flex items-center gap-2 text-sm">
+          <Link href={isCommercial ? "/commercial" : "/"} className="text-primary hover:text-foreground transition-colors font-semibold">
+            {isCommercial ? "Commercial Services" : "Residential Services"}
+          </Link>
+          <span className="text-muted-foreground" aria-hidden="true">/</span>
+          <span className="text-muted-foreground font-semibold" aria-current="page">{page.h1}</span>
+        </nav>
+        <div className="max-w-7xl mx-auto px-4 pb-24 pt-14 md:pt-8 lg:pt-10 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
           <BlockRenderer blocks={page.blocks} serviceImages={getServiceImages(slug || "")} />
         </div>
@@ -180,10 +178,9 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       </div>
 
       {/* Bottom CTA */}
-      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--primary))" />
-      <div className="relative bg-primary text-primary-foreground py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-contours opacity-40 pointer-events-none"></div>
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--brand-forest))" />
+      <div className="relative bg-[hsl(var(--brand-forest))] text-white py-24 overflow-hidden">
+        <CtaBackdrop imageUrl={isCommercial ? galleryCom : galleryRes} />
         <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-16 top-1/2 -translate-y-1/2 h-72 w-auto text-white/10" />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-extrabold mb-6 tracking-tight">Ready to get started?</h2>

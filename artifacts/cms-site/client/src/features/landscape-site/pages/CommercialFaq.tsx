@@ -3,6 +3,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { BRAND } from "@/features/landscape-site/content/site";
 import { extractFaqs } from "./Faq";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 
 export default function CommercialFaq() {
   const slugs = [
@@ -17,7 +18,7 @@ export default function CommercialFaq() {
   const faqs = extractFaqs(slugs);
 
   return (
-    <div className="w-full bg-background min-h-screen pb-24">
+    <div className="w-full surface-stone bg-topo min-h-screen pb-24">
       <Seo 
         title={`Commercial & HOA FAQ | ${BRAND.name}`} 
         description={`Frequently asked questions about our commercial landscaping, HOA grounds maintenance, and site work services.`} 
@@ -33,6 +34,7 @@ export default function CommercialFaq() {
             Answers to common questions about our commercial and HOA services.
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       <div className="max-w-3xl mx-auto px-4">

@@ -7,6 +7,7 @@ import { CheckCircle2, ArrowRight, Phone } from "lucide-react";
 import { Link } from "wouter";
 import { CityLinkProvider, LinkedText, resolveCitySlug } from "@/features/landscape-site/lib/cityLinks";
 import { BRAND } from "@/features/landscape-site/content/site";
+import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
 
 type Item = { title: string; text: string };
 
@@ -314,13 +315,15 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
         if (group.type === 'cta') {
           return (
             <div key={idx} className="my-16 max-w-4xl mx-auto">
-              <div className="bg-card border border-border/60 rounded-3xl shadow-sm p-8 md:p-12 text-center">
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-foreground tracking-tight">{group.title}</h2>
+              <div className="relative overflow-hidden bg-[hsl(var(--brand-forest))] border border-white/15 rounded-3xl shadow-natural-lg p-8 md:p-12 text-center text-white">
+                <CtaBackdrop />
+                <div className="relative z-10">
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-white tracking-tight">{group.title}</h2>
                 <div className="max-w-3xl mx-auto mb-8 space-y-4">
                   {group.blocks
                     .filter((b) => b.type === 'p')
                     .map((b, bIdx) => (
-                      <p key={bIdx} className="text-muted-foreground font-medium leading-relaxed text-lg">
+                      <p key={bIdx} className="text-white/80 font-medium leading-relaxed text-lg">
                         <LinkedText text={b.text} />
                       </p>
                     ))}
@@ -332,12 +335,13 @@ export function BlockRenderer({ blocks, className, excludeSlug, serviceImages }:
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg" className="font-bold h-14 rounded-full px-8 bg-background">
+                  <Button asChild variant="outline" size="lg" className="font-bold h-14 rounded-full px-8 bg-transparent border-white/50 text-white hover:bg-white hover:text-[hsl(var(--brand-forest))]">
                     <a href={`tel:${BRAND.phoneTel}`}>
-                      <Phone className="mr-2 h-4 w-4 text-primary" />
+                      <Phone className="mr-2 h-4 w-4" />
                       {BRAND.phoneDisplay}
                     </a>
                   </Button>
+                </div>
                 </div>
               </div>
             </div>

@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -73,7 +74,7 @@ export default function GetAQuote() {
   if (!page) return null;
 
   return (
-    <div className="w-full bg-background min-h-screen pb-24">
+    <div className="w-full surface-stone bg-topo min-h-screen pb-24">
       <Seo title={page.titleTag} description={page.metaDescription} />
       
       <div className="bg-foreground py-20 px-4 text-center relative overflow-hidden">
@@ -86,6 +87,7 @@ export default function GetAQuote() {
             {page.blocks.find(b => b.type === 'p')?.text || "Request a free estimate."}
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       <div className="max-w-3xl mx-auto px-4 -mt-10">

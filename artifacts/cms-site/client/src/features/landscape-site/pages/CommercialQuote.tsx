@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 
 const formSchema = z.object({
   contactName: z.string().min(1, "Contact name is required"),
@@ -76,7 +77,7 @@ export default function CommercialQuote() {
   if (!page) return null;
 
   return (
-    <div className="w-full bg-background min-h-screen pb-24">
+    <div className="w-full surface-stone bg-topo min-h-screen pb-24">
       <Seo title={page.titleTag} description={page.metaDescription} />
       
       <div className="bg-foreground py-20 px-4 text-center relative overflow-hidden">
@@ -89,6 +90,7 @@ export default function CommercialQuote() {
             {page.blocks.find(b => b.type === 'p')?.text || "Request a commercial proposal."}
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       <div className="max-w-3xl mx-auto px-4 -mt-10">

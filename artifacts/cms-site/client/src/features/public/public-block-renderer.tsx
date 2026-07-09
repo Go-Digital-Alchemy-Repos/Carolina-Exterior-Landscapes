@@ -16,6 +16,9 @@ import { useBranding } from "@/components/shared/branding-provider";
 import { GalleryRenderer } from "@/components/shared/gallery-renderer";
 import { LazyPublicFormRenderer } from "@/components/forms/lazy-public-form-renderer";
 import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
+import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
+import { ServiceAreaMap } from "@/features/landscape-site/components/ServiceAreaMap";
 import type { BlockInstance } from "@/features/admin/cms/builder/block-registry";
 import {
   Accessibility,
@@ -823,6 +826,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             ) : null}
           </div>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </section>
     );
   }
@@ -1454,6 +1458,21 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     );
   }
 
+  if (block.type === "service-area-map") {
+    const mapHeight = positivePixelValue(props.height) ?? 500;
+    return (
+      <section className={sectionBackgroundClass(props.background)} data-testid="block-service-area-map">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20">
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <h2 className="text-3xl font-semibold tracking-normal">{str(props.heading, "Communities We Serve")}</h2>
+            {str(props.intro) ? <p className="mt-4 text-muted-foreground">{str(props.intro)}</p> : null}
+          </div>
+          <ServiceAreaMap height={mapHeight} />
+        </div>
+      </section>
+    );
+  }
+
   if (block.type === "cta") {
     const primaryText = str(props.primaryText);
     const primaryLink = str(props.primaryLink);
@@ -1480,8 +1499,9 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
       );
     }
     return (
-      <section className="bg-[#2C2C2C] text-white" data-testid="block-cta">
-        <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6">
+      <section className="relative overflow-hidden bg-[hsl(var(--brand-forest))] text-white" data-testid="block-cta">
+        <CtaBackdrop />
+        <div className="relative z-10 mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
           <h2 className="text-3xl font-semibold tracking-normal">{str(props.heading, "Ready to get started?")}</h2>
           {plainText(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-white/75">{plainText(props.subheading)}</p> : null}
           {buttons.length > 0 || (primaryText && primaryLink) ? (
@@ -1553,6 +1573,24 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 }
 
 export function PublicPageRenderer({ blocks }: { blocks: BlockInstance[] }) {
+  const firstBlockIsHero = blocks[0]?.type === "hero";
+
+  if (firstBlockIsHero) {
+    return (
+      <>
+        <PublicBlockRenderer block={blocks[0]} />
+        <div className="cms-patterned-body relative surface-stone bg-paper overflow-hidden">
+          <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none" aria-hidden="true" />
+          <div className="relative z-10">
+            {blocks.slice(1).map((block) => (
+              <PublicBlockRenderer key={block.id} block={block} />
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {blocks.map((block) => (

@@ -60,7 +60,7 @@ type CmsBuilderBlock = {
 };
 
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
-const LANDSCAPE_CMS_WIRING_VERSION = 2;
+const LANDSCAPE_CMS_WIRING_VERSION = 3;
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 const CONTACT_PAGE_SLUG = "contact";
 const NOT_FOUND_PAGE_SLUG = "404";
@@ -542,6 +542,19 @@ function buildBuilderBlocks(
       },
     },
   ];
+
+  if (slug === "service-areas") {
+    blocks.push({
+      id: "service-areas-map",
+      type: "service-area-map",
+      props: {
+        heading: "Communities We Serve",
+        intro: "Explore our service territory across Union County and the greater Charlotte region. Select any pin to view local services for that community.",
+        height: 500,
+        background: "muted",
+      },
+    });
+  }
 
   if (slug === "home" && media?.featureCards?.length) {
     blocks.push({
@@ -1025,7 +1038,6 @@ function buildMenus(): InsertCmsMenu[] {
     menuItem("gallery", "View Gallery", "/gallery"),
   ];
   const mainCommercial = [
-    menuItem("commercial", "Commercial Hub", "/commercial"),
     ...commercialServices,
     menuItem("commercial-portfolio", "View Portfolio", "/commercial-portfolio"),
   ];
@@ -1039,13 +1051,15 @@ function buildMenus(): InsertCmsMenu[] {
       name: "Main Navigation",
       location: "main_navigation",
       items: [
+        menuItem("residential", "Residential Services", "/residential-landscaping", residentialFooter),
+        menuItem("commercial", "Commercial Services", "/commercial", mainCommercial),
         menuItem("home", "Home", "/"),
-        menuItem("residential", "Residential", "/residential-landscaping", residentialFooter),
-        menuItem("commercial", "Commercial", "/commercial", mainCommercial),
+        menuItem("about", "About", "/about"),
         menuItem("gallery", "Gallery", "/gallery"),
         menuItem("service-areas", "Service Areas", "/service-areas"),
-        menuItem("about", "About", "/about"),
         menuItem("blog", "Blog", "/blog"),
+        menuItem("faq", "FAQ", "/faq"),
+        menuItem("contact", "Contact", "/contact"),
       ],
     },
     {
@@ -1255,11 +1269,26 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
 
-    await storage.cmsPages.updatePage(existing.id, {
-      ...page,
-      publishedAt: existing.publishedAt ?? page.publishedAt,
-      content: cloneSeedContent(page.content),
-    });
+    if (!hasBuilderBlocks(existing.content) || containsSecurityLowVoltageCopy(existing)) {
+      await storage.cmsPages.updatePage(existing.id, {
+        ...page,
+        publishedAt: existing.publishedAt ?? page.publishedAt,
+        content: cloneSeedContent(page.content),
+      });
+      continue;
+    }
+
+    const existingContent = existing.content && typeof existing.content === "object"
+      ? existing.content as Record<string, unknown>
+      : {};
+    const wiringVersion = Number(existingContent.landscapeCmsWiringVersion ?? 0);
+    if (wiringVersion < LANDSCAPE_CMS_WIRING_VERSION) {
+      await storage.cmsPages.updatePage(existing.id, {
+        ...page,
+        publishedAt: existing.publishedAt ?? page.publishedAt,
+        content: cloneSeedContent(page.content),
+      });
+    }
   }
 
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
@@ -1294,7 +1323,10 @@ export async function ensureLandscapeCmsContent() {
       await storage.cmsMenus.create(menu);
       continue;
     }
-    if (containsSecurityLowVoltageCopy(existing) || containsRetiredPublicLink(existing)) {
+    const serializedItems = JSON.stringify(existing.items ?? []);
+    const needsMainNavigationMigration = menu.location === "main_navigation"
+      && (serializedItems.includes("Commercial Hub") || !serializedItems.includes('"Contact"'));
+    if (containsSecurityLowVoltageCopy(existing) || containsRetiredPublicLink(existing) || needsMainNavigationMigration) {
       await storage.cmsMenus.update(existing.id, menu);
     }
   }

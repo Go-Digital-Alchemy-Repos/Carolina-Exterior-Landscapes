@@ -9,7 +9,14 @@ import type { CmsMenu, MenuItem } from "@shared/schema";
 type MenuMap = Partial<Record<string, CmsMenu>>;
 
 function menuItems(menu: CmsMenu | undefined): MenuItem[] {
-  return Array.isArray(menu?.items) ? (menu.items as MenuItem[]).map((item) => ({ ...item, children: item.children ?? [] })) : [];
+  if (!Array.isArray(menu?.items)) return [];
+
+  const withoutCommercialHub = (items: MenuItem[]): MenuItem[] =>
+    items
+      .filter((item) => item.label.trim().toLowerCase() !== "commercial hub")
+      .map((item) => ({ ...item, children: withoutCommercialHub(item.children ?? []) }));
+
+  return withoutCommercialHub(menu.items as MenuItem[]);
 }
 
 function NavLink({ item, onClick, className }: { item: MenuItem; onClick?: () => void; className?: string }) {

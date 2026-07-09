@@ -266,8 +266,8 @@ describe("PublicBlockRenderer hero", () => {
       );
     });
 
-    const outer = container.querySelector('[data-testid="block-hero"] > div:last-child') as HTMLDivElement | null;
     const content = container.querySelector('[data-testid="hero-content"]') as HTMLDivElement | null;
+    const outer = content?.parentElement as HTMLDivElement | null;
     const subheading = container.querySelector("p") as HTMLParagraphElement | null;
     const actions = container.querySelector("p + div") as HTMLDivElement | null;
 
@@ -321,8 +321,8 @@ describe("PublicBlockRenderer hero", () => {
         );
       });
 
-      const outer = container.querySelector('[data-testid="block-hero"] > div:last-child') as HTMLDivElement | null;
       const content = container.querySelector('[data-testid="hero-content"]') as HTMLDivElement | null;
+      const outer = content?.parentElement as HTMLDivElement | null;
       const subheading = container.querySelector("p") as HTMLParagraphElement | null;
       const actions = container.querySelector("p + div") as HTMLDivElement | null;
 
@@ -358,8 +358,8 @@ describe("PublicBlockRenderer hero", () => {
         );
       });
 
-      const outer = container.querySelector('[data-testid="block-hero"] > div:last-child') as HTMLDivElement | null;
       const content = container.querySelector('[data-testid="hero-content"]') as HTMLDivElement | null;
+      const outer = content?.parentElement as HTMLDivElement | null;
 
       expect(outer?.className).toContain("min-[641px]:mx-0");
       expect(outer?.className).toContain("min-[641px]:max-w-none");

@@ -36,7 +36,6 @@ function mapBlockToSectionCategory(block: BlockDef): string {
   }
   return "general";
 }
-
 function placeholderTextForKey(key: string): string {
   const normalized = key.toLowerCase();
 

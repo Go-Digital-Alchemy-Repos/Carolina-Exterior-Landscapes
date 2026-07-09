@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 
 export default function BlogIndex() {
   const posts = useLandscapeCmsBlogPosts(getBlogPosts());
@@ -15,7 +16,7 @@ export default function BlogIndex() {
   const filteredPosts = posts.filter(p => filter === "all" || p.category === filter);
 
   return (
-    <div className="w-full bg-background min-h-screen pb-24">
+    <div className="w-full surface-stone bg-topo min-h-screen pb-24">
       <Seo 
         title="Landscaping & Lawn Care Blog | Carolina Exterior" 
         description="Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region." 
@@ -31,6 +32,7 @@ export default function BlogIndex() {
             Expert insights, seasonal tips, and guides for properties in the Carolina Piedmont.
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4">

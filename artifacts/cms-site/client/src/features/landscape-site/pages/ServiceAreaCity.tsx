@@ -55,7 +55,7 @@ export default function ServiceAreaCity() {
           <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
 
-        <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">

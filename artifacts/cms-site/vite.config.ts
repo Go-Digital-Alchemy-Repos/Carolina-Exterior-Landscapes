@@ -53,7 +53,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
 
-          if (/\/node_modules\/(react|react-dom|scheduler|use-sync-external-store)\//.test(id)) {
+          if (/\/node_modules\/(react|react-dom|react-is|scheduler|use-sync-external-store)\//.test(id)) {
             return "react-core";
           }
 
@@ -105,15 +105,6 @@ export default defineConfig({
             id.includes("/rope-sequence/")
           ) {
             return "prosemirror";
-          }
-
-          if (
-            id.includes("/recharts/") ||
-            id.includes("/d3-") ||
-            id.includes("/victory-vendor/") ||
-            id.includes("/lodash/")
-          ) {
-            return "charts";
           }
 
           if (id.includes("/embla-carousel")) {

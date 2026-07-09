@@ -21,15 +21,17 @@ const BOUNDS: [[number, number], [number, number]] = [
   [35.28, -80.5],
 ];
 
-export function ServiceAreaMap() {
+export function ServiceAreaMap({ height = 500 }: { height?: number }) {
   const [, navigate] = useLocation();
+  const mapHeight = Math.max(320, Math.min(720, Math.round(height)));
 
   return (
     <div className="rounded-2xl overflow-hidden border border-border/60 shadow-sm">
       <MapContainer
         bounds={BOUNDS}
         scrollWheelZoom={false}
-        className="h-[500px] w-full z-0"
+        className="w-full z-0"
+        style={{ height: mapHeight }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-
 import res1 from "@/features/landscape-site/assets/gallery-res-1.webp";
 import res2 from "@/features/landscape-site/assets/gallery-res-2.webp";
 import res3 from "@/features/landscape-site/assets/gallery-res-3.webp";
@@ -17,6 +16,7 @@ import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.webp"
 import heroMulch from "@/features/landscape-site/assets/hero-mulch.webp";
 import heroDrainage from "@/features/landscape-site/assets/hero-drainage.webp";
 import heroCommercial from "@/features/landscape-site/assets/hero-commercial.webp";
+import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
 
 type Category = "residential" | "commercial";
 type Filter = "all" | Category;
@@ -151,7 +151,7 @@ export default function Gallery() {
   const activeProject = lightboxIndex !== null ? visible[lightboxIndex] : null;
 
   return (
-    <div className="w-full bg-background min-h-screen">
+    <div className="w-full surface-stone bg-topo min-h-screen">
       <Seo
         title={`Project Gallery | Landscaping & Hardscape Portfolio | ${BRAND.name}`}
         description={`Browse finished residential and commercial landscaping, hardscape, drainage, and lawn care projects by ${BRAND.name} across ${BRAND.region}.`}
@@ -170,6 +170,7 @@ export default function Gallery() {
             Real results from finished projects across the {BRAND.region} — from backyard patios and lawn renovations to commercial grounds programs.
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       {/* Filters */}
@@ -227,13 +228,13 @@ export default function Gallery() {
       </div>
 
       {/* CTA */}
-      <SectionDivider variant="hills" bgColor="hsl(var(--background))" fillColor="hsl(var(--surface-sand))" />
-      <section className="surface-sand bg-paper py-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
-        <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-4 bottom-6 h-64 w-auto text-brand-leaf/10 -rotate-12" />
-        <div className="max-w-3xl mx-auto text-center relative">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-5">Want results like these on your property?</h2>
-          <p className="text-lg text-muted-foreground font-medium mb-8">
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--brand-forest))" />
+      <section className="bg-[hsl(var(--brand-forest))] text-white py-20 px-4 relative overflow-hidden">
+        <CtaBackdrop imageUrl={res1} />
+        <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-4 bottom-6 h-64 w-auto text-white/10 -rotate-12" />
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-5">Want results like these on your property?</h2>
+          <p className="text-lg text-white/80 font-medium mb-8">
             Tell us about your project and we'll put together a free, no-pressure quote — usually within one business day.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -242,7 +243,7 @@ export default function Gallery() {
                 GET A FREE QUOTE <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full px-8 h-14 font-bold tracking-wide w-full sm:w-auto">
+            <Button asChild size="lg" variant="outline" className="rounded-full px-8 h-14 font-bold tracking-wide w-full sm:w-auto bg-transparent border-white/50 text-white hover:bg-white hover:text-[hsl(var(--brand-forest))]">
               <Link href="/commercial-quote">
                 Commercial Inquiry
               </Link>

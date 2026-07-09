@@ -17,6 +17,38 @@ describe("Navbar", () => {
     document.body.appendChild(container);
   });
 
+  it("omits the legacy Commercial Hub item from public navigation", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(["/api/cms/menus"], {
+      main_navigation: {
+        id: "main",
+        name: "Main Navigation",
+        location: "main_navigation",
+        items: [
+          {
+            id: "commercial",
+            label: "Commercial Services",
+            url: "/commercial",
+            children: [
+              { id: "commercial-hub", label: "Commercial Hub", url: "/commercial", children: [] },
+              { id: "commercial-landscaping", label: "Commercial Landscaping", url: "/commercial-landscaping", children: [] },
+            ],
+          },
+        ],
+      },
+    });
+
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(React.createElement(QueryClientProvider, { client }, React.createElement(Navbar)));
+    });
+
+    expect(container.textContent).toContain("Commercial Services");
+    expect(container.textContent).toContain("Commercial Landscaping");
+    expect(container.textContent).not.toContain("Commercial Hub");
+  });
+
   afterEach(() => {
     act(() => {
       root?.unmount();

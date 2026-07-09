@@ -3,6 +3,7 @@ import { Seo } from "@/features/landscape-site/components/Seo";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BRAND } from "@/features/landscape-site/content/site";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 
 export function extractFaqs(pageSlugs: string[]) {
   const faqs: { q: string; a: string; source: string }[] = [];
@@ -42,7 +43,7 @@ export default function Faq() {
   const faqs = extractFaqs(slugs);
 
   return (
-    <div className="w-full bg-background min-h-screen pb-24">
+    <div className="w-full surface-stone bg-topo min-h-screen pb-24">
       <Seo 
         title={`Residential FAQ | ${BRAND.name}`} 
         description={`Frequently asked questions about our residential landscaping and lawn care services.`} 
@@ -58,6 +59,7 @@ export default function Faq() {
             Answers to common questions about our lawn care, landscaping, and hardscape services.
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       <div className="max-w-3xl mx-auto px-4">

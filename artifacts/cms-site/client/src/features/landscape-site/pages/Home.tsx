@@ -8,7 +8,6 @@ import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Leaf, Shield, Clock, MapPin } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-
 import heroImg from "@/features/landscape-site/assets/hero-home.webp";
 import res1 from "@/features/landscape-site/assets/gallery-res-1.webp";
 import res2 from "@/features/landscape-site/assets/gallery-res-2.webp";
@@ -16,6 +15,7 @@ import res3 from "@/features/landscape-site/assets/gallery-res-3.webp";
 import com1 from "@/features/landscape-site/assets/hero-commercial.webp";
 import comHoa from "@/features/landscape-site/assets/gallery-com-2.webp";
 import aboutStory from "@/features/landscape-site/assets/about-story.webp";
+import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
 
 export default function Home() {
   const page = useLandscapeCmsPage("home", getPage("home"));
@@ -74,11 +74,11 @@ export default function Home() {
           </div>
         </div>
 
-        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-sand))" />
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </section>
 
       {/* Services Overview */}
-      <section className="py-24 surface-sand bg-paper relative overflow-hidden">
+      <section className="py-24 surface-stone bg-paper relative overflow-hidden">
         <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none"></div>
         <div className="absolute inset-0 bg-topo opacity-70 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden lg:block absolute -left-6 top-16 h-64 w-auto text-brand-leaf/15 -rotate-12" />
@@ -249,12 +249,10 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <SectionDivider variant="hills" bgColor="hsl(var(--surface-mist))" fillColor="hsl(var(--accent))" />
-      <section className="py-32 bg-accent relative overflow-hidden text-accent-foreground">
-        <div className="absolute inset-0 bg-contours opacity-70 pointer-events-none"></div>
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-white rounded-full blur-3xl opacity-40"></div>
-        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-16 top-1/2 -translate-y-1/2 h-80 w-auto text-brand-forest/10" />
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-mist))" fillColor="hsl(var(--brand-forest))" />
+      <section className="py-32 bg-[hsl(var(--brand-forest))] relative overflow-hidden text-white">
+        <CtaBackdrop imageUrl={heroImg} />
+        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-16 top-1/2 -translate-y-1/2 h-80 w-auto text-white/10" />
 
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <span className="public-eyebrow-badge mb-8">
@@ -270,7 +268,7 @@ export default function Home() {
                 REQUEST RESIDENTIAL QUOTE
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-16 px-10 text-lg font-bold rounded-full bg-transparent border-foreground/20 text-foreground hover:bg-foreground hover:text-background transition-colors">
+            <Button asChild variant="outline" size="lg" className="h-16 px-10 text-lg font-bold rounded-full bg-transparent border-white/50 text-white hover:bg-white hover:text-[hsl(var(--brand-forest))] transition-colors">
               <Link href="/commercial-quote">
                 COMMERCIAL INQUIRY
               </Link>

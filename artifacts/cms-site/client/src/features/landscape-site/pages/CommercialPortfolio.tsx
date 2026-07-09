@@ -5,6 +5,7 @@ import com1 from "@/features/landscape-site/assets/gallery-com-1.webp";
 import com2 from "@/features/landscape-site/assets/gallery-com-2.webp";
 import com3 from "@/features/landscape-site/assets/gallery-com-3.webp";
 import heroCommercial from "@/features/landscape-site/assets/hero-commercial.webp";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 
 export default function CommercialPortfolio() {
   const images = [
@@ -15,7 +16,7 @@ export default function CommercialPortfolio() {
   ];
 
   return (
-    <div className="w-full bg-background min-h-screen pb-24">
+    <div className="w-full surface-stone bg-topo min-h-screen pb-24">
       <Seo 
         title={`Commercial Portfolio | ${BRAND.name}`} 
         description={`View our recent commercial landscaping, grounds maintenance, and site work projects across ${BRAND.region}.`} 
@@ -31,6 +32,7 @@ export default function CommercialPortfolio() {
             Professional grounds maintenance, landscape design, and hardscape for businesses and HOAs.
           </p>
         </div>
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4">

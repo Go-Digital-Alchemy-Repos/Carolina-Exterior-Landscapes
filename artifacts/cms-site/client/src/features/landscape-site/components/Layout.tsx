@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES } from "@/features/landscape-site/content/site";
+import { BRAND, RESIDENTIAL_SERVICES, COMMERCIAL_SERVICES, SERVICE_AREAS } from "@/features/landscape-site/content/site";
 import headerLogoHorizontal from "@/features/landscape-site/assets/header-logo-horizontal.svg";
 import footerLogoHorizontal from "@/features/landscape-site/assets/footer-logo-horizontal.svg";
 import digitalAlchemyLogo from "@/features/landscape-site/assets/da-logo.svg";
@@ -23,12 +23,18 @@ const FALLBACK_RESIDENTIAL_ITEMS = [
 ];
 
 const FALLBACK_COMMERCIAL_ITEMS = [
-  menuItem("commercial", "Commercial Hub", "/commercial"),
   ...COMMERCIAL_SERVICES.map((service) => menuItem(service.slug, service.name, `/${service.slug}`)),
   menuItem("commercial-portfolio", "View Portfolio", "/commercial-portfolio"),
 ];
 
-const FALLBACK_FOOTER_COMMERCIAL_ITEMS = FALLBACK_COMMERCIAL_ITEMS.filter((item) => item.id !== "commercial-portfolio");
+const FALLBACK_FOOTER_COMMERCIAL_ITEMS = [
+  menuItem("commercial", "Commercial Hub", "/commercial"),
+  ...COMMERCIAL_SERVICES.map((service) => menuItem(service.slug, service.name, `/${service.slug}`)),
+];
+
+const FALLBACK_SERVICE_AREA_ITEMS = SERVICE_AREAS.map((area) =>
+  menuItem(area.slug, `${area.city}, ${area.state}`, `/service-areas/${area.slug}`),
+);
 
 const FALLBACK_FOOTER_LINKS = [
   menuItem("about", "About Us", "/about"),
@@ -37,14 +43,23 @@ const FALLBACK_FOOTER_LINKS = [
 ];
 
 const FALLBACK_MAIN_NAVIGATION = [
+  menuItem("residential", "Residential Services", "/residential-landscaping", FALLBACK_RESIDENTIAL_ITEMS),
+  menuItem("commercial", "Commercial Services", "/commercial", FALLBACK_COMMERCIAL_ITEMS),
   menuItem("home", "Home", "/"),
-  menuItem("residential", "Residential", "/residential-landscaping", FALLBACK_RESIDENTIAL_ITEMS),
-  menuItem("commercial", "Commercial", "/commercial", FALLBACK_COMMERCIAL_ITEMS),
+  menuItem("about", "About", "/about"),
   menuItem("gallery", "Gallery", "/gallery"),
   menuItem("service-areas", "Service Areas", "/service-areas"),
-  menuItem("about", "About", "/about"),
   menuItem("blog", "Blog", "/blog"),
+  menuItem("faq", "FAQ", "/faq"),
+  menuItem("contact", "Contact", "/contact"),
 ];
+
+function phoneHref(phoneDisplay: string | null | undefined) {
+  const digits = (phoneDisplay ?? "").replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return BRAND.phoneTel;
+}
 
 function menuItems(menu: CmsMenu | undefined, fallback: MenuItem[] = []): MenuItem[] {
   if (!Array.isArray(menu?.items) || menu.items.length === 0) return fallback;
@@ -89,10 +104,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState<string | null>(null);
   const [location] = useLocation();
-  const { frontendLogoUrl, footerLogoUrl, companyName } = useBranding();
+  const { frontendLogoUrl, footerLogoUrl, companyName, companyAddress, companyPhoneNumbers } = useBranding();
   const headerLogo = frontendLogoUrl || headerLogoHorizontal;
   const footerLogo = footerLogoUrl || footerLogoHorizontal;
   const logoAlt = companyName || BRAND.name;
+  const displayName = companyName || BRAND.name;
+  const displayAddress = companyAddress || `${BRAND.city}, ${BRAND.state}`;
+  const displayPhone = companyPhoneNumbers || BRAND.phoneDisplay;
+  const telHref = phoneHref(displayPhone);
   const { data: publicMenus } = useQuery<PublicMenuMap>({
     queryKey: ["/api/cms/menus"],
     staleTime: 60_000,
@@ -100,6 +119,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const mainNavigation = menuItems(publicMenus?.main_navigation, FALLBACK_MAIN_NAVIGATION);
   const footerResidential = menuItems(publicMenus?.footer_platform, FALLBACK_RESIDENTIAL_ITEMS);
   const footerCommercial = menuItems(publicMenus?.footer_secondary, FALLBACK_FOOTER_COMMERCIAL_ITEMS);
+  const footerServiceAreas = menuItems(publicMenus?.footer_resources, FALLBACK_SERVICE_AREA_ITEMS);
   const footerLinks = menuItems(publicMenus?.footer_legal, FALLBACK_FOOTER_LINKS);
 
   useEffect(() => {
@@ -152,25 +172,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <a href={`mailto:${BRAND.email}`} className="hover:text-white transition-colors">{BRAND.email}</a>
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-2 text-primary-foreground/90"><Leaf className="h-4 w-4" /> {BRAND.founded}</span>
-          </div>
+          <a href={`tel:${telHref}`} className="flex items-center gap-2 font-bold text-primary-foreground hover:text-white transition-colors">
+            <Phone className="h-4 w-4" />
+            {displayPhone}
+          </a>
         </div>
       </div>
 
       {/* Main Header */}
       <header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
-          isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm py-3 border-border/50" : "bg-background py-5 border-transparent"
+        className={`sticky top-0 z-50 w-full bg-background transition-all duration-300 border-b ${
+          isScrolled ? "md:bg-background/95 md:backdrop-blur-md shadow-sm py-3 border-border/50" : "py-5 border-transparent"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+        <div className="max-w-[1440px] mx-auto px-4 xl:px-6 flex justify-between items-center gap-5">
           <Link href="/" className="flex items-center group z-50">
             <img src={headerLogo} alt={logoAlt} width={471} height={126} fetchPriority="high" decoding="async" className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" />
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 font-bold text-sm text-foreground/80">
+          <nav className="hidden xl:flex flex-1 items-center justify-end gap-4 2xl:gap-6 whitespace-nowrap font-bold text-[0.8rem] 2xl:text-sm text-foreground/80">
             {mainNavigation.map((item) => {
               if (item.children.length === 0) {
                 return <MenuLink key={item.id} item={item} className="hover:text-primary transition-colors" />;
@@ -219,11 +240,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-6">
-            <a href={`tel:${BRAND.phoneTel}`} className="flex items-center gap-2 font-extrabold text-foreground hover:text-primary transition-colors">
-              <Phone className="h-5 w-5 text-primary" />
-              {BRAND.phoneDisplay}
-            </a>
+          <div className="hidden xl:flex items-center">
             <Button asChild className="font-extrabold tracking-wide rounded-full px-6 h-11 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">
               <Link href="/get-a-quote">
                 GET A QUOTE
@@ -234,7 +251,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {/* Mobile Menu Toggle */}
           <button 
             type="button"
-            className="lg:hidden p-2 text-foreground z-50 relative bg-muted/50 rounded-full"
+            className="xl:hidden p-2 text-foreground z-50 relative bg-muted rounded-full border border-border/70 shadow-sm"
             aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
@@ -247,6 +264,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Mobile Nav Overlay */}
         {mobileMenuOpen ? <div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Site navigation" className="fixed inset-0 bg-background z-40 pt-28 px-6 overflow-y-auto">
           <div className="flex flex-col gap-6 font-extrabold text-2xl pb-20">
+            <a href={`tel:${telHref}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
+              <Phone className="h-6 w-6 text-primary" />
+              {displayPhone}
+            </a>
+            <div className="h-px bg-border/50 my-2" />
             {mainNavigation.map((item) => {
               if (item.children.length === 0) {
                 return (
@@ -273,10 +295,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             })}
 
             <div className="mt-8 flex flex-col gap-4">
-              <a href={`tel:${BRAND.phoneTel}`} className="flex items-center justify-center gap-3 font-extrabold text-foreground bg-muted p-5 rounded-2xl">
-                <Phone className="h-6 w-6 text-primary" />
-                {BRAND.phoneDisplay}
-              </a>
               <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">
                 <Link href="/get-a-quote">GET A QUOTE</Link>
               </Button>
@@ -298,18 +316,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <BotanicalAccent variant="fern" className="hidden lg:block absolute left-2 bottom-8 h-64 w-auto text-primary/10" />
 
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12 xl:gap-8 mb-16">
             
-            <div className="lg:col-span-4 space-y-8">
+            <div className="space-y-8">
               <img src={footerLogo} alt={logoAlt} width={486} height={135} loading="lazy" decoding="async" className="h-16 w-auto max-w-full" />
               <p className="text-background/70 text-base leading-relaxed font-medium max-w-sm">
                 {BRAND.tagline} {BRAND.subTagline}.<br/>
                 We are proud to serve {BRAND.county} and the {BRAND.region} with premium landscaping and lawn care services.
               </p>
               <div className="space-y-4 font-bold text-sm">
-                <a href={`tel:${BRAND.phoneTel}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
+                <a href={`tel:${telHref}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Phone className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{BRAND.phoneDisplay}</span>
+                  <span className="text-base tracking-wide">{displayPhone}</span>
                 </a>
                 <a href={`mailto:${BRAND.email}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Mail className="h-4 w-4" /></div>
@@ -317,13 +335,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </a>
                 <div className="flex items-center gap-4 group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background"><MapPin className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{BRAND.city}, {BRAND.state}</span>
+                  <span className="text-base tracking-wide whitespace-pre-line">{displayAddress}</span>
                 </div>
               </div>
             </div>
 
-            <FooterMenuColumn title="Residential" items={footerResidential} className="lg:col-span-3 lg:col-start-6" />
-            <div className="lg:col-span-4 lg:col-start-9">
+            <FooterMenuColumn title="Residential" items={footerResidential} className="" />
+            <div>
               <FooterMenuColumn title="Commercial" items={footerCommercial} className="" />
               
               <div className="mt-10">
@@ -334,11 +352,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Button>
               </div>
             </div>
+            <FooterMenuColumn title="Service Areas" items={footerServiceAreas} className="" />
 
           </div>
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm font-medium text-background/50">
-            <p>&copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} {displayName}. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-6">
               <span className="flex items-center gap-2"><Leaf className="h-3 w-3" /> {BRAND.founded}</span>
               {footerLinks.map((item) => (

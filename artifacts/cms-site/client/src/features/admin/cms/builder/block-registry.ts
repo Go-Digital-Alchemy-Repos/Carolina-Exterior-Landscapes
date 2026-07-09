@@ -475,6 +475,25 @@ export const ALL_BLOCKS: BlockDef[] = [
     ],
   },
   {
+    type: "service-area-map",
+    label: "Service Area Map",
+    iconName: "MapPinned",
+    description: "Interactive map of every service-area city landing page",
+    category: "media",
+    defaultProps: {
+      heading: "Communities We Serve",
+      intro: "Explore our service territory and select a map pin to view local services for that community.",
+      height: 500,
+      background: "muted",
+    },
+    propDefs: [
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "intro", label: "Supporting Text", type: "textarea" },
+      { key: "height", label: "Map Height (px)", type: "number", min: 320, max: 720 },
+      { key: "background", label: "Background", type: "text" },
+    ],
+  },
+  {
     type: "trust-bar",
     label: "Trust Bar",
     iconName: "ShieldCheck",

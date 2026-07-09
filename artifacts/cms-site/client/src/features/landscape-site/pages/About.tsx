@@ -9,6 +9,7 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 import heroImg from "@/features/landscape-site/assets/about-story.webp";
+import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
 
 export default function About() {
   const page = useLandscapeCmsPage("about", getPage("about"));
@@ -25,7 +26,7 @@ export default function About() {
           <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
 
-        <SectionDivider variant="hills" overlay fillColor="hsl(var(--background))" />
+        <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
@@ -80,11 +81,10 @@ export default function About() {
       </div>
       
       {/* Simple CTA */}
-      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--accent))" />
-      <div className="bg-accent text-accent-foreground py-32 text-center px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-contours opacity-60 pointer-events-none"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary rounded-full blur-3xl opacity-10"></div>
-        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-20 top-1/2 -translate-y-1/2 h-72 w-auto text-brand-forest/10" />
+      <SectionDivider variant="hills" bgColor="hsl(var(--surface-stone))" fillColor="hsl(var(--brand-forest))" />
+      <div className="bg-[hsl(var(--brand-forest))] text-white py-32 text-center px-4 relative overflow-hidden">
+        <CtaBackdrop imageUrl={heroImg} />
+        <BotanicalAccent variant="fern" className="hidden md:block absolute left-6 lg:left-20 top-1/2 -translate-y-1/2 h-72 w-auto text-white/10" />
         <div className="relative z-10 max-w-3xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight">Experience the difference.</h2>
           <p className="text-xl font-medium opacity-90 mb-10 leading-relaxed">Let us show you what reliable, premium landscaping looks like.</p>

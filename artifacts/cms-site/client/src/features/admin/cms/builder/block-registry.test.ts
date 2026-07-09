@@ -6,6 +6,12 @@ describe("block registry compatibility helpers", () => {
   it("keeps retained block types direct and retired aliases unavailable", () => {
     expect(normalizeBlockType("cta")).toBe("cta");
     expect(getBlockDef("cta")?.type).toBe("cta");
+    expect(getBlockDef("service-area-map")).toEqual(
+      expect.objectContaining({
+        label: "Service Area Map",
+        defaultProps: expect.objectContaining({ height: 500 }),
+      }),
+    );
     expect(getBlockDef("blog-feed")).toBeUndefined();
   });
 
