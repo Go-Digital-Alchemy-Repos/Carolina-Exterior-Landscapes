@@ -98,6 +98,10 @@ const editorSchema = z.object({
 
 type EditorForm = z.infer<typeof editorSchema>;
 
+function normalizeEditorTemplate(template: unknown): EditorForm["template"] {
+  return template === "with-sidebar" ? "with-sidebar" : "full-width";
+}
+
 function firstValidationMessage(errors: FieldErrors<EditorForm>): string | null {
   const firstError = Object.values(errors)[0];
   const message = firstError?.message;
@@ -287,7 +291,7 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
         title: page.title,
         slug: page.slug,
         pageType: (page.pageType as EditorForm["pageType"]) ?? "custom",
-        template: (page.template as EditorForm["template"]) ?? "full-width",
+        template: normalizeEditorTemplate(page.template),
         sidebarId: page.sidebarId ?? "",
         status: (page.status as EditorForm["status"]) ?? "draft",
         seoTitle: page.seoTitle ?? "",
@@ -521,6 +525,7 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
         const payload = {
           ...formData,
           pageType: isBlogMode ? "blog-post" as const : formData.pageType,
+          template: normalizeEditorTemplate(formData.template),
           sidebarId: formData.template === "with-sidebar" ? formData.sidebarId || "" : "",
           content: isBlogMode
             ? buildBlogLandscapeContent(page?.content, normalizedContent, { ...formData, pageType: "blog-post" }, blogMeta)

@@ -690,7 +690,7 @@ function pageRecord(
     slug: options.slug,
     status: "published",
     pageType: options.pageType ?? options.kind,
-    template: "landscape-site",
+    template: "full-width",
     sidebarId: null,
     content: {
       source: LANDSCAPE_CONTENT_VERSION,
@@ -1048,7 +1048,7 @@ export async function ensureLandscapeCmsContent() {
       title: existing.title || page.title,
       status: existing.status || page.status,
       pageType: existing.pageType || page.pageType,
-      template: existing.template || page.template,
+      template: existing.template === "landscape-site" ? page.template : existing.template || page.template,
       sidebarId: existing.sidebarId ?? page.sidebarId,
       seoTitle: existing.seoTitle ?? page.seoTitle,
       seoDescription: existing.seoDescription ?? page.seoDescription,

@@ -10,11 +10,17 @@ const router = Router();
 
 const PAGE_TYPES = ["home", "landing", "service", "service-hub", "service-area", "location", "custom"] as const;
 const STATUSES = ["draft", "published", "scheduled", "archived"] as const;
+const TEMPLATES = ["full-width", "with-sidebar"] as const;
+
+function normalizeTemplate(template: unknown): unknown {
+  return template === "landscape-site" ? "full-width" : template;
+}
 
 const createPageSchema = insertCmsPageSchema.extend({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-/]+$/, "Slug must be lowercase with hyphens only"),
   pageType: z.enum(PAGE_TYPES).default("custom"),
+  template: z.preprocess(normalizeTemplate, z.enum(TEMPLATES).default("full-width")),
   status: z.enum(STATUSES).default("draft"),
 });
 
