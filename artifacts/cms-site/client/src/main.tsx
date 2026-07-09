@@ -24,3 +24,9 @@ if (typeof window !== "undefined") {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+if (typeof window !== "undefined") {
+  window.requestAnimationFrame(() => {
+    document.body.classList.remove("app-shell-loading");
+  });
+}

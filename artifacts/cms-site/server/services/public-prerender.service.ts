@@ -66,7 +66,7 @@ export function injectPublicHtmlSnapshot(template: string, snapshot: PublicHtmlS
   return normalizedTemplate
     .replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${escapeHtml(snapshot.title)}</title>`)
     .replace("<!--APP_DYNAMIC_HEAD-->", () => headParts.join("\n"))
-    .replace("<!--APP_PRERENDER_CONTENT-->", () => `<div id="seo-prerender">${snapshot.bodyHtml}</div>`);
+    .replace("<!--APP_PRERENDER_CONTENT-->", () => `<div id="seo-prerender" hidden aria-hidden="true">${snapshot.bodyHtml}</div>`);
 }
 
 export function getPrerenderedPublicPaths() {

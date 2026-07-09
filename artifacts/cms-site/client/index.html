@@ -9,11 +9,19 @@
     <meta property="og:description" content="Residential lawn maintenance, landscaping, hardscape, drainage, HOA services, and commercial grounds care from Carolina Exterior Landscapes." />
     <meta property="og:image" content="/src/features/landscape-site/assets/logo-full.png" />
     <!--APP_DYNAMIC_HEAD-->
+    <style>
+      #seo-prerender {
+        display: none !important;
+      }
+      body.app-shell-loading #root {
+        visibility: hidden;
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/src/features/landscape-site/assets/symbol.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   </head>
-  <body>
+  <body class="app-shell-loading">
     <!--APP_PRERENDER_CONTENT-->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
