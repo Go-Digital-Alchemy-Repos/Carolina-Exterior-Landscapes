@@ -7,6 +7,11 @@ export interface BrandingSettings {
   companyName: string | null;
   companyAddress: string | null;
   companyPhoneNumbers: string | null;
+  companyEmail: string | null;
+  companyHours: string | null;
+  companyLicense: string | null;
+  companyLicensing: string | null;
+  companyCredentials: string | null;
   companyGoogleBusinessUrl: string | null;
   bodyFont: string | null;
   headingFont: string | null;
@@ -72,6 +77,11 @@ export const DEFAULT_BRANDING_SETTINGS: BrandingSettings = {
   companyName: DEFAULT_BRANDING_VALUES.company_name,
   companyAddress: DEFAULT_BRANDING_VALUES.company_address,
   companyPhoneNumbers: DEFAULT_BRANDING_VALUES.company_phone_numbers,
+  companyEmail: DEFAULT_BRANDING_VALUES.company_email,
+  companyHours: DEFAULT_BRANDING_VALUES.company_hours,
+  companyLicense: DEFAULT_BRANDING_VALUES.company_license,
+  companyLicensing: DEFAULT_BRANDING_VALUES.company_licensing,
+  companyCredentials: DEFAULT_BRANDING_VALUES.company_credentials,
   companyGoogleBusinessUrl: null,
   bodyFont: null,
   headingFont: null,

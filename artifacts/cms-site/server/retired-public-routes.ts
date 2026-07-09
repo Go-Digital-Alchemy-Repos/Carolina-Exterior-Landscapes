@@ -9,7 +9,6 @@ const RETIRED_PUBLIC_PREFIXES = [
   "/metal-fabrication-charlotte-nc",
   "/services",
   "/reviews",
-  "/contact",
   "/privacy-policy",
   "/directory",
   "/events",

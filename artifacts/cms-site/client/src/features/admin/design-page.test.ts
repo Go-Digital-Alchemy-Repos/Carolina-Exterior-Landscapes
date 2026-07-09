@@ -30,6 +30,14 @@ describe("AdminDesignPage", () => {
     expect(html).toContain("Header Logo");
     expect(html).toContain("Footer Logo");
     expect(html).toContain("Favicon / Admin Icon");
+    expect(html).toContain("Company Name");
+    expect(html).toContain("Company Address");
+    expect(html).toContain("Phone Display");
+    expect(html).toContain("Public Email");
+    expect(html).toContain("Business Hours");
+    expect(html).toContain("License");
+    expect(html).toContain("Licensing / Service Statement");
+    expect(html).toContain("Credentials");
     expect(html).toContain("/images/header-logo-horizontal.svg");
     expect(html).toContain("/images/footer-logo-horizontal.svg");
     expect(html).toContain("/images/symbol.svg");

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -36,7 +37,7 @@ type SettingField = {
   label: string;
   description?: string;
   placeholder?: string;
-  type?: "text" | "url" | "tel" | "asset";
+  type?: "text" | "url" | "tel" | "email" | "textarea" | "asset";
   helpText?: string;
 };
 
@@ -102,12 +103,46 @@ const BRANDING_FIELDS: SettingField[] = [
     key: "company_address",
     label: "Company Address",
     placeholder: DEFAULT_BRANDING_VALUES.company_address,
+    type: "textarea",
+    helpText: "Use multiple lines when the reusable contact details section should show a street address and city/state line.",
   },
   {
     key: "company_phone_numbers",
     label: "Phone Display",
     placeholder: DEFAULT_BRANDING_VALUES.company_phone_numbers,
     type: "tel",
+    helpText: "Use one phone number per line when multiple public numbers should appear.",
+  },
+  {
+    key: "company_email",
+    label: "Public Email",
+    placeholder: DEFAULT_BRANDING_VALUES.company_email,
+    type: "email",
+  },
+  {
+    key: "company_hours",
+    label: "Business Hours",
+    placeholder: DEFAULT_BRANDING_VALUES.company_hours,
+    type: "text",
+  },
+  {
+    key: "company_license",
+    label: "License",
+    placeholder: "NC License: SP.FA/LV.37341",
+    type: "text",
+  },
+  {
+    key: "company_licensing",
+    label: "Licensing / Service Statement",
+    placeholder: DEFAULT_BRANDING_VALUES.company_licensing,
+    type: "textarea",
+  },
+  {
+    key: "company_credentials",
+    label: "Credentials",
+    placeholder: DEFAULT_BRANDING_VALUES.company_credentials,
+    type: "textarea",
+    helpText: "Add one credential per line, or a short sentence. These appear below hours and license in contact detail sections.",
   },
   {
     key: "company_google_business_url",
@@ -186,6 +221,28 @@ function SettingInput({
     );
   }
 
+  if (field.type === "textarea") {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={`design-${field.key}`}>{field.label}</Label>
+        <Textarea
+          key={`${field.key}-textarea-${value}`}
+          id={`design-${field.key}`}
+          defaultValue={value}
+          placeholder={field.placeholder}
+          rows={3}
+          onBlur={(event) => onSave(field.key, event.currentTarget.value)}
+        />
+        {field.helpText ? (
+          <p className="text-xs text-muted-foreground">{field.helpText}</p>
+        ) : null}
+        {field.description ? (
+          <p className="text-xs text-muted-foreground">{field.description}</p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <Label htmlFor={`design-${field.key}`}>{field.label}</Label>
@@ -199,6 +256,9 @@ function SettingInput({
       />
       {field.description ? (
         <p className="text-xs text-muted-foreground">{field.description}</p>
+      ) : null}
+      {field.helpText ? (
+        <p className="text-xs text-muted-foreground">{field.helpText}</p>
       ) : null}
     </div>
   );

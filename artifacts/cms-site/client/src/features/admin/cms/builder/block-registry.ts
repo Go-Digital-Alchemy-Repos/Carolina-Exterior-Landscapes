@@ -84,13 +84,14 @@ export const ALL_BLOCKS: BlockDef[] = [
       gradientColor: "#102234",
       gradientOpacity: 75,
       gradientHeight: 40,
+      heroHeightPx: 0,
       alignment: "center",
     },
     propDefs: [
       { key: "eyebrow", label: "Eyebrow", type: "text", placeholder: "Optional intro label" },
       { key: "heading", label: "Heading", type: "text", placeholder: "Page heading" },
       { key: "mobileHeading", label: "Mobile Heading", type: "textarea", placeholder: "Optional mobile-only heading", helpText: "Shown only on screens 640px wide and below. Use line breaks to control mobile wrapping." },
-      { key: "subheading", label: "Subheading", type: "richtext", placeholder: "Supporting copy" },
+      { key: "subheading", label: "Subheading", type: "textarea", placeholder: "Supporting copy" },
       { key: "ctaText", label: "Button Text", type: "text", placeholder: "Learn more" },
       { key: "ctaLink", label: "Button Link", type: "url", placeholder: "/page" },
       { key: "backgroundImageUrl", label: "Background Image", type: "image-url" },
@@ -103,6 +104,7 @@ export const ALL_BLOCKS: BlockDef[] = [
       { key: "gradientColor", label: "Gradient Color", type: "color" },
       { key: "gradientOpacity", label: "Gradient Strength", type: "number", min: 0, max: 100 },
       { key: "gradientHeight", label: "Gradient Height", type: "number", min: 0, max: 100 },
+      { key: "heroHeightPx", label: "Custom Hero Height (px)", type: "number", min: 0, helpText: "Leave as 0 to use the default responsive hero height. Enter a pixel value like 520 or 760 to override it." },
       { key: "alignment", label: "Alignment", type: "select", options: ALIGN_OPTIONS },
     ],
   },
@@ -116,7 +118,7 @@ export const ALL_BLOCKS: BlockDef[] = [
     propDefs: [
       { key: "eyebrow", label: "Eyebrow", type: "text" },
       { key: "title", label: "Title", type: "text", placeholder: "Section heading" },
-      { key: "subtitle", label: "Subtitle", type: "richtext", placeholder: "Supporting copy" },
+      { key: "subtitle", label: "Subtitle", type: "textarea", placeholder: "Supporting copy" },
       { key: "alignment", label: "Alignment", type: "select", options: ALIGN_OPTIONS },
     ],
   },
@@ -275,7 +277,7 @@ export const ALL_BLOCKS: BlockDef[] = [
     },
     propDefs: [
       { key: "heading", label: "Heading", type: "text" },
-      { key: "body", label: "Body", type: "richtext" },
+      { key: "body", label: "Body", type: "textarea" },
       { key: "imageUrl", label: "Image", type: "image-url" },
       { key: "imageAlt", label: "Image Alt Text", type: "text" },
       { key: "imagePositionX", label: "Image Focal X", type: "number", min: 0, max: 100 },
@@ -307,7 +309,7 @@ export const ALL_BLOCKS: BlockDef[] = [
     },
     propDefs: [
       { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "richtext" },
+      { key: "subtitle", label: "Subtitle", type: "textarea" },
       { key: "columns", label: "Columns", type: "select", options: COLUMNS_OPTIONS },
       {
         key: "cards",
@@ -315,7 +317,7 @@ export const ALL_BLOCKS: BlockDef[] = [
         type: "array-items",
         itemSchema: [
           { key: "title", label: "Title", type: "text" },
-          { key: "description", label: "Description", type: "richtext" },
+          { key: "description", label: "Description", type: "textarea" },
           { key: "icon", label: "Icon", type: "text" },
           { key: "linkText", label: "Link Text", type: "text" },
           { key: "linkPath", label: "Link Path", type: "url" },
@@ -345,7 +347,7 @@ export const ALL_BLOCKS: BlockDef[] = [
     propDefs: [
       { key: "eyebrow", label: "Eyebrow", type: "text" },
       { key: "title", label: "Title", type: "text" },
-      { key: "subtitle", label: "Subtitle", type: "richtext" },
+      { key: "subtitle", label: "Subtitle", type: "textarea" },
       {
         key: "variant",
         label: "Variant",
@@ -362,7 +364,7 @@ export const ALL_BLOCKS: BlockDef[] = [
         label: "Review Items",
         type: "array-items",
         itemSchema: [
-          { key: "quote", label: "Quote", type: "richtext" },
+          { key: "quote", label: "Quote", type: "textarea" },
           { key: "name", label: "Name", type: "text" },
           { key: "role", label: "Role", type: "text" },
           { key: "location", label: "Location", type: "text" },
@@ -384,7 +386,7 @@ export const ALL_BLOCKS: BlockDef[] = [
       message: "Google reviews will display here once the review widget is configured.",
     },
     propDefs: [
-      { key: "message", label: "Placeholder Message", type: "richtext" },
+      { key: "message", label: "Placeholder Message", type: "textarea" },
     ],
   },
   {
@@ -482,7 +484,7 @@ export const ALL_BLOCKS: BlockDef[] = [
     defaultProps: { heading: "Ready to get started?", subheading: "", primaryText: "", primaryLink: "" },
     propDefs: [
       { key: "heading", label: "Heading", type: "text" },
-      { key: "subheading", label: "Subheading", type: "richtext" },
+      { key: "subheading", label: "Subheading", type: "textarea" },
       { key: "primaryText", label: "Button Text", type: "text" },
       { key: "primaryLink", label: "Button Link", type: "url" },
     ],
@@ -505,7 +507,7 @@ export const ALL_BLOCKS: BlockDef[] = [
         type: "array-items",
         itemSchema: [
           { key: "question", label: "Question", type: "text" },
-          { key: "answer", label: "Answer", type: "richtext" },
+          { key: "answer", label: "Answer", type: "textarea" },
         ],
       },
     ],

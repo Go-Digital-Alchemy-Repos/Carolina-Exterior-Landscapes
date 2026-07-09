@@ -1,5 +1,4 @@
-import { LANDSCAPE_IMAGE_BASE } from "@/features/landscape-site/content/base";
-import { getPage } from "@/features/landscape-site/content/pages";
+import { getPage } from "@/features/landscape-site/content";
 import { useLandscapeCmsPage } from "@/features/landscape-site/use-landscape-cms";
 import { BlockRenderer } from "@/features/landscape-site/components/BlockRenderer";
 import { Seo } from "@/features/landscape-site/components/Seo";
@@ -11,22 +10,32 @@ import { getServiceImages } from "@/features/landscape-site/lib/serviceImages";
 import { ArrowRight, Phone, CheckCircle2 } from "lucide-react";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { LandscapeImage } from "@/features/landscape-site/components/LandscapeImage";
+
+import heroHome from "@/features/landscape-site/assets/hero-home.png";
+import heroCommercial from "@/features/landscape-site/assets/hero-commercial.png";
+import heroHardscape from "@/features/landscape-site/assets/hero-hardscape.png";
+import heroMulch from "@/features/landscape-site/assets/hero-mulch.png";
+import heroDrainage from "@/features/landscape-site/assets/hero-drainage.png";
+import heroCommercialGrounds from "@/features/landscape-site/assets/hero-commercial-grounds.png";
+import heroCommercialLandscaping from "@/features/landscape-site/assets/hero-commercial-landscaping.png";
+import heroCommercialHardscape from "@/features/landscape-site/assets/hero-commercial-hardscape.png";
+import heroCommercialDrainage from "@/features/landscape-site/assets/hero-commercial-drainage.png";
+import heroHoa from "@/features/landscape-site/assets/hero-hoa.png";
+import galleryRes from "@/features/landscape-site/assets/gallery-res-1.png";
+import galleryCom from "@/features/landscape-site/assets/gallery-com-1.png";
 
 const HERO_IMAGES: Record<string, string> = {
-  "residential-lawn-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
-  "residential-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-home.png`,
-  "residential-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-hardscape.png`,
-  "residential-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-residential-pressure-washing.png`,
-  "mulching-and-planting": `${LANDSCAPE_IMAGE_BASE}/hero-mulch.png`,
-  "drainage-solutions": `${LANDSCAPE_IMAGE_BASE}/hero-drainage.png`,
-  "commercial": `${LANDSCAPE_IMAGE_BASE}/hero-commercial.png`,
-  "commercial-grounds-maintenance": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-grounds.png`,
-  "commercial-landscaping": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-landscaping.png`,
-  "commercial-hardscape": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-hardscape.png`,
-  "commercial-drainage": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-drainage.png`,
-  "commercial-pressure-washing": `${LANDSCAPE_IMAGE_BASE}/hero-commercial-pressure-washing.png`,
-  "hoa-services": `${LANDSCAPE_IMAGE_BASE}/hero-hoa.png`,
+  "residential-lawn-maintenance": heroHome,
+  "residential-landscaping": heroHome,
+  "residential-hardscape": heroHardscape,
+  "mulching-and-planting": heroMulch,
+  "drainage-solutions": heroDrainage,
+  "commercial": heroCommercial,
+  "commercial-grounds-maintenance": heroCommercialGrounds,
+  "commercial-landscaping": heroCommercialLandscaping,
+  "commercial-hardscape": heroCommercialHardscape,
+  "commercial-drainage": heroCommercialDrainage,
+  "hoa-services": heroHoa,
 };
 
 export default function ServicePage({ slug: slugProp }: { slug?: string }) {
@@ -39,8 +48,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
   }
 
   const isCommercial = slug?.includes("commercial") || slug === "hoa-services";
-  const heroImage = page.media?.heroImageUrl ?? HERO_IMAGES[slug || ""] ?? `${LANDSCAPE_IMAGE_BASE}/hero-home.png`;
-  const sidebarImage = page.media?.sidebarImageUrl ?? (isCommercial ? `${LANDSCAPE_IMAGE_BASE}/gallery-com-1.png` : `${LANDSCAPE_IMAGE_BASE}/gallery-res-1.png`);
+  const heroImage = HERO_IMAGES[slug || ""] || heroHome;
 
   const serviceJsonLd = {
     "@context": "https://schema.org",
@@ -73,16 +81,16 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       />
       
       {/* Hero Section */}
-      <div className="relative w-full h-[60vh] min-h-[500px] flex items-end bg-foreground overflow-hidden md:items-center">
+      <div className="relative w-full h-[60vh] min-h-[500px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <LandscapeImage src={heroImage} alt={page.h1} className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
-          <div className="absolute inset-0 bg-topo-light opacity-25 mix-blend-multiply pointer-events-none"></div>
+          <img src={heroImage} alt={page.h1} className="w-full h-full object-cover opacity-75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>
 
         <BotanicalAccent variant="fern" className="hidden lg:block absolute right-10 top-1/2 -translate-y-1/2 h-72 w-auto text-primary/20 z-10" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full pb-16 pt-28 animate-in fade-in slide-in-from-bottom-8 duration-700 md:py-16">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 w-full py-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-[1.1] tracking-tight">
               {page.h1}
@@ -95,7 +103,7 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       </div>
 
       {/* Breadcrumbs */}
-      <div className="border-b border-border bg-background">
+      <div className="hidden border-b border-border bg-background md:block">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-2">
           <Link href={isCommercial ? "/commercial" : "/"} className="text-primary hover:text-foreground transition-colors text-sm font-bold tracking-wide uppercase">
             {isCommercial ? "Commercial Services" : "Residential Services"}
@@ -109,9 +117,9 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
       <div className="relative surface-stone bg-paper overflow-hidden">
         <div className="absolute inset-0 bg-topo opacity-60 pointer-events-none"></div>
         <BotanicalAccent variant="sprig" className="hidden xl:block absolute -left-4 top-32 h-72 w-auto text-brand-leaf/10 -rotate-6" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+        <div className="max-w-7xl mx-auto px-4 pb-24 pt-14 md:pt-10 lg:pt-12 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 relative">
         <div className="lg:col-span-8">
-          <BlockRenderer blocks={page.blocks} serviceImages={page.media?.serviceImages ?? getServiceImages(slug || "")} />
+          <BlockRenderer blocks={page.blocks} serviceImages={getServiceImages(slug || "")} />
         </div>
         
         {/* Sidebar CTA */}
@@ -162,8 +170,8 @@ export default function ServicePage({ slug: slugProp }: { slug?: string }) {
             </div>
 
             <div className="rounded-3xl overflow-hidden border border-border shadow-natural relative aspect-[4/3]">
-              <LandscapeImage src={sidebarImage} alt={page.media?.sidebarImageAlt ?? `${page.h1} project by ${BRAND.shortName}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+              <img src={isCommercial ? galleryCom : galleryRes} alt={`${page.h1} project by ${BRAND.shortName}`} loading="lazy" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent"></div>
               <span className="absolute bottom-5 left-6 text-white font-extrabold text-lg">Recent Work</span>
             </div>
           </div>

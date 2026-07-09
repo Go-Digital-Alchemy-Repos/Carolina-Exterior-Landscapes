@@ -51,6 +51,11 @@ export function registerApiRoutes(app: Express) {
         companyName: branding.company_name || DEFAULT_BRANDING_VALUES.company_name,
         companyAddress: branding.company_address || DEFAULT_BRANDING_VALUES.company_address,
         companyPhoneNumbers: branding.company_phone_numbers || DEFAULT_BRANDING_VALUES.company_phone_numbers,
+        companyEmail: branding.company_email || DEFAULT_BRANDING_VALUES.company_email,
+        companyHours: branding.company_hours || DEFAULT_BRANDING_VALUES.company_hours,
+        companyLicense: branding.company_license || DEFAULT_BRANDING_VALUES.company_license,
+        companyLicensing: branding.company_licensing || DEFAULT_BRANDING_VALUES.company_licensing,
+        companyCredentials: branding.company_credentials || DEFAULT_BRANDING_VALUES.company_credentials,
         companyGoogleBusinessUrl: branding.company_google_business_url || null,
         bodyFont: branding.frontend_body_font || null,
         headingFont: branding.frontend_heading_font || null,
@@ -82,6 +87,13 @@ export function registerApiRoutes(app: Express) {
         footerLogoUrl: DEFAULT_BRANDING_VALUES.footer_logo_url,
         faviconUrl: DEFAULT_BRANDING_VALUES.favicon_url,
         companyName: DEFAULT_BRANDING_VALUES.company_name,
+        companyAddress: DEFAULT_BRANDING_VALUES.company_address,
+        companyPhoneNumbers: DEFAULT_BRANDING_VALUES.company_phone_numbers,
+        companyEmail: DEFAULT_BRANDING_VALUES.company_email,
+        companyHours: DEFAULT_BRANDING_VALUES.company_hours,
+        companyLicense: DEFAULT_BRANDING_VALUES.company_license,
+        companyLicensing: DEFAULT_BRANDING_VALUES.company_licensing,
+        companyCredentials: DEFAULT_BRANDING_VALUES.company_credentials,
       });
     }
   });

@@ -19,7 +19,11 @@ const CmsHybridPage = lazy(() =>
 );
 const CmsPreviewPage = lazy(() => import("@/features/public/cms-preview-page"));
 const StandaloneFormPage = lazy(() => import("@/features/public/standalone-form-page"));
-const LandscapeSite = lazy(() => import("@/features/landscape-site/landscape-router"));
+const LandscapeSite = lazy(() =>
+  import("@/features/landscape-site/landscape-router").then((module) => ({
+    default: module.LandscapeSite,
+  })),
+);
 
 const LoginPage = lazy(() => import("@/features/auth/login-page"));
 const ForgotPasswordPage = lazy(() => import("@/features/auth/forgot-password-page"));
@@ -205,13 +209,14 @@ function Router() {
         </Route>
 
         <Route path="/" component={LandscapeSiteRoute} />
+        <Route path="/contact/" component={LandscapeSiteRoute} />
         <Route path="/about" component={LandscapeSiteRoute} />
+        <Route path="/contact" component={LandscapeSiteRoute} />
         <Route path="/get-a-quote" component={LandscapeSiteRoute} />
         <Route path="/commercial-quote" component={LandscapeSiteRoute} />
         <Route path="/residential-lawn-maintenance" component={LandscapeSiteRoute} />
         <Route path="/residential-landscaping" component={LandscapeSiteRoute} />
         <Route path="/residential-hardscape" component={LandscapeSiteRoute} />
-        <Route path="/residential-pressure-washing" component={LandscapeSiteRoute} />
         <Route path="/mulching-and-planting" component={LandscapeSiteRoute} />
         <Route path="/drainage-solutions" component={LandscapeSiteRoute} />
         <Route path="/commercial" component={LandscapeSiteRoute} />
@@ -219,7 +224,6 @@ function Router() {
         <Route path="/commercial-landscaping" component={LandscapeSiteRoute} />
         <Route path="/commercial-hardscape" component={LandscapeSiteRoute} />
         <Route path="/commercial-drainage" component={LandscapeSiteRoute} />
-        <Route path="/commercial-pressure-washing" component={LandscapeSiteRoute} />
         <Route path="/hoa-services" component={LandscapeSiteRoute} />
         <Route path="/service-areas" component={LandscapeSiteRoute} />
         <Route path="/service-areas/:slug" component={LandscapeSiteRoute} />

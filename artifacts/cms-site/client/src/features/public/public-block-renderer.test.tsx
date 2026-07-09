@@ -106,11 +106,10 @@ describe("PublicBlockRenderer hero", () => {
 
     expect(image?.style.opacity).toBe("1");
     expect(image?.style.objectPosition).toBe("50% 50%");
-    expect(overlay?.style.opacity).toBe("0.45");
+    expect(overlay?.style.opacity).toBe("0.2");
     expect(gradient?.style.height).toBe("40%");
     expect(gradient?.style.opacity).toBe("0.75");
     expect(gradient?.style.backgroundImage).toContain("linear-gradient");
-    expect(gradient?.style.backgroundImage).toContain("rgb(0, 0, 0)");
     expect(heading?.className).toContain("max-[640px]:ml-[1vw]");
     expect(heading?.className).toContain("max-[640px]:max-w-[92%]");
     expect(heading?.className).toContain("max-[640px]:text-[clamp(2.375rem,9.5vw,3.25rem)]");
@@ -153,7 +152,7 @@ describe("PublicBlockRenderer hero", () => {
 
     const overlay = container.querySelector('[data-testid="hero-overlay"]') as HTMLDivElement | null;
 
-    expect(overlay?.style.opacity).toBe("0.45");
+    expect(overlay?.style.opacity).toBe("0.2");
   });
 
   it("applies custom hero opacity, overlay, and gradient settings", async () => {
@@ -185,6 +184,20 @@ describe("PublicBlockRenderer hero", () => {
     expect(gradient?.style.height).toBe("25%");
     expect(gradient?.style.opacity).toBe("0.33");
     expect(gradient?.style.backgroundImage).toContain("rgb(171, 205, 239)");
+  });
+
+  it("applies a custom hero pixel height when provided", async () => {
+    await act(async () => {
+      root!.render(
+        React.createElement(PublicBlockRenderer, {
+          block: heroBlock({ heroHeightPx: 740 }),
+        }),
+      );
+    });
+
+    const hero = container.querySelector('[data-testid="block-hero"]') as HTMLElement | null;
+
+    expect(hero?.style.minHeight).toBe("740px");
   });
 
   it("omits the hero gradient when disabled", async () => {

@@ -105,6 +105,7 @@ const SECTION_SETTING_KEYS = new Set([
   "videoBackgroundUrl",
   "overlayColor",
   "overlayOpacity",
+  "heroHeightPx",
   "layout",
   "minHeight",
 ]);
@@ -243,6 +244,7 @@ const CONTEXTUAL_PRIORITY: Record<string, number> = {
   gradientColor: 73,
   gradientOpacity: 74,
   gradientHeight: 75,
+  heroHeightPx: 76,
 };
 
 function humanizeBlockType(type: string) {
