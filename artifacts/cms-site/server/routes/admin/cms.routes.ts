@@ -8,7 +8,7 @@ import { createCmsPreviewToken } from "../../utils/cms-preview-token";
 
 const router = Router();
 
-const PAGE_TYPES = ["home", "landing", "service", "service-hub", "service-area", "location", "blog-index", "blog-post", "custom"] as const;
+const PAGE_TYPES = ["home", "landing", "service", "service-hub", "service-area", "location", "custom"] as const;
 const STATUSES = ["draft", "published", "scheduled", "archived"] as const;
 
 const createPageSchema = insertCmsPageSchema.extend({
@@ -24,7 +24,7 @@ const updatePageSchema = createPageSchema.partial().extend({
 });
 
 function normalizeSlug(slug: string): string {
-  return slug.toLowerCase().trim().replace(/\s+/g, "-");
+  return slug.toLowerCase().trim().replace(/\s+/g, "-").replace(/^\/+|\/+$/g, "");
 }
 
 function detachSeedKey(content: unknown) {

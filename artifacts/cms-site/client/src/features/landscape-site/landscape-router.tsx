@@ -2,7 +2,6 @@ import { Route, Switch } from "wouter";
 import { Layout } from "@/features/landscape-site/components/Layout";
 import Home from "@/features/landscape-site/pages/Home";
 import About from "@/features/landscape-site/pages/About";
-import Contact from "@/features/landscape-site/pages/Contact";
 import GetAQuote from "@/features/landscape-site/pages/GetAQuote";
 import CommercialQuote from "@/features/landscape-site/pages/CommercialQuote";
 import ServicePage from "@/features/landscape-site/pages/ServicePage";
@@ -36,7 +35,6 @@ export function LandscapeSite() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />
-        <Route path="/contact" component={Contact} />
         <Route path="/get-a-quote" component={GetAQuote} />
         <Route path="/commercial-quote" component={CommercialQuote} />
 

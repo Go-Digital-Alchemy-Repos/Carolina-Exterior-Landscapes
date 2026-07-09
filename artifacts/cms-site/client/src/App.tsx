@@ -64,6 +64,10 @@ function CmsSlugRoute({ params }: { params: { slug?: string } }) {
   return <CmsHybridPage slug={params.slug ?? ""} fallback={<NotFound />} />;
 }
 
+function ContactCmsRoute() {
+  return <CmsHybridPage slug="contact" fallback={<NotFound />} />;
+}
+
 function LandscapeSiteRoute() {
   return <LandscapeSite />;
 }
@@ -224,10 +228,10 @@ function Router() {
           </ProtectedRoute>
         </Route>
 
+        <Route path="/contact/" component={ContactCmsRoute} />
+        <Route path="/contact" component={ContactCmsRoute} />
         <Route path="/" component={LandscapeSiteRoute} />
-        <Route path="/contact/" component={LandscapeSiteRoute} />
         <Route path="/about" component={LandscapeSiteRoute} />
-        <Route path="/contact" component={LandscapeSiteRoute} />
         <Route path="/get-a-quote" component={LandscapeSiteRoute} />
         <Route path="/commercial-quote" component={LandscapeSiteRoute} />
         <Route path="/residential-lawn-maintenance" component={LandscapeSiteRoute} />

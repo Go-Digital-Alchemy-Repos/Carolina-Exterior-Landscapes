@@ -269,7 +269,7 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
   const { data: page, isLoading, error } = useQuery<CmsPage>({
     queryKey: ["/api/cms/pages/by-slug", slug],
     queryFn: async () => {
-      const res = await fetch(`/api/cms/pages/by-slug/${slug}`, { credentials: "include" });
+      const res = await fetch(`/api/cms/pages/by-slug/${encodeURIComponent(slug)}`, { credentials: "include" });
       if (res.status === 404) {
         throw new CmsNotFoundError(slug);
       }

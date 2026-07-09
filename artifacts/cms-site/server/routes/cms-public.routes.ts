@@ -7,6 +7,23 @@ import { verifyCmsPreviewToken } from "../utils/cms-preview-token";
 
 const router = Router();
 
+const PUBLIC_PAGE_SLUG_ALIASES: Record<string, string> = {
+  contact: "66e31a59-5278-4708-bcba-0da6cb06e154",
+};
+
+function normalizePublicSlug(slug: string) {
+  return slug.toLowerCase().trim().replace(/^\/+|\/+$/g, "");
+}
+
+async function getPublicPageBySlug(slug: string) {
+  const normalizedSlug = normalizePublicSlug(slug);
+  const page = await storage.cmsPages.getPageBySlug(normalizedSlug);
+  if (page) return page;
+
+  const aliasId = PUBLIC_PAGE_SLUG_ALIASES[normalizedSlug];
+  return aliasId ? storage.cmsPages.getPage(aliasId) : undefined;
+}
+
 router.get(
   "/galleries/:id",
   asyncHandler(async (req, res) => {
@@ -40,7 +57,7 @@ router.get(
   "/pages/by-slug/:slug",
   asyncHandler(async (req, res) => {
     const slug = paramString(req.params.slug);
-    const page = await storage.cmsPages.getPageBySlug(slug);
+    const page = await getPublicPageBySlug(slug);
     if (!page || page.status !== "published") {
       return res.status(404).json({ error: "Page not found" });
     }
