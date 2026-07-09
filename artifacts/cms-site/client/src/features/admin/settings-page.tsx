@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -54,9 +55,39 @@ export default function AdminSettingsPage() {
     },
   });
 
+  const saveCodeSnippets = useMutation({
+    mutationFn: async (payload: { headSnippets: string; headerSnippets: string; footerSnippets: string }) => {
+      await Promise.all([
+        apiRequest("PUT", "/api/admin/settings", {
+          category: "code_snippets",
+          key: "head_snippets",
+          value: payload.headSnippets,
+          isSecret: false,
+        }),
+        apiRequest("PUT", "/api/admin/settings", {
+          category: "code_snippets",
+          key: "header_snippets",
+          value: payload.headerSnippets,
+          isSecret: false,
+        }),
+        apiRequest("PUT", "/api/admin/settings", {
+          category: "code_snippets",
+          key: "footer_snippets",
+          value: payload.footerSnippets,
+          isSecret: false,
+        }),
+      ]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      toast({ title: "Code snippets saved" });
+    },
+  });
+
   const mailgun = settings.mailgun ?? {};
   const analytics = settings.google_analytics ?? {};
   const googleReviews = settings.google_reviews ?? {};
+  const codeSnippets = settings.code_snippets ?? {};
 
   return (
     <AdminSidebar>
@@ -66,6 +97,13 @@ export default function AdminSettingsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Generic backend configuration for email, analytics, and integrations.</p>
         </div>
 
+        <Tabs defaultValue="general" className="space-y-6">
+          <TabsList className="flex h-auto flex-wrap gap-1">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="code-snippets">Code Snippets</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general" className="mt-0 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Email Delivery</CardTitle>
@@ -243,6 +281,82 @@ export default function AdminSettingsPage() {
             ))}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="code-snippets" className="mt-0" forceMount>
+            <Card>
+              <CardHeader>
+                <CardTitle>Code Snippets</CardTitle>
+                <CardDescription>
+                  Add verification tags, analytics pixels, and trusted third-party snippets to public site pages.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  className="space-y-5"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const formData = new FormData(event.currentTarget);
+                    saveCodeSnippets.mutate({
+                      headSnippets: String(formData.get("headSnippets") ?? ""),
+                      headerSnippets: String(formData.get("headerSnippets") ?? ""),
+                      footerSnippets: String(formData.get("footerSnippets") ?? ""),
+                    });
+                  }}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="head-snippets">Head Tags</Label>
+                    <Textarea
+                      id="head-snippets"
+                      name="headSnippets"
+                      defaultValue={codeSnippets.head_snippets?.value ?? ""}
+                      className="min-h-40 font-mono text-xs"
+                      spellCheck={false}
+                      placeholder={'<meta name="google-site-verification" content="..." />'}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Injected before the closing head tag on public pages.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="header-snippets">Header Tags</Label>
+                    <Textarea
+                      id="header-snippets"
+                      name="headerSnippets"
+                      defaultValue={codeSnippets.header_snippets?.value ?? ""}
+                      className="min-h-40 font-mono text-xs"
+                      spellCheck={false}
+                      placeholder="<!-- Tag manager noscript or body-start snippet -->"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Injected immediately after the opening body tag on public pages.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="footer-snippets">Footer Tags</Label>
+                    <Textarea
+                      id="footer-snippets"
+                      name="footerSnippets"
+                      defaultValue={codeSnippets.footer_snippets?.value ?? ""}
+                      className="min-h-40 font-mono text-xs"
+                      spellCheck={false}
+                      placeholder="<!-- Chat widgets, pixels, or body-end snippets -->"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Injected before the closing body tag on public pages.
+                    </p>
+                  </div>
+
+                  <Button type="submit" disabled={saveCodeSnippets.isPending}>
+                    {saveCodeSnippets.isPending ? "Saving..." : "Save Code Snippets"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminSidebar>
   );

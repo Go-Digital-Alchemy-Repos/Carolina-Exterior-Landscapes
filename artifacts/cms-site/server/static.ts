@@ -4,6 +4,7 @@ import path from "path";
 import { isLandscapePublicRoute } from "./public-landscape-routes";
 import { isRetiredPublicPath } from "./retired-public-routes";
 import { getPrerenderedPublicFilePath } from "./services/public-prerender.service";
+import { getSiteCodeSnippets, injectSiteCodeSnippets } from "./services/code-snippets.service";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
@@ -22,14 +23,6 @@ export function serveStatic(app: Express) {
     return cachedIndexTemplate;
   }
 
-  async function sendPrerenderedPublicHtml(pathname: string, res: Response) {
-    const htmlPath = getPrerenderedPublicFilePath(distPath, pathname);
-    if (!htmlPath || !fs.existsSync(htmlPath)) return false;
-    res.setHeader("Cache-Control", "no-cache");
-    res.type("html").send(await fs.promises.readFile(htmlPath, "utf-8"));
-    return true;
-  }
-
   function isClientOnlyRoute(pathname: string) {
     return (
       pathname.startsWith("/admin") ||
@@ -38,6 +31,31 @@ export function serveStatic(app: Express) {
       pathname.startsWith("/preview") ||
       pathname.startsWith("/forms/")
     );
+  }
+
+  function shouldInjectCodeSnippets(pathname: string) {
+    return !isClientOnlyRoute(pathname) && !pathname.startsWith("/api") && !pathname.startsWith("/uploads");
+  }
+
+  async function renderHtml(pathname: string, html: string) {
+    if (!shouldInjectCodeSnippets(pathname)) return html;
+    return injectSiteCodeSnippets(html, await getSiteCodeSnippets());
+  }
+
+  async function renderIndexTemplate(pathname: string) {
+    return renderHtml(pathname, await getIndexTemplate());
+  }
+
+  async function sendPrerenderedPublicHtml(pathname: string, res: Response) {
+    const htmlPath = getPrerenderedPublicFilePath(distPath, pathname);
+    if (!htmlPath || !fs.existsSync(htmlPath)) return false;
+    res.setHeader("Cache-Control", "no-cache");
+    res.type("html").send(await renderHtml(pathname, await fs.promises.readFile(htmlPath, "utf-8")));
+    return true;
+  }
+
+  function looksLikeAssetRequest(pathname: string) {
+    return /\.[a-z0-9]{2,8}$/i.test(pathname);
   }
 
   app.use(express.static(distPath, {
@@ -73,11 +91,18 @@ export function serveStatic(app: Express) {
       !pathname.startsWith("/api") &&
       !pathname.startsWith("/uploads")
     ) {
-      res.status(404).type("text").set("Cache-Control", "no-cache").send("Not found");
+      if (looksLikeAssetRequest(pathname)) {
+        res.status(404).type("text").set("Cache-Control", "no-cache").send("Not found");
+        return;
+      }
+
+      const template = await renderIndexTemplate(pathname);
+      res.status(404).setHeader("Cache-Control", "no-cache");
+      res.type("html").send(template);
       return;
     }
 
-    const template = await getIndexTemplate();
+    const template = await renderIndexTemplate(pathname);
     res.setHeader(
       "Cache-Control",
       req.path.startsWith("/admin") || req.path.startsWith("/auth")

@@ -5,6 +5,7 @@ import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
+import { getSiteCodeSnippets, injectSiteCodeSnippets } from "./services/code-snippets.service";
 
 const viteLogger = createLogger();
 
@@ -31,8 +32,19 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
+  function isClientOnlyRoute(pathname: string) {
+    return (
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/setup") ||
+      pathname.startsWith("/preview") ||
+      pathname.startsWith("/forms/")
+    );
+  }
+
   app.use("/{*path}", async (req, res, next) => {
     const url = req.originalUrl;
+    const pathname = new URL(url || "/", "http://localhost").pathname || "/";
 
     try {
       const clientTemplate = path.resolve(
@@ -48,6 +60,9 @@ export async function setupVite(server: Server, app: Express) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
+      if (!isClientOnlyRoute(pathname) && !pathname.startsWith("/api") && !pathname.startsWith("/uploads")) {
+        template = injectSiteCodeSnippets(template, await getSiteCodeSnippets());
+      }
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {

@@ -26,9 +26,19 @@ describe("AdminSettingsPage", () => {
   it("renders Google Reviews API integration settings", () => {
     const html = renderSettingsPage();
 
-    expect(html).toContain("Integrations");
+    expect(html).toContain("General");
     expect(html).toContain("Google Reviews API");
     expect(html).toContain("Google Place ID");
     expect(html).toContain("Google Places API Key");
+  });
+
+  it("renders the code snippets settings tab", () => {
+    const html = renderSettingsPage();
+
+    expect(html).toContain("Code Snippets");
+    expect(html).toContain("Head Tags");
+    expect(html).toContain("Header Tags");
+    expect(html).toContain("Footer Tags");
+    expect(html).toContain("Save Code Snippets");
   });
 });
