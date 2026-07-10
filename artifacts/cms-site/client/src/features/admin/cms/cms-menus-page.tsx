@@ -1,5 +1,22 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { EditorLockBanner } from "@/components/shared/editor-lock-banner";
@@ -66,6 +83,43 @@ const LEGACY_LOCATION_OPTIONS = LEGACY_MENU_LOCATIONS.map((location) => ({
   label: MENU_LOCATION_LABELS[location],
 }));
 
+export function reorderMenuItems(items: MenuItem[], activeId: string, overId: string): MenuItem[] {
+  const oldIndex = items.findIndex((item) => item.id === activeId);
+  const newIndex = items.findIndex((item) => item.id === overId);
+  if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return items;
+  return arrayMove(items, oldIndex, newIndex);
+}
+
+function SortableMenuItemList({
+  items,
+  onReorder,
+  className,
+  children,
+}: {
+  items: MenuItem[];
+  onReorder: (items: MenuItem[]) => void;
+  className?: string;
+  children: (item: MenuItem, index: number) => ReactNode;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    onReorder(reorderMenuItems(items, String(active.id), String(over.id)));
+  };
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+        <div className={className}>{items.map(children)}</div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 function MenuItemEditor({
   item,
   depth,
@@ -90,6 +144,15 @@ function MenuItemEditor({
   onOutdent: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
+  const {
+    attributes,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
   const hasChildren = item.children && item.children.length > 0;
   const canNest = depth < 3;
 
@@ -146,9 +209,24 @@ function MenuItemEditor({
   }, [item, onUpdate]);
 
   return (
-    <div className="border rounded-lg bg-card" data-testid={`menu-item-${item.id}`}>
+    <div
+      ref={setNodeRef}
+      className={cn("border rounded-lg bg-card", isDragging && "relative z-10 opacity-70 shadow-lg")}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      data-testid={`menu-item-${item.id}`}
+    >
       <div className="flex items-center gap-2 p-3">
-        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 cursor-grab" />
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          className="shrink-0 touch-none cursor-grab rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+          aria-label={`Drag to reorder ${item.label || "menu item"}`}
+          data-testid={`drag-handle-${item.id}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" aria-hidden="true" />
+        </button>
 
         {hasChildren ? (
           <button
@@ -233,8 +311,12 @@ function MenuItemEditor({
       </div>
 
       {hasChildren && expanded && (
-        <div className="pl-6 pr-3 pb-3 space-y-2">
-          {item.children.map((child, cIdx) => (
+        <SortableMenuItemList
+          items={item.children}
+          onReorder={(children) => onUpdate(item.id, { children })}
+          className="pl-6 pr-3 pb-3 space-y-2"
+        >
+          {(child, cIdx) => (
             <MenuItemEditor
               key={child.id}
               item={child}
@@ -245,7 +327,7 @@ function MenuItemEditor({
               onDelete={deleteChild}
               onMoveUp={moveChildUp}
               onMoveDown={moveChildDown}
-              onIndent={(childId) => {
+              onIndent={(_childId) => {
                 if (cIdx === 0) return;
                 const arr = [...item.children];
                 const prevSibling = arr[cIdx - 1];
@@ -256,8 +338,8 @@ function MenuItemEditor({
               }}
               onOutdent={onOutdent}
             />
-          ))}
-        </div>
+          )}
+        </SortableMenuItemList>
       )}
     </div>
   );
@@ -378,7 +460,6 @@ function MenuEditor({
 
   function outdentFromChildren(parent: MenuItem, targetId: string): { item: MenuItem; extracted?: MenuItem } {
     const newChildren: MenuItem[] = [];
-    let extracted: MenuItem | undefined;
     for (const child of parent.children) {
       const childIdx = child.children.findIndex((c) => c.id === targetId);
       if (childIdx >= 0) {
@@ -494,8 +575,8 @@ function MenuEditor({
             <p className="text-sm">No menu items yet. Click "Add Item" to get started.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {items.map((item, idx) => (
+          <SortableMenuItemList items={items} onReorder={setItems} className="space-y-2">
+            {(item, idx) => (
               <MenuItemEditor
                 key={item.id}
                 item={item}
@@ -509,8 +590,8 @@ function MenuEditor({
                 onIndent={indentItem}
                 onOutdent={outdentItem}
               />
-            ))}
-          </div>
+            )}
+          </SortableMenuItemList>
         )}
       </div>
     </div>
