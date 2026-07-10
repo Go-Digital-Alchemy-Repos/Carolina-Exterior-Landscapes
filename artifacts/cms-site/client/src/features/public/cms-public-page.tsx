@@ -65,10 +65,11 @@ function isLandscapeContent(content: unknown) {
   return Boolean(content && typeof content === "object" && (content as { source?: unknown }).source === "carolina-landscape-v1");
 }
 
-type LandscapeTone = "dark" | "stone" | "sand" | "white";
+type LandscapeTone = "cta" | "dark" | "stone" | "sand" | "white";
 
 function landscapeSectionTone(block: BlockInstance, index: number): LandscapeTone {
-  if (block.type === "hero" || block.type === "cta") return "dark";
+  if (block.type === "cta") return "cta";
+  if (block.type === "hero") return "dark";
   const background = typeof block.props?.background === "string" ? block.props.background : "";
   if (background === "dark") return "dark";
   if (background === "muted" || background === "off-white") return "stone";
@@ -76,6 +77,7 @@ function landscapeSectionTone(block: BlockInstance, index: number): LandscapeTon
 }
 
 function landscapeToneColor(tone: LandscapeTone) {
+  if (tone === "cta") return "hsl(var(--brand-sand))";
   if (tone === "dark") return "hsl(var(--foreground))";
   if (tone === "stone") return "hsl(var(--surface-stone))";
   if (tone === "sand") return "hsl(var(--surface-sand))";
@@ -91,7 +93,7 @@ function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
         const showBotanical = block.type === "cards-grid" || block.type === "faq" || block.type === "rich-text";
         return (
           <div key={block.id}>
-            {index > 0 ? (
+            {index > 0 && block.type !== "cta" ? (
               <SectionDivider
                 variant={index % 3 === 0 ? "leaf" : "hills"}
                 bgColor={landscapeToneColor(previousTone)}

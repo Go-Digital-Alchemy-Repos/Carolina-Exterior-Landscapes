@@ -17,7 +17,7 @@ import { GalleryRenderer } from "@/components/shared/gallery-renderer";
 import { LazyPublicFormRenderer } from "@/components/forms/lazy-public-form-renderer";
 import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
 import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
-import { CtaBackdrop } from "@/features/landscape-site/components/CtaBackdrop";
+import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
 import { ServiceAreaMap } from "@/features/landscape-site/components/ServiceAreaMap";
 import type { BlockInstance } from "@/features/admin/cms/builder/block-registry";
 import {
@@ -1455,8 +1455,11 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
   }
 
   if (block.type === "cta") {
+    const eyebrow = str(props.eyebrow, "Start Your Project");
     const primaryText = str(props.primaryText);
     const primaryLink = str(props.primaryLink);
+    const secondaryText = str(props.secondaryText);
+    const secondaryLink = str(props.secondaryLink);
     const buttons = items(props.buttons);
     if (str(props.variant) === "inline") {
       return (
@@ -1479,25 +1482,62 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         </section>
       );
     }
+    const actions = buttons.length > 0
+      ? buttons
+      : [
+          { label: primaryText, path: primaryLink },
+          { label: secondaryText, path: secondaryLink },
+        ].filter((action) => action.label && action.path);
+
     return (
-      <section className="relative overflow-hidden bg-[hsl(var(--brand-forest))] text-white" data-testid="block-cta">
-        <CtaBackdrop />
-        <div className="relative z-10 mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
-          <h2 className="text-3xl font-semibold tracking-normal">{str(props.heading, "Ready to get started?")}</h2>
-          {plainText(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-white/75">{plainText(props.subheading)}</p> : null}
-          {buttons.length > 0 || (primaryText && primaryLink) ? (
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
-              {buttons.length > 0 ? (
-                buttons.map((button, index) => <ActionButton key={index} action={button} variant={index === 0 ? "default" : "secondary"} />)
-              ) : (
-                <Button asChild>
-                  <Link href={primaryLink}>{primaryText}</Link>
-                </Button>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </section>
+      <div data-testid="block-cta">
+        <SectionDivider
+          variant="hills"
+          bgColor="hsl(var(--surface-stone))"
+          fillColor="hsl(var(--brand-sand))"
+          heightClassName="h-14 md:h-20 lg:h-24"
+        />
+        <section className="relative isolate flex min-h-[560px] items-center overflow-hidden bg-[hsl(var(--brand-sand))] text-[hsl(var(--brand-forest))] md:min-h-[640px]">
+          <div className="absolute inset-0 bg-contours opacity-60" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-primary/10" aria-hidden="true" />
+          <BotanicalAccent
+            variant="fern"
+            className="absolute -left-2 bottom-16 hidden h-80 w-auto text-[hsl(var(--brand-forest)/0.15)] md:block lg:left-16"
+          />
+          <div className="relative z-10 mx-auto w-full max-w-6xl px-5 py-24 text-center sm:px-8 md:py-28">
+            {eyebrow ? (
+              <span className="inline-flex rounded-full border border-white/75 bg-white/35 px-5 py-2 text-xs font-extrabold uppercase tracking-[0.14em] shadow-sm">
+                {eyebrow}
+              </span>
+            ) : null}
+            <h2 className="mx-auto mt-8 max-w-5xl font-heading text-[clamp(2.6rem,5vw,4.75rem)] font-bold leading-[1.05] tracking-normal">
+              {str(props.heading, "Ready to transform your property?")}
+            </h2>
+            {plainText(props.subheading) ? (
+              <p className="mx-auto mt-8 max-w-3xl text-lg font-medium leading-relaxed text-[hsl(var(--brand-forest)/0.88)] md:text-2xl">
+                {plainText(props.subheading)}
+              </p>
+            ) : null}
+            {actions.length > 0 ? (
+              <div className="mx-auto mt-12 flex max-w-4xl flex-col justify-center gap-4 sm:flex-row sm:gap-5">
+                {actions.map((action, index) => {
+                  const label = str(action.label);
+                  const target = linkTarget(action);
+                  if (!label || !target) return null;
+                  const linkClassName = index === 0
+                    ? "inline-flex min-h-16 min-w-0 items-center justify-center rounded-full bg-primary px-8 py-4 text-center text-base font-extrabold uppercase text-primary-foreground shadow-md transition-colors hover:bg-primary/90 sm:min-w-[22rem]"
+                    : "inline-flex min-h-16 min-w-0 items-center justify-center rounded-full border border-[hsl(var(--brand-forest)/0.25)] bg-transparent px-8 py-4 text-center text-base font-extrabold uppercase text-[hsl(var(--brand-forest))] transition-colors hover:bg-[hsl(var(--brand-forest))] hover:text-white sm:min-w-[18rem]";
+                  return target.startsWith("http") || target.startsWith("tel:") || target.startsWith("mailto:") ? (
+                    <a key={index} href={target} className={linkClassName}>{label}</a>
+                  ) : (
+                    <Link key={index} href={target} className={linkClassName}>{label}</Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
     );
   }
 

@@ -99,6 +99,8 @@ function placeholderValueForProp(prop: PropDef, existingValue: unknown): unknown
 }
 
 function createPlaceholderBlock(block: BlockDef): BlockInstance {
+  if (block.type === "cta") return createBlock(block.type);
+
   const instance = createBlock(block.type);
   const nextProps: Record<string, unknown> = { ...instance.props };
 
@@ -155,7 +157,7 @@ export async function ensureSystemCmsSections(options?: { refreshExisting?: bool
       continue;
     }
 
-    if (refreshExisting) {
+    if (refreshExisting || block.type === "cta") {
       await storage.cmsSections.updateSection(existing.id, {
         name: starterSection.name,
         description: starterSection.description,

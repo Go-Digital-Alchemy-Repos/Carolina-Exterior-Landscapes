@@ -62,6 +62,7 @@ type CmsBuilderBlock = {
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
 const LANDSCAPE_CMS_WIRING_VERSION = 3;
 const LANDSCAPE_QUOTE_LAYOUT_VERSION = 1;
+const LANDSCAPE_CTA_LAYOUT_VERSION = 1;
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 const CONTACT_PAGE_SLUG = "contact";
 const NOT_FOUND_PAGE_SLUG = "404";
@@ -681,10 +682,13 @@ function buildBuilderBlocks(
       id: `${slug}-cta`,
       type: "cta",
       props: {
-        heading: "Ready to improve your outdoor space?",
-        subheading: "<p>Tell us about your property and we will help you choose the right next step.</p>",
-        primaryText: isCommercial ? "Request a Commercial Proposal" : "Request a Quote",
-        primaryLink: isCommercial ? "/commercial-quote" : "/get-a-quote",
+        eyebrow: "Start Your Project",
+        heading: "Ready to transform your property?",
+        subheading: "Contact Carolina Exterior Landscapes today for a free estimate on your residential or commercial landscaping needs.",
+        primaryText: "Request Residential Quote",
+        primaryLink: "/get-a-quote",
+        secondaryText: "Commercial Inquiry",
+        secondaryLink: "/commercial-quote",
       },
     });
   }
@@ -711,6 +715,8 @@ function pageRecord(
   },
 ): InsertCmsPage {
   const landscapeData = withMedia(data, options.slug);
+  const builderBlocks = buildBuilderBlocks(data, options);
+  const hasStandardCta = builderBlocks.some((block) => block.type === "cta");
   return {
     title: options.title,
     slug: options.slug,
@@ -722,12 +728,13 @@ function pageRecord(
       source: LANDSCAPE_CONTENT_VERSION,
       landscapeCmsWiringVersion: LANDSCAPE_CMS_WIRING_VERSION,
       ...(options.slug.includes("quote") ? { landscapeQuoteLayoutVersion: LANDSCAPE_QUOTE_LAYOUT_VERSION } : {}),
+      ...(hasStandardCta ? { landscapeCtaLayoutVersion: LANDSCAPE_CTA_LAYOUT_VERSION } : {}),
       landscape: {
         kind: options.kind,
         path: options.path,
         data: landscapeData,
       },
-      blocks: buildBuilderBlocks(data, options),
+      blocks: builderBlocks,
     },
     seoTitle: options.seoTitle,
     seoDescription: options.seoDescription,
@@ -780,6 +787,35 @@ function landscapeQuoteLayoutVersion(content: unknown): number {
   if (!content || typeof content !== "object") return 0;
   const version = (content as { landscapeQuoteLayoutVersion?: unknown }).landscapeQuoteLayoutVersion;
   return typeof version === "number" ? version : 0;
+}
+
+function landscapeCtaLayoutVersion(content: unknown): number {
+  if (!content || typeof content !== "object") return 0;
+  const version = (content as { landscapeCtaLayoutVersion?: unknown }).landscapeCtaLayoutVersion;
+  return typeof version === "number" ? version : 0;
+}
+
+function migrateStandardCta(existingContent: unknown, seedContent: unknown) {
+  const existing = cloneSeedContent(existingContent) as Record<string, unknown>;
+  const seed = cloneSeedContent(seedContent) as Record<string, unknown>;
+  const existingBlocks = Array.isArray(existing.blocks) ? existing.blocks as CmsBuilderBlock[] : [];
+  const seedBlocks = Array.isArray(seed.blocks) ? seed.blocks as CmsBuilderBlock[] : [];
+  const standardCta = seedBlocks.find((block) => block.type === "cta");
+  if (!standardCta) return existingContent as InsertCmsPage["content"];
+
+  let replaced = false;
+  const blocks = existingBlocks.map((block) => {
+    if (block.type !== "cta") return block;
+    replaced = true;
+    return standardCta;
+  });
+  if (!replaced) blocks.push(standardCta);
+
+  return {
+    ...existing,
+    landscapeCtaLayoutVersion: LANDSCAPE_CTA_LAYOUT_VERSION,
+    blocks,
+  } as InsertCmsPage["content"];
 }
 
 function faqBlocksFromPages(pages: Record<string, LandscapePage>, slugs: string[]): LandscapeBlock[] {
@@ -1249,6 +1285,9 @@ export async function ensureLandscapeCmsContent() {
 
     const needsQuoteLayoutMigration = page.slug.includes("quote")
       && landscapeQuoteLayoutVersion(existing.content) < LANDSCAPE_QUOTE_LAYOUT_VERSION;
+    const seedHasStandardCta = landscapeCtaLayoutVersion(page.content) === LANDSCAPE_CTA_LAYOUT_VERSION;
+    const needsCtaLayoutMigration = seedHasStandardCta
+      && landscapeCtaLayoutVersion(existing.content) < LANDSCAPE_CTA_LAYOUT_VERSION;
     if (
       !isLandscapePageContent(existing.content)
       || landscapeCmsWiringVersion(existing.content) < LANDSCAPE_CMS_WIRING_VERSION
@@ -1258,6 +1297,13 @@ export async function ensureLandscapeCmsContent() {
         ...page,
         publishedAt: existing.publishedAt ?? page.publishedAt,
         content: cloneSeedContent(page.content),
+      });
+      continue;
+    }
+
+    if (needsCtaLayoutMigration) {
+      await storage.cmsPages.updatePage(existing.id, {
+        content: migrateStandardCta(existing.content, page.content),
       });
     }
   }

@@ -5,7 +5,16 @@ import { createFallbackBlockDef } from "@/features/admin/cms/builder/block-edito
 describe("block registry compatibility helpers", () => {
   it("keeps retained block types direct and retired aliases unavailable", () => {
     expect(normalizeBlockType("cta")).toBe("cta");
-    expect(getBlockDef("cta")?.type).toBe("cta");
+    expect(getBlockDef("cta")).toEqual(
+      expect.objectContaining({
+        type: "cta",
+        defaultProps: expect.objectContaining({
+          eyebrow: "Start Your Project",
+          primaryLink: "/get-a-quote",
+          secondaryLink: "/commercial-quote",
+        }),
+      }),
+    );
     expect(getBlockDef("service-area-map")).toEqual(
       expect.objectContaining({
         label: "Service Area Map",

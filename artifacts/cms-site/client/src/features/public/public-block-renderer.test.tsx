@@ -839,4 +839,32 @@ describe("PublicBlockRenderer hero", () => {
     expect(renderedImage?.className).toContain("aspect-[5/4]");
     expect(renderedImage?.className).not.toContain("aspect-[4/3]");
   });
+
+  it("renders the standard project CTA with residential and commercial paths", async () => {
+    await act(async () => {
+      root!.render(
+        React.createElement(PublicBlockRenderer, {
+          block: {
+            id: "standard-cta",
+            type: "cta",
+            props: {
+              eyebrow: "Start Your Project",
+              heading: "Ready to transform your property?",
+              subheading: "Contact us today for a free estimate.",
+              primaryText: "Request Residential Quote",
+              primaryLink: "/get-a-quote",
+              secondaryText: "Commercial Inquiry",
+              secondaryLink: "/commercial-quote",
+            },
+          },
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Start Your Project");
+    expect(container.querySelector("h2")?.className).toContain("font-heading");
+    expect(container.querySelector('a[href="/get-a-quote"]')?.textContent).toBe("Request Residential Quote");
+    expect(container.querySelector('a[href="/commercial-quote"]')?.textContent).toBe("Commercial Inquiry");
+    expect(container.querySelector('[data-testid="block-cta"] .bg-contours')).not.toBeNull();
+  });
 });
