@@ -38,7 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus } from "lucide-react";
+import { ClipboardList, Database, MessageSquareText, Plus } from "lucide-react";
 import type { CrmLead, CrmLeadDetail, CrmLeadStage } from "@shared/schema";
 
 const stages: Array<{ value: CrmLeadStage; label: string; className: string }> = [
@@ -502,9 +502,18 @@ export default function CrmPage() {
                   </CardContent>
                 </Card>
                 <TabsList>
-                  <TabsTrigger value="notes">Notes</TabsTrigger>
-                  <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                  <TabsTrigger value="data">Data</TabsTrigger>
+                  <TabsTrigger value="notes" className="gap-2">
+                    <MessageSquareText className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                    Notes
+                  </TabsTrigger>
+                  <TabsTrigger value="tasks" className="gap-2">
+                    <ClipboardList className="h-4 w-4 text-orange-600" aria-hidden="true" />
+                    Tasks
+                  </TabsTrigger>
+                  <TabsTrigger value="data" className="gap-2">
+                    <Database className="h-4 w-4 text-cyan-600" aria-hidden="true" />
+                    Data
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="notes" className="space-y-3">
                   <Textarea
