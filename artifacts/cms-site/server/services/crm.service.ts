@@ -20,14 +20,14 @@ export function inferCrmLeadFromFormData(data: Record<string, unknown>) {
   const fullNameObject = object(data.fullName);
   const objectFullName = [text(fullNameObject.firstName), text(fullNameObject.lastName)].filter(Boolean).join(" ") || text(fullNameObject.fullName);
   const splitName = [text(data.firstName), text(data.lastName)].filter(Boolean).join(" ");
-  const email = text(data.email);
+  const email = text(data.email) || text(data.contactEmail);
 
   return {
-    name: text(data.name) || text(data.fullName) || objectName || objectFullName || splitName || email || "Website Lead",
+    name: text(data.name) || text(data.fullName) || text(data.contactName) || objectName || objectFullName || splitName || email || "Website Lead",
     email: email || null,
-    phone: text(data.phone) || text(data.tel) || null,
-    company: text(data.company) || text(data.organization) || null,
-    message: text(data.message) || text(data.comments) || text(data.details) || null,
+    phone: text(data.phone) || text(data.tel) || text(data.contactPhone) || null,
+    company: text(data.company) || text(data.companyName) || text(data.organization) || null,
+    message: text(data.message) || text(data.notes) || text(data.comments) || text(data.details) || null,
   };
 }
 
@@ -84,13 +84,15 @@ export async function createCrmLeadFromFormSubmission({
   formSubmissionId: string;
   data: Record<string, unknown>;
 }) {
-  return createOrUpdateCrmLead({
+  const parsed = crmLeadInputSchema.parse({
     ...inferCrmLeadFromFormData(data),
     source: "website_form",
     formSubmissionId,
     formData: data,
     metadata: { formName },
   });
+  const lead = await storage.crm.createLead(parsed);
+  return { lead, duplicate: false };
 }
 
 export async function ensureClientForWonLead(lead: CrmLead, createdById?: string): Promise<CrmClient> {

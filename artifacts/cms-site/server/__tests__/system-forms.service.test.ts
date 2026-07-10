@@ -79,7 +79,7 @@ describe("ensureSystemForms", () => {
     expect(contactUpdate[1].fields.length).toBeGreaterThan(1);
     expect(contactUpdate[1].fields.find((field: { key: string }) => field.key === "city")?.placeholder).toBe("Waxhaw");
     expect(contactUpdate[1].settings.successMessage).toBe("Thank you! We have received your request and will be in touch shortly to schedule your consultation.");
-    expect(contactUpdate[1].settings.createCrmLead).toBe(false);
+    expect(contactUpdate[1].settings.createCrmLead).toBe(true);
   });
 
   it("creates missing system forms on a clean install", async () => {
@@ -97,6 +97,9 @@ describe("ensureSystemForms", () => {
       ])
     );
     const contactForm = mockCreate.mock.calls.find(([form]) => form.slug === "residential-quote")?.[0];
+    const commercialForm = mockCreate.mock.calls.find(([form]) => form.slug === "commercial-quote")?.[0];
+    expect(contactForm.settings.createCrmLead).toBe(true);
+    expect(commercialForm.settings.createCrmLead).toBe(true);
     const serviceField = contactForm.fields.find((field: { key: string }) => field.key === "servicesInterested");
     expect(serviceField.options).toEqual(
       expect.arrayContaining([

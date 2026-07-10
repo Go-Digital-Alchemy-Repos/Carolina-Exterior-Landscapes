@@ -6,6 +6,7 @@ import { AppError } from "../middleware/error-handler";
 import { createCrmLeadFromFormSubmission } from "./crm.service";
 
 const CONTACT_FORM_OWNER_EMAIL = "van@carolinaexteriorlandscapes.com";
+const CRM_PIPELINE_FORM_SLUGS = new Set(["contact-form", "residential-quote", "commercial-quote"]);
 
 function normalizeFormSettings(form: CmsForm) {
   const settings = (typeof form.settings === "object" && form.settings
@@ -278,7 +279,7 @@ async function notifyAssignedUsers(form: CmsForm, data: Record<string, unknown>,
 
 async function handleCrmLeadEffect(form: CmsForm, data: Record<string, unknown>, formSubmissionId: string) {
   const settings = normalizeFormSettings(form);
-  if (!settings.createCrmLead) return;
+  if (!settings.createCrmLead && !CRM_PIPELINE_FORM_SLUGS.has(form.slug)) return;
 
   try {
     await createCrmLeadFromFormSubmission({ formName: form.name, formSubmissionId, data });

@@ -118,6 +118,19 @@ describe("submitManagedFormBySlug", () => {
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Property Type: Commercial");
     expect(mockGetFormNotificationUsers).not.toHaveBeenCalled();
     expect(mockGetUsersByRole).not.toHaveBeenCalled();
+    expect(mockCreateCrmLeadFromFormSubmission).toHaveBeenCalledWith({
+      formName: "Contact Form",
+      formSubmissionId: "submission-1",
+      data: {
+        fullName: "Van Orcutt",
+        phone: "(803) 995-1522",
+        email: "van@example.com",
+        service: "Security Camera Installation",
+        propertyType: "Commercial",
+        city: "Fort Mill",
+        message: "Need cameras for a warehouse.",
+      },
+    });
   });
 
   it("emails residential quote submissions through the contact notification path", async () => {
@@ -202,4 +215,26 @@ describe("submitManagedFormBySlug", () => {
 
     expect(mockCreateCrmLeadFromFormSubmission).not.toHaveBeenCalled();
   });
+
+  it.each(["residential-quote", "commercial-quote"])(
+    "always sends %s submissions to the CRM pipeline",
+    async (slug) => {
+      mockGetPublicBySlug.mockResolvedValue({
+        id: `${slug}-id`,
+        name: "Quote Form",
+        slug,
+        fields: [contactField("name", "Name"), contactField("email", "Email", "email")],
+        settings: { createCrmLead: false },
+      });
+      const { submitManagedFormBySlug } = await import("./forms.service");
+
+      await submitManagedFormBySlug(slug, { name: "Jane", email: "jane@example.com" });
+
+      expect(mockCreateCrmLeadFromFormSubmission).toHaveBeenCalledWith({
+        formName: "Quote Form",
+        formSubmissionId: "submission-1",
+        data: { name: "Jane", email: "jane@example.com" },
+      });
+    },
+  );
 });

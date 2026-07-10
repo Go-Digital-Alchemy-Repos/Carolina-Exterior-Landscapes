@@ -123,6 +123,49 @@ describe("crm service", () => {
     });
   });
 
+  it("maps commercial quote fields into the lead summary", async () => {
+    const { inferCrmLeadFromFormData } = await import("./crm.service");
+    expect(inferCrmLeadFromFormData({
+      contactName: "Pat Manager",
+      email: "pat@example.com",
+      phone: "7045553434",
+      companyName: "Acme Properties",
+      notes: "Three HOA communities",
+    })).toEqual({
+      name: "Pat Manager",
+      email: "pat@example.com",
+      phone: "7045553434",
+      company: "Acme Properties",
+      message: "Three HOA communities",
+    });
+  });
+
+  it("creates every website form submission as a new lead with all form data", async () => {
+    const { createCrmLeadFromFormSubmission } = await import("./crm.service");
+    const data = {
+      name: "Jane Homeowner",
+      email: "jane@example.com",
+      servicesInterested: ["Drainage", "Hardscape"],
+      city: "Waxhaw",
+    };
+
+    const result = await createCrmLeadFromFormSubmission({
+      formName: "Residential Quote Form",
+      formSubmissionId: "submission-2",
+      data,
+    });
+
+    expect(mockFindDuplicateLead).not.toHaveBeenCalled();
+    expect(mockCreateLead).toHaveBeenCalledWith(expect.objectContaining({
+      stage: "new",
+      source: "website_form",
+      formSubmissionId: "submission-2",
+      formData: data,
+      metadata: { formName: "Residential Quote Form" },
+    }));
+    expect(result.duplicate).toBe(false);
+  });
+
   it("creates individual and business clients from won leads without duplicates", async () => {
     const { ensureClientForWonLead } = await import("./crm.service");
 

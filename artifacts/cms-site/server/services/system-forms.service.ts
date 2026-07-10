@@ -121,6 +121,7 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
       successRedirect: "/thank-you/",
       notifyAdmins: true,
       storeAsContactMessage: true,
+      createCrmLead: true,
     }),
   },
   {
@@ -137,6 +138,7 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
       successRedirect: "/thank-you/",
       notifyAdmins: true,
       storeAsContactMessage: true,
+      createCrmLead: true,
     }),
   },
 ];
