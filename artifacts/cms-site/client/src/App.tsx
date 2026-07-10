@@ -122,10 +122,23 @@ function Router() {
             <DocsPage />
           </ProtectedRoute>
         </Route>
-        <Route path="/admin/settings">
+        <Route path="/admin/settings/email">
           <ProtectedRoute roles={["admin"]}>
-            <AdminSettingsPage />
+            <AdminSettingsPage initialSubview="email" />
           </ProtectedRoute>
+        </Route>
+        <Route path="/admin/settings/code-snippets">
+          <ProtectedRoute roles={["admin"]}>
+            <AdminSettingsPage initialSubview="code-snippets" />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/settings/integrations">
+          <ProtectedRoute roles={["admin"]}>
+            <AdminSettingsPage initialSubview="integrations" />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/settings">
+          <Redirect to="/admin/settings/email" replace />
         </Route>
         <Route path="/admin/design/branding">
           <ProtectedRoute roles={["admin", "editor"]} adminPermissions={["design"]}>

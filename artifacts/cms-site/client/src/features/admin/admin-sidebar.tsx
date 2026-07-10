@@ -108,7 +108,7 @@ export function buildNavGroups(
         { title: "System Emails", href: "/admin/system/emails", icon: Mail, iconColor: "text-emerald-600" },
         { title: "System Backups", href: "/admin/system/backups", icon: Database, iconColor: "text-cyan-600" },
         { title: "System Users", href: "/admin/users", icon: Users, iconColor: "text-blue-600" },
-        { title: "Settings", href: "/admin/settings", icon: Settings, iconColor: "text-slate-500" },
+        { title: "Settings", href: "/admin/settings/email", icon: Settings, iconColor: "text-slate-500" },
       ],
     });
   }

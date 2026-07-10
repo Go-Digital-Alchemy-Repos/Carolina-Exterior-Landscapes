@@ -1,19 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { AdminSidebar } from "./admin-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, Loader2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, Loader2, Mail } from "lucide-react";
+import type { EmailTemplate } from "@shared/schema";
 
 type SettingsResponse = Record<string, Record<string, { value: string; isSecret: boolean }>>;
 const SECRET_FIELD_MASK = "*****";
-type IntegrationKey = "google_reviews";
+type IntegrationKey = "mailgun" | "google_reviews";
+export type SettingsSubview = "email" | "code-snippets" | "integrations";
 type ConnectionTestResult = { success: boolean; message: string };
 
 type SetupLink = {
@@ -174,7 +177,8 @@ function GoogleReviewsVerificationHelp({ message }: { message: string }) {
   );
 }
 
-export default function AdminSettingsPage() {
+export default function AdminSettingsPage({ initialSubview = "email" }: { initialSubview?: SettingsSubview }) {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings = {} } = useQuery<SettingsResponse>({ queryKey: ["/api/admin/settings"] });
@@ -189,8 +193,8 @@ export default function AdminSettingsPage() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
-      if (variables.category === "google_reviews") {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/test-connection", "google_reviews"] });
+      if (variables.category === "google_reviews" || variables.category === "mailgun") {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/test-connection", variables.category] });
       }
       toast({ title: "Setting saved" });
     },
@@ -201,8 +205,8 @@ export default function AdminSettingsPage() {
       const res = await apiRequest("POST", "/api/admin/settings/test-connection", { integration });
       return res.json() as Promise<{ success: boolean; message: string }>;
     },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/test-connection", "google_reviews"] });
+    onSuccess: (result, integration) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings/test-connection", integration] });
       toast({
         title: result.success ? "Integration connected" : "Integration needs attention",
         description: result.message,
@@ -244,6 +248,9 @@ export default function AdminSettingsPage() {
   const analytics = settings.google_analytics ?? {};
   const googleReviews = settings.google_reviews ?? {};
   const codeSnippets = settings.code_snippets ?? {};
+  const mailgunDomain = mailgun.mailgun_domain?.value?.trim() || "";
+  const mailgunApiKeyStored = Boolean(mailgun.mailgun_api_key?.value);
+  const canValidateMailgun = Boolean(mailgunDomain && mailgunApiKeyStored);
   const googleReviewsEnabled = googleReviews.google_reviews_enabled?.value === "true";
   const googleReviewsPlaceId = googleReviews.google_reviews_place_id?.value?.trim() || "";
   const googleReviewsApiKeyStored = Boolean(googleReviews.google_reviews_api_key?.value);
@@ -267,6 +274,34 @@ export default function AdminSettingsPage() {
     staleTime: 60_000,
     retry: false,
   });
+
+  const mailgunStatus = useQuery<ConnectionTestResult>({
+    queryKey: ["/api/admin/settings/test-connection", "mailgun", mailgunDomain, mailgunApiKeyStored],
+    queryFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/settings/test-connection", { integration: "mailgun" });
+      return res.json() as Promise<ConnectionTestResult>;
+    },
+    enabled: canValidateMailgun,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const { data: emailTemplates = [] } = useQuery<EmailTemplate[]>({
+    queryKey: ["/api/admin/email-templates"],
+    enabled: initialSubview === "email",
+  });
+
+  const mailgunConnectionStatus = !canValidateMailgun
+    ? "missing"
+    : mailgunStatus.isFetching
+      ? "checking"
+      : mailgunStatus.data?.success
+        ? "verified"
+        : "failed";
+  const mailgunConnectionMessage = !canValidateMailgun
+    ? "Add a Mailgun domain and API key to verify delivery."
+    : mailgunStatus.data?.message ||
+      (mailgunStatus.error instanceof Error ? mailgunStatus.error.message : "Connection has not been verified yet.");
 
   const googleReviewsConnectionStatus = !googleReviewsEnabled
     ? "disabled"
@@ -294,17 +329,28 @@ export default function AdminSettingsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Generic backend configuration for email, analytics, and integrations.</p>
         </div>
 
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs
+          value={initialSubview}
+          onValueChange={(value) => navigate(`/admin/settings/${value}`)}
+          className="space-y-6"
+        >
           <TabsList className="flex h-auto flex-wrap gap-1">
-            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="email">Email Settings</TabsTrigger>
             <TabsTrigger value="code-snippets">Code Snippets</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
           </TabsList>
+        </Tabs>
 
-          <TabsContent value="general" className="mt-0 space-y-6">
+        {initialSubview === "email" ? <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Email Delivery</CardTitle>
-            <CardDescription>Configure Mailgun delivery for admin notifications and password resets.</CardDescription>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle>Email Delivery</CardTitle>
+                <CardDescription className="mt-1">Configure Mailgun delivery for admin notifications and password resets.</CardDescription>
+              </div>
+              <IntegrationStatusBadge status={mailgunConnectionStatus} message={mailgunConnectionMessage} />
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <SetupInstructions
@@ -346,12 +392,43 @@ export default function AdminSettingsPage() {
                 })}
               />
             </div>
+            <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+              <Button type="button" variant="outline" onClick={() => testIntegration.mutate("mailgun")} disabled={!canValidateMailgun || testIntegration.isPending}>
+                {testIntegration.isPending ? "Verifying..." : "Verify Connection"}
+              </Button>
+              <p className="text-xs text-muted-foreground">Checks the saved API key against the configured Mailgun sending domain.</p>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Analytics</CardTitle>
+            <CardTitle>Email Templates</CardTitle>
+            <CardDescription>Manage the transactional messages sent by website and administrator workflows.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {emailTemplates.map((template) => (
+              <button key={template.slug} type="button" onClick={() => navigate(`/admin/system/emails?template=${template.slug}`)} className="flex w-full items-center justify-between gap-4 rounded-md border p-3 text-left transition-colors hover:bg-muted/50">
+                <div className="flex min-w-0 items-start gap-3">
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="font-medium">{template.name}</p>
+                    <p className="line-clamp-1 text-sm text-muted-foreground">{template.description}</p>
+                  </div>
+                </div>
+                <span className="shrink-0 text-xs font-medium text-muted-foreground">{template.isActive ? "Active" : "Paused"}</span>
+              </button>
+            ))}
+            {emailTemplates.length === 0 ? <p className="text-sm text-muted-foreground">No managed email templates found.</p> : null}
+            <Button variant="outline" onClick={() => navigate("/admin/system/emails")}>Manage Email Templates</Button>
+          </CardContent>
+        </Card>
+        </div> : null}
+
+        {initialSubview === "integrations" ? <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Google Analytics</CardTitle>
             <CardDescription>Optional public runtime analytics setting.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -379,7 +456,7 @@ export default function AdminSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Integrations</CardTitle>
+            <CardTitle>Google Reviews</CardTitle>
             <CardDescription>Configure third-party services used by dynamic website blocks.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -519,10 +596,9 @@ export default function AdminSettingsPage() {
             </div>
           </CardContent>
         </Card>
+        </div> : null}
 
-          </TabsContent>
-
-          <TabsContent value="code-snippets" className="mt-0" forceMount>
+        {initialSubview === "code-snippets" ? (
             <Card>
               <CardHeader>
                 <CardTitle>Code Snippets</CardTitle>
@@ -594,8 +670,7 @@ export default function AdminSettingsPage() {
                 </form>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+        ) : null}
       </div>
     </AdminSidebar>
   );
