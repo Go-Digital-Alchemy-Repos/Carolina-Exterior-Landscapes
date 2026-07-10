@@ -209,10 +209,14 @@ async function handleContactFormEffects(form: CmsForm, data: Record<string, unkn
   await storage.contacts.createMessage({ name, email, subject, message });
   if (!settings.notifyAdmins) return;
 
-  const recipientEmails =
-    form.slug === "contact-form"
+  const assignedEmails = (await storage.users.getFormNotificationUsers(form.id))
+    .map((user) => user.email)
+    .filter(Boolean);
+  const recipientEmails = assignedEmails.length > 0
+    ? assignedEmails
+    : form.slug === "contact-form"
       ? [CONTACT_FORM_OWNER_EMAIL]
-      : (await storage.users.getFormNotificationUsers(form.id)).map((user) => user.email).filter(Boolean);
+      : [];
   const adminEmails =
     recipientEmails.length > 0
       ? recipientEmails

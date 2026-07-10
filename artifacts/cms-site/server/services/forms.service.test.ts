@@ -58,7 +58,7 @@ describe("submitManagedFormBySlug", () => {
     mockGetUsersByRole.mockResolvedValue([{ email: "admin@example.com" }]);
   });
 
-  it("emails current contact form submissions directly to the owner email", async () => {
+  it("emails current contact form submissions to assigned users", async () => {
     mockGetPublicBySlug.mockResolvedValue({
       id: "contact-form-id",
       name: "Contact Form",
@@ -102,7 +102,7 @@ describe("submitManagedFormBySlug", () => {
       message: expect.stringContaining("Phone Number: (803) 995-1522"),
     });
     expect(mockSendContactFormEmail).toHaveBeenCalledWith(
-      ["van@carolinaexteriorlandscapes.com"],
+      ["editor@example.com"],
       "Van Orcutt",
       "van@example.com",
       expect.stringContaining("Tell us about your project: Need cameras for a warehouse."),
@@ -116,7 +116,7 @@ describe("submitManagedFormBySlug", () => {
     );
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Service of Interest: Security Camera Installation");
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Property Type: Commercial");
-    expect(mockGetFormNotificationUsers).not.toHaveBeenCalled();
+    expect(mockGetFormNotificationUsers).toHaveBeenCalledWith("contact-form-id");
     expect(mockGetUsersByRole).not.toHaveBeenCalled();
     expect(mockCreateCrmLeadFromFormSubmission).toHaveBeenCalledWith({
       formName: "Contact Form",
@@ -131,6 +131,37 @@ describe("submitManagedFormBySlug", () => {
         message: "Need cameras for a warehouse.",
       },
     });
+  });
+
+  it("falls back to the contact form owner when no user is assigned", async () => {
+    mockGetFormNotificationUsers.mockResolvedValue([]);
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "contact-form-id",
+      name: "Contact Form",
+      slug: "contact-form",
+      fields: [
+        contactField("fullName", "Full Name"),
+        contactField("email", "Email Address", "email"),
+        contactField("message", "Message", "textarea"),
+      ],
+      settings: { notifyAdmins: true, storeAsContactMessage: true },
+    });
+    const { submitManagedFormBySlug } = await import("./forms.service");
+
+    await submitManagedFormBySlug("contact-form", {
+      fullName: "Jane Homeowner",
+      email: "jane@example.com",
+      message: "Need a quote",
+    });
+
+    expect(mockSendContactFormEmail).toHaveBeenCalledWith(
+      ["van@carolinaexteriorlandscapes.com"],
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
   });
 
   it("emails residential quote submissions through the contact notification path", async () => {

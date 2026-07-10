@@ -80,6 +80,7 @@ describe("AdminSettingsPage", () => {
 
     expect(html).toContain('id="mailgun-key"');
     expect(html).toContain('value="*****"');
+    expect(html).toContain("Form Submission Recipients");
   });
 
   it("shows Mailgun as verified when the saved domain and API key pass validation", () => {

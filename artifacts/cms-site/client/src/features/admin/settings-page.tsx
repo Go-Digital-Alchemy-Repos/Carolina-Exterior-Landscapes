@@ -6,18 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, Loader2, Mail } from "lucide-react";
-import type { EmailTemplate } from "@shared/schema";
+import type { CmsForm, EmailTemplate, User } from "@shared/schema";
 
 type SettingsResponse = Record<string, Record<string, { value: string; isSecret: boolean }>>;
 const SECRET_FIELD_MASK = "*****";
 type IntegrationKey = "mailgun" | "google_reviews";
 export type SettingsSubview = "email" | "code-snippets" | "integrations";
 type ConnectionTestResult = { success: boolean; message: string };
+type NotificationUser = Omit<User, "password">;
 
 type SetupLink = {
   label: string;
@@ -182,6 +185,30 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings = {} } = useQuery<SettingsResponse>({ queryKey: ["/api/admin/settings"] });
+  const { data: notificationUsers = [] } = useQuery<NotificationUser[]>({
+    queryKey: ["/api/admin/users"],
+    enabled: initialSubview === "email",
+  });
+  const { data: forms = [] } = useQuery<CmsForm[]>({
+    queryKey: ["/api/admin/forms"],
+    enabled: initialSubview === "email",
+  });
+  const activeForms = forms.filter((form) => form.isActive);
+
+  const updateFormRecipient = useMutation({
+    mutationFn: async ({ user, formId, enabled }: { user: NotificationUser; formId: string; enabled: boolean }) => {
+      const current = Array.isArray(user.formNotificationFormIds) ? user.formNotificationFormIds : [];
+      const formNotificationFormIds = enabled
+        ? Array.from(new Set([...current, formId]))
+        : current.filter((id) => id !== formId);
+      const response = await apiRequest("PUT", `/api/admin/users/${user.id}`, { formNotificationFormIds });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Form recipients updated" });
+    },
+  });
 
   const saveSetting = useMutation({
     mutationFn: async (payload: { category: string; key: string; value: string; isSecret?: boolean }) => {
@@ -398,6 +425,53 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
               </Button>
               <p className="text-xs text-muted-foreground">Checks the saved API key against the configured Mailgun sending domain.</p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Form Submission Recipients</CardTitle>
+            <CardDescription>Choose which system users receive an email when each active form is submitted.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeForms.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No active forms are available.</p>
+            ) : notificationUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No system users are available.</p>
+            ) : activeForms.map((form) => (
+              <div key={form.id} className="rounded-lg border p-4" data-testid={`form-recipients-${form.slug}`}>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <h3 className="font-medium">{form.name}</h3>
+                  {form.isSystem ? <Badge variant="outline">System</Badge> : null}
+                  <span className="text-xs text-muted-foreground">/{form.slug}</span>
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {notificationUsers.map((user) => {
+                    const checked = Array.isArray(user.formNotificationFormIds)
+                      && user.formNotificationFormIds.includes(form.id);
+                    const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+                    return (
+                      <label key={user.id} className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/30">
+                        <Checkbox
+                          checked={checked}
+                          disabled={updateFormRecipient.isPending}
+                          onCheckedChange={(value) => updateFormRecipient.mutate({
+                            user,
+                            formId: form.id,
+                            enabled: Boolean(value),
+                          })}
+                          data-testid={`checkbox-recipient-${form.slug}-${user.id}`}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium">{name}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
