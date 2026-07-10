@@ -6,6 +6,22 @@ import { AppError } from "../middleware/error-handler";
 import { createCrmLeadFromFormSubmission } from "./crm.service";
 
 const CONTACT_FORM_OWNER_EMAIL = "van@carolinaexteriorlandscapes.com";
+const QUOTE_FORM_SLUGS = new Set(["residential-quote", "commercial-quote"]);
+
+function validRecipientEmail(value: unknown): string {
+  const email = typeof value === "string" ? value.trim() : "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+
+async function configuredFormRecipient(formSlug: string): Promise<string | null> {
+  const settings = await storage.settings.getDecryptedCategory("email_notifications");
+  const settingValue = formSlug === "contact-form"
+    ? settings.contact_form_recipient_email
+    : QUOTE_FORM_SLUGS.has(formSlug)
+      ? settings.quote_form_recipient_email
+      : "";
+  return validRecipientEmail(settingValue) || null;
+}
 
 function normalizeFormSettings(form: CmsForm) {
   const settings = (typeof form.settings === "object" && form.settings
@@ -208,8 +224,10 @@ async function handleContactFormEffects(form: CmsForm, data: Record<string, unkn
   await storage.contacts.createMessage({ name, email, subject, message });
   if (!settings.notifyAdmins) return;
 
-  const recipientEmails =
-    form.slug === "contact-form"
+  const configuredRecipient = await configuredFormRecipient(form.slug);
+  const recipientEmails = configuredRecipient
+    ? [configuredRecipient]
+    : form.slug === "contact-form"
       ? [CONTACT_FORM_OWNER_EMAIL]
       : (await storage.users.getFormNotificationUsers(form.id)).map((user) => user.email).filter(Boolean);
   const adminEmails =

@@ -82,6 +82,22 @@ describe("AdminSettingsPage", () => {
     expect(html).toContain('value="*****"');
   });
 
+  it("shows configurable contact and quote form recipients in email settings", () => {
+    const html = renderSettingsPage({
+      email_notifications: {
+        contact_form_recipient_email: { value: "contact@example.com", isSecret: false },
+        quote_form_recipient_email: { value: "quotes@example.com", isSecret: false },
+      },
+    });
+
+    expect(html).toContain("Form Submission Recipients");
+    expect(html).toContain("Contact Form Recipient");
+    expect(html).toContain("Quote Form Recipient");
+    expect(html).toContain('value="contact@example.com"');
+    expect(html).toContain('value="quotes@example.com"');
+    expect(html).toContain("residential and commercial quote requests");
+  });
+
   it("shows Mailgun as verified when the saved domain and API key pass validation", () => {
     const html = renderSettingsPage(
       {

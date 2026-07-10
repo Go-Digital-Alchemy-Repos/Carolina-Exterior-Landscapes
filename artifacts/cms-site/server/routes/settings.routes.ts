@@ -83,11 +83,29 @@ router.get(
   })
 );
 
+const FORM_RECIPIENT_SETTING_KEYS = new Set([
+  "contact_form_recipient_email",
+  "quote_form_recipient_email",
+]);
+
 const upsertSettingSchema = z.object({
   key: z.string().min(1),
   value: z.string(),
   category: z.string().min(1),
   isSecret: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+  if (
+    data.category === "email_notifications" &&
+    FORM_RECIPIENT_SETTING_KEYS.has(data.key) &&
+    data.value.trim() &&
+    !z.string().email().safeParse(data.value.trim()).success
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["value"],
+      message: "Enter a valid recipient email address",
+    });
+  }
 });
 
 const brandingUploadSchema = z.object({

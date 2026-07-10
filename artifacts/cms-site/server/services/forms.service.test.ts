@@ -5,6 +5,7 @@ const mockCreateSubmission = vi.fn();
 const mockCreateMessage = vi.fn();
 const mockGetFormNotificationUsers = vi.fn();
 const mockGetUsersByRole = vi.fn();
+const mockGetEmailNotificationSettings = vi.fn();
 const mockSendContactFormEmail = vi.fn();
 const mockSendManagedFormSubmissionEmail = vi.fn();
 const mockCreateCrmLeadFromFormSubmission = vi.fn();
@@ -21,6 +22,9 @@ vi.mock("../storage", () => ({
     users: {
       getFormNotificationUsers: mockGetFormNotificationUsers,
       getUsersByRole: mockGetUsersByRole,
+    },
+    settings: {
+      getDecryptedCategory: mockGetEmailNotificationSettings,
     },
   },
 }));
@@ -56,9 +60,10 @@ describe("submitManagedFormBySlug", () => {
     mockCreateCrmLeadFromFormSubmission.mockResolvedValue({ duplicate: false, lead: { id: "lead-1" } });
     mockGetFormNotificationUsers.mockResolvedValue([{ email: "editor@example.com" }]);
     mockGetUsersByRole.mockResolvedValue([{ email: "admin@example.com" }]);
+    mockGetEmailNotificationSettings.mockResolvedValue({});
   });
 
-  it("emails current contact form submissions directly to the owner email", async () => {
+  it("emails contact form submissions to the configured contact recipient", async () => {
     mockGetPublicBySlug.mockResolvedValue({
       id: "contact-form-id",
       name: "Contact Form",
@@ -77,6 +82,9 @@ describe("submitManagedFormBySlug", () => {
         notifyAdmins: true,
         storeAsContactMessage: true,
       },
+    });
+    mockGetEmailNotificationSettings.mockResolvedValue({
+      contact_form_recipient_email: "contact-team@example.com",
     });
 
     const { submitManagedFormBySlug } = await import("./forms.service");
@@ -102,7 +110,7 @@ describe("submitManagedFormBySlug", () => {
       message: expect.stringContaining("Phone Number: (803) 995-1522"),
     });
     expect(mockSendContactFormEmail).toHaveBeenCalledWith(
-      ["van@carolinaexteriorlandscapes.com"],
+      ["contact-team@example.com"],
       "Van Orcutt",
       "van@example.com",
       expect.stringContaining("Tell us about your project: Need cameras for a warehouse."),
@@ -138,6 +146,9 @@ describe("submitManagedFormBySlug", () => {
         storeAsContactMessage: true,
       },
     });
+    mockGetEmailNotificationSettings.mockResolvedValue({
+      quote_form_recipient_email: "quotes@example.com",
+    });
     mockGetFormNotificationUsers.mockResolvedValue([]);
 
     const { submitManagedFormBySlug } = await import("./forms.service");
@@ -155,7 +166,7 @@ describe("submitManagedFormBySlug", () => {
     );
 
     expect(mockSendContactFormEmail).toHaveBeenCalledWith(
-      ["admin@example.com"],
+      ["quotes@example.com"],
       "Jane Homeowner",
       "jane@example.com",
       expect.stringContaining("Services Needed: Mulch, Drainage"),
@@ -166,6 +177,75 @@ describe("submitManagedFormBySlug", () => {
         subject: "Mulch, Drainage",
         sourcePage: "/get-a-quote",
       },
+    );
+    expect(mockGetFormNotificationUsers).not.toHaveBeenCalled();
+    expect(mockGetUsersByRole).not.toHaveBeenCalled();
+  });
+
+  it("uses the same configured quote recipient for commercial quote submissions", async () => {
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "commercial-quote-id",
+      name: "Commercial Quote Form",
+      slug: "commercial-quote",
+      fields: [
+        contactField("contactName", "Contact Name"),
+        contactField("email", "Email", "email"),
+        contactField("subject", "Subject"),
+        contactField("message", "Message"),
+      ],
+      settings: { notifyAdmins: true, storeAsContactMessage: true },
+    });
+    mockGetEmailNotificationSettings.mockResolvedValue({
+      quote_form_recipient_email: "quotes@example.com",
+    });
+
+    const { submitManagedFormBySlug } = await import("./forms.service");
+    await submitManagedFormBySlug("commercial-quote", {
+      contactName: "Pat Manager",
+      email: "pat@example.com",
+      subject: "Commercial maintenance",
+      message: "Requesting a proposal.",
+    });
+
+    expect(mockSendContactFormEmail).toHaveBeenCalledWith(
+      ["quotes@example.com"],
+      "Pat Manager",
+      "pat@example.com",
+      "Requesting a proposal.",
+      expect.anything(),
+      expect.objectContaining({ formName: "Commercial Quote Form" }),
+    );
+  });
+
+  it("falls back to the existing contact owner when no recipient is configured", async () => {
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "contact-form-id",
+      name: "Contact Form",
+      slug: "contact-form",
+      fields: [
+        contactField("name", "Name"),
+        contactField("email", "Email", "email"),
+        contactField("subject", "Subject"),
+        contactField("message", "Message"),
+      ],
+      settings: { notifyAdmins: true, storeAsContactMessage: true },
+    });
+
+    const { submitManagedFormBySlug } = await import("./forms.service");
+    await submitManagedFormBySlug("contact-form", {
+      name: "Jane",
+      email: "jane@example.com",
+      subject: "Question",
+      message: "Can you help?",
+    });
+
+    expect(mockSendContactFormEmail).toHaveBeenCalledWith(
+      ["van@carolinaexteriorlandscapes.com"],
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
     );
   });
 
