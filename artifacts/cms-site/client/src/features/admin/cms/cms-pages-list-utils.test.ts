@@ -146,6 +146,16 @@ describe("CMS page list helpers", () => {
     ]);
   });
 
+  it("uses the actual CMS publication timestamp instead of an older content date", () => {
+    const metadata = getCmsBlogPostMetadata(page({
+      pageType: "blog-post",
+      publishedAt: new Date("2026-09-06T14:30:00.000Z"),
+      content: { landscape: { data: { date: "2026-09-01" } } },
+    }));
+
+    expect(metadata.publishedDate).toBe("2026-09-06T14:30:00.000Z");
+  });
+
   it("extracts blog metadata from landscape CMS content", () => {
     const metadata = getCmsBlogPostMetadata(page({
       pageType: "blog-post",

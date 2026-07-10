@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { ArrowLeft, Eye, FileText, Globe, Image as ImageIcon, Loader2, Save, Search } from "lucide-react";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { CmsImageUpload } from "@/features/admin/cms/components/cms-image-upload";
@@ -125,7 +126,9 @@ function draftFromPage(page: CmsPage): BlogDraft {
     authorName: typeof blog.authorName === "string" ? blog.authorName : DEFAULT_AUTHOR,
     category,
     tags: Array.isArray(blog.tags) ? blog.tags.filter((tag): tag is string => typeof tag === "string").join(", ") : "",
-    date: typeof data.date === "string" ? data.date : todayIso(),
+    date: page.publishedAt
+      ? format(new Date(page.publishedAt), "yyyy-MM-dd")
+      : typeof data.date === "string" ? data.date : todayIso(),
     readMinutes: typeof data.readMinutes === "number" ? data.readMinutes : 3,
     excerpt: typeof data.excerpt === "string" ? data.excerpt : "",
     body: bodyText,
@@ -235,6 +238,7 @@ export default function CmsBlogEditorPage() {
     onSuccess: (savedPage) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
+      if (!isNew) queryClient.setQueryData([`/api/admin/cms/pages/${params.id}`], savedPage);
       toast({ title: draft.status === "published" ? "Blog post published" : "Blog post saved" });
       if (isNew) navigate(`/admin/cms/blog/${savedPage.id}`);
     },
@@ -342,7 +346,10 @@ export default function CmsBlogEditorPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="blog-date">Published Date</Label>
-                    <Input id="blog-date" type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} disabled={isReadOnly} />
+                    <Input id="blog-date" type="date" value={page?.publishedAt ? format(new Date(page.publishedAt), "yyyy-MM-dd") : ""} disabled />
+                    <p className="text-xs text-muted-foreground">
+                      {page?.publishedAt ? "The date this post most recently became public." : "Set automatically when this post is published."}
+                    </p>
                   </div>
                   <div className="grid gap-2">
                     <Label>Category</Label>

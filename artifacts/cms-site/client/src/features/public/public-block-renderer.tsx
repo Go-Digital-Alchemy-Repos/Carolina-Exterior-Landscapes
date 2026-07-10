@@ -692,7 +692,7 @@ function BlogListingBlock({ props }: { props: Record<string, unknown> }) {
               const data = blogPostLandscapeData(post);
               const imageUrl = str(post.ogImageUrl) || str(data.imageUrl);
               const excerpt = str(data.excerpt) || str(post.seoDescription);
-              const dateValue = str(data.date) || (post.publishedAt ? String(post.publishedAt) : "");
+              const dateValue = post.publishedAt ? String(post.publishedAt) : str(data.date);
               const formattedDate = dateValue
                 ? new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(new Date(dateValue))
                 : "";

@@ -5,6 +5,7 @@ import { paramString } from "../../utils/params";
 import { insertCmsPageSchema } from "@shared/schema";
 import { logger } from "../../utils/logger";
 import { createCmsPreviewToken } from "../../utils/cms-preview-token";
+import { publicationTimestampForTransition } from "../../services/cms-publication-state";
 
 const router = Router();
 
@@ -72,9 +73,11 @@ router.post("/pages", async (req, res) => {
     }
 
     const adminId = (req as any).user?.id;
+    const publishedAt = publicationTimestampForTransition(data.status, null) ?? null;
     const page = await storage.cmsPages.createPage({
       ...data,
       slug,
+      publishedAt,
       createdBy: adminId,
       updatedBy: adminId,
     });
@@ -158,6 +161,14 @@ router.put("/pages/:id", async (req, res) => {
     const adminId = (req as any).user?.id;
     if ("content" in data) {
       data.content = detachSeedKey(data.content) as typeof data.content;
+    }
+
+    const publicationTimestamp = publicationTimestampForTransition(data.status, page.status);
+    if (publicationTimestamp !== undefined) {
+      data.publishedAt = publicationTimestamp;
+    }
+    if (data.status === "published" && page.status !== "published") {
+      data.scheduledAt = null;
     }
 
     await storage.cmsPageRevisions.createRevision({

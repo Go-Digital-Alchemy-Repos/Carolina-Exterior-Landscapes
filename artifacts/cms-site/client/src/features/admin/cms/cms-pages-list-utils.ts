@@ -74,9 +74,9 @@ export function getCmsBlogPostMetadata(page: CmsPage): {
   const landscape = content.landscape && typeof content.landscape === "object" ? content.landscape as Record<string, unknown> : {};
   const data = landscape.data && typeof landscape.data === "object" ? landscape.data as Record<string, unknown> : {};
   const category = typeof data.category === "string" && data.category.trim() ? data.category : "uncategorized";
-  const publishedDate = typeof data.date === "string" && data.date
-    ? data.date
-    : page.publishedAt ? new Date(page.publishedAt).toISOString() : "";
+  const publishedDate = page.publishedAt
+    ? new Date(page.publishedAt).toISOString()
+    : typeof data.date === "string" && data.date ? data.date : "";
   const media = data.media && typeof data.media === "object" ? data.media as Record<string, unknown> : {};
   const featuredImageUrl = [data.imageUrl, media.heroImageUrl, page.ogImageUrl]
     .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? "";
