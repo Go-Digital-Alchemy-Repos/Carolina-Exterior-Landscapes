@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, FileText, Globe, Image as ImageIcon, Loader2, Save, Sea
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { CmsImageUpload } from "@/features/admin/cms/components/cms-image-upload";
 import { ImagePositionPicker } from "@/features/admin/cms/components/image-position-picker";
+import { CmsRichTextEditor } from "@/features/admin/cms/builder/cms-rich-text-editor";
 import { EditorLockBanner } from "@/components/shared/editor-lock-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,9 @@ type BlogDraft = {
   readMinutes: number;
   excerpt: string;
   body: string;
+  heroEyebrow: string;
+  heroHeading: string;
+  heroSubheading: string;
   imageUrl: string;
   imagePositionX: number;
   imagePositionY: number;
@@ -73,6 +77,9 @@ function emptyDraft(): BlogDraft {
     readMinutes: 3,
     excerpt: "",
     body: "",
+    heroEyebrow: "Landscape Journal",
+    heroHeading: "",
+    heroSubheading: "",
     imageUrl: "",
     imagePositionX: 50,
     imagePositionY: 50,
@@ -115,6 +122,45 @@ function blocksToBody(blocks: unknown): string {
     .join("\n\n");
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function blocksToHtml(blocks: unknown): string {
+  if (!Array.isArray(blocks)) return "";
+  return blocks.map((block) => {
+    const item = getObject(block);
+    const text = typeof item.text === "string" ? escapeHtml(item.text.trim()) : "";
+    if (!text) return "";
+    if (item.type === "h2") return `<h2>${text}</h2>`;
+    if (item.type === "h3") return `<h3>${text}</h3>`;
+    if (item.type === "li") return `<ul><li>${text}</li></ul>`;
+    return `<p>${text}</p>`;
+  }).filter(Boolean).join("");
+}
+
+function legacyBodyToHtml(bodyText: string, blocks: unknown) {
+  if (bodyText.trim()) return blocksToHtml(bodyToBlocks(bodyText));
+  return blocksToHtml(blocks);
+}
+
+function htmlToPlainText(html: string) {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>|<\/h[1-6]>|<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function bodyToBlocks(body: string): BlogBlock[] {
   return body
     .split(/\n{2,}/)
@@ -128,13 +174,19 @@ function bodyToBlocks(body: string): BlogBlock[] {
     .filter((block) => block.text);
 }
 
-function draftFromPage(page: CmsPage): BlogDraft {
+export function draftFromPage(page: CmsPage): BlogDraft {
   const content = getObject(page.content);
   const landscape = getObject(content.landscape);
   const data = getObject(landscape.data);
   const blog = getObject(content.blog);
+  const builderBlocks = Array.isArray(content.blocks) ? content.blocks : [];
+  const heroBlock = builderBlocks.map(getObject).find((block) => block.type === "hero");
+  const heroProps = getObject(heroBlock?.props);
   const category = data.category === "commercial" ? "commercial" : "residential";
-  const bodyText = typeof blog.bodyText === "string" ? blog.bodyText : blocksToBody(data.blocks);
+  const bodyText = typeof blog.bodyText === "string" ? blog.bodyText : "";
+  const bodyHtml = typeof blog.bodyHtml === "string"
+    ? blog.bodyHtml
+    : legacyBodyToHtml(bodyText, data.blocks);
 
   return {
     title: page.title || (typeof data.h1 === "string" ? data.h1 : ""),
@@ -147,7 +199,10 @@ function draftFromPage(page: CmsPage): BlogDraft {
       : typeof data.date === "string" ? data.date : todayIso(),
     readMinutes: typeof data.readMinutes === "number" ? data.readMinutes : 3,
     excerpt: typeof data.excerpt === "string" ? data.excerpt : "",
-    body: bodyText,
+    body: bodyHtml,
+    heroEyebrow: typeof heroProps.eyebrow === "string" ? heroProps.eyebrow : "Landscape Journal",
+    heroHeading: typeof heroProps.heading === "string" ? heroProps.heading : page.title,
+    heroSubheading: typeof heroProps.subheading === "string" ? heroProps.subheading : (typeof data.excerpt === "string" ? `<p>${escapeHtml(data.excerpt)}</p>` : ""),
     imageUrl: typeof data.imageUrl === "string" ? data.imageUrl : "",
     imagePositionX: positionValue(data.imagePositionX),
     imagePositionY: positionValue(data.imagePositionY),
@@ -161,29 +216,45 @@ function draftFromPage(page: CmsPage): BlogDraft {
   };
 }
 
-function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
+export function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
   const slug = normalizeSlug(draft.slug || draft.title);
   const title = draft.title.trim();
   const excerpt = draft.excerpt.trim();
   const seoTitle = draft.seoTitle.trim() || `${title} | Carolina Exterior`;
   const seoDescription = draft.seoDescription.trim() || excerpt;
   const tags = draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
-  const blocks = bodyToBlocks(draft.body);
   const existingContent = getObject(currentContent);
   const existingBuilderBlocks = Array.isArray(existingContent.blocks) ? existingContent.blocks : [];
-  const builderBlocks = existingBuilderBlocks.map((block) => {
-    const item = getObject(block);
-    if (item.type !== "hero") return block;
-    return {
-      ...item,
+  const existingHero = existingBuilderBlocks.map(getObject).find((block) => block.type === "hero");
+  const preservedCtas = existingBuilderBlocks.map(getObject).filter((block) => block.type === "cta");
+  const builderBlocks = [
+    {
+      ...existingHero,
+      id: typeof existingHero?.id === "string" ? existingHero.id : `${slug}-hero`,
+      type: "hero",
       props: {
-        ...getObject(item.props),
+        ...getObject(existingHero?.props),
+        eyebrow: draft.heroEyebrow.trim(),
+        heading: draft.heroHeading.trim() || title,
+        subheading: draft.heroSubheading,
         backgroundImageUrl: draft.imageUrl,
         backgroundPositionX: draft.imagePositionX,
         backgroundPositionY: draft.imagePositionY,
+        ctaText: "",
+        ctaLink: "",
       },
-    };
-  });
+    },
+    {
+      id: `${slug}-article-content`,
+      type: "rich-text",
+      props: {
+        content: draft.body,
+        alignment: "left",
+        background: "white",
+      },
+    },
+    ...preservedCtas,
+  ];
 
   return {
     title,
@@ -206,7 +277,7 @@ function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
           secondaryKeywords: tags,
           schemaType: "BlogPosting",
           wordCountTarget: "",
-          blocks,
+          bodyHtml: draft.body,
           category: draft.category,
           date: draft.date,
           readMinutes: Math.max(1, Number(draft.readMinutes) || 1),
@@ -220,9 +291,10 @@ function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
       blog: {
         authorName: draft.authorName.trim() || DEFAULT_AUTHOR,
         tags,
-        bodyText: draft.body,
+        bodyHtml: draft.body,
+        bodyText: htmlToPlainText(draft.body),
       },
-      ...(builderBlocks.length > 0 ? { blocks: builderBlocks } : {}),
+      blocks: builderBlocks,
     },
     seoTitle,
     seoDescription,
@@ -321,6 +393,7 @@ export default function CmsBlogEditorPage() {
       ...current,
       title,
       slug: slugEdited ? current.slug : normalizeSlug(title),
+      heroHeading: !current.heroHeading || current.heroHeading === current.title ? title : current.heroHeading,
     }));
   };
 
@@ -381,6 +454,26 @@ export default function CmsBlogEditorPage() {
           </TabsList>
 
           <TabsContent value="content" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Hero Content</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-5">
+                <div className="grid gap-2">
+                  <Label htmlFor="blog-hero-eyebrow">Eyebrow</Label>
+                  <Input id="blog-hero-eyebrow" value={draft.heroEyebrow} onChange={(event) => updateDraft("heroEyebrow", event.target.value)} disabled={isReadOnly} data-testid="input-blog-hero-eyebrow" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="blog-hero-heading">Heading</Label>
+                  <Input id="blog-hero-heading" value={draft.heroHeading} onChange={(event) => updateDraft("heroHeading", event.target.value)} disabled={isReadOnly} data-testid="input-blog-hero-heading" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Supporting Copy</Label>
+                  <CmsRichTextEditor value={draft.heroSubheading} onChange={(heroSubheading) => updateDraft("heroSubheading", heroSubheading)} readOnly={isReadOnly} placeholder="Add supporting copy beneath the hero heading..." data-testid="editor-blog-hero-subheading" />
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Post Details</CardTitle>
@@ -452,16 +545,10 @@ export default function CmsBlogEditorPage() {
                   <Textarea id="blog-excerpt" value={draft.excerpt} onChange={(event) => updateDraft("excerpt", event.target.value)} className="min-h-24" disabled={isReadOnly} data-testid="textarea-blog-excerpt" />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="blog-body">Body Content</Label>
-                  <Textarea
-                    id="blog-body"
-                    value={draft.body}
-                    onChange={(event) => updateDraft("body", event.target.value)}
-                    className="min-h-[420px] font-mono text-sm leading-6"
-                    disabled={isReadOnly}
-                    data-testid="textarea-blog-body"
-                  />
-                  <p className="text-xs text-muted-foreground">Use blank lines between paragraphs. Optional headings: ## Heading or ### Heading.</p>
+                  <Label>Body Content</Label>
+                  <div className="[&_.ProseMirror]:min-h-[420px]">
+                    <CmsRichTextEditor value={draft.body} onChange={(body) => updateDraft("body", body)} readOnly={isReadOnly} placeholder="Write the article content..." data-testid="editor-blog-body" />
+                  </div>
                 </div>
               </CardContent>
             </Card>

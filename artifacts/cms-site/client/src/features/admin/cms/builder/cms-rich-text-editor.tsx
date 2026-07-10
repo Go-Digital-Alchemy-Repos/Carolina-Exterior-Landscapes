@@ -32,6 +32,7 @@ interface CmsRichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  readOnly?: boolean;
   "data-testid"?: string;
 }
 
@@ -78,6 +79,7 @@ export function CmsRichTextEditor({
   value,
   onChange,
   placeholder,
+  readOnly = false,
   "data-testid": testId,
 }: CmsRichTextEditorProps) {
   const [activeTab, setActiveTab] = useState<"visual" | "html">("visual");
@@ -109,6 +111,7 @@ export function CmsRichTextEditor({
       }),
     ],
     content: value || "",
+    editable: !readOnly,
     onUpdate({ editor }) {
       onChange(editor.getHTML());
     },
@@ -127,6 +130,10 @@ export function CmsRichTextEditor({
       editor.commands.setContent(nextValue);
     }
   }, [editor, value]);
+
+  useEffect(() => {
+    editor?.setEditable(!readOnly);
+  }, [editor, readOnly]);
 
   const insertLink = () => {
     if (!editor || !linkUrl.trim()) return;
@@ -405,6 +412,7 @@ export function CmsRichTextEditor({
         <Textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          disabled={readOnly}
           placeholder={placeholder}
           rows={12}
           className="min-h-[300px] rounded-xl font-mono text-xs leading-relaxed"
