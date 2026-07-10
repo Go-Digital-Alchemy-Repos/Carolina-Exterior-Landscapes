@@ -731,10 +731,16 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const ctaText = str(props.ctaText);
     const ctaLink = str(props.ctaLink);
     const buttons = items(props.buttons);
-    const isInterior = str(props.variant) === "interior";
+    const heroVariant = str(props.variant);
+    const isInterior = heroVariant === "interior";
+    const isQuote = heroVariant === "quote";
 
-    const heroHeightClass = isInterior ? "min-h-[620px] sm:min-h-[620px] lg:min-h-[680px]" : "min-h-[560px] sm:min-h-[620px] lg:min-h-[680px]";
-    const heroPaddingClass = isInterior ? "py-24 sm:py-28" : "py-28 sm:py-32";
+    const heroHeightClass = isQuote
+      ? "min-h-[440px] sm:min-h-[460px] lg:min-h-[480px]"
+      : isInterior
+        ? "min-h-[620px] sm:min-h-[620px] lg:min-h-[680px]"
+        : "min-h-[560px] sm:min-h-[620px] lg:min-h-[680px]";
+    const heroPaddingClass = isQuote ? "pb-28 pt-20 sm:pb-32 sm:pt-24" : isInterior ? "py-24 sm:py-28" : "py-28 sm:py-32";
     const isServiceHeroImage = backgroundImageUrl.includes("/images/hero-");
     const defaultOverlayOpacity = isServiceHeroImage ? 20 : 30;
     const overlayColor = str(props.overlayColor, "#000000") || "#000000";

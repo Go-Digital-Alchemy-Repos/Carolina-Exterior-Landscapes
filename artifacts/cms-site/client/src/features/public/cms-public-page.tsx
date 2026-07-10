@@ -116,6 +116,33 @@ function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
   );
 }
 
+function LandscapeQuoteBlocks({ blocks }: { blocks: BlockInstance[] }) {
+  const hero = blocks.find((block) => block.type === "hero");
+  const form = blocks.find((block) => block.type === "form-embed");
+  const quoteHero = hero ? {
+    ...hero,
+    props: {
+      ...hero.props,
+      variant: "quote",
+      ctaText: "",
+      ctaLink: "",
+    },
+  } : null;
+
+  return (
+    <div className="landscape-cms-page w-full">
+      {quoteHero ? <PublicBlockRenderer block={quoteHero} /> : null}
+      {form ? (
+        <div className="relative bg-topo surface-stone pb-16 pt-2 sm:pb-24">
+          <div className="relative z-10 -mt-24">
+            <PublicBlockRenderer block={form} />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function setMeta(name: string, content: string, property = false) {
   const attr = property ? "property" : "name";
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${name}"]`);
@@ -293,6 +320,7 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
   const heroBlocks = showSidebar && blocks[0] && /hero/i.test(blocks[0].type) ? [blocks[0]] : [];
   const contentBlocks = heroBlocks.length > 0 ? blocks.slice(1) : blocks;
   const useLandscapeShell = isLandscapeContent(page.content) || page.slug === "contact";
+  const isQuoteLandingPage = page.slug === "get-a-quote" || page.slug === "commercial-quote";
 
   const pageBody = blocks.length > 0 ? (
     showSidebar ? (
@@ -309,6 +337,8 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
           </div>
         </div>
       </>
+    ) : isQuoteLandingPage ? (
+      <LandscapeQuoteBlocks blocks={blocks} />
     ) : useLandscapeShell ? (
       <LandscapeCmsBlocks blocks={blocks} />
     ) : (

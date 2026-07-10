@@ -158,6 +158,17 @@ describe("PublicBlockRenderer hero", () => {
     expect(hero?.className).toContain("lg:min-h-[680px]");
   });
 
+  it("uses a compact hero for quote landing pages", async () => {
+    await act(async () => {
+      root!.render(React.createElement(PublicBlockRenderer, { block: heroBlock({ variant: "quote" }) }));
+    });
+
+    const hero = container.querySelector('[data-testid="block-hero"]') as HTMLElement | null;
+
+    expect(hero?.className).toContain("min-h-[440px]");
+    expect(hero?.className).toContain("lg:min-h-[480px]");
+  });
+
   it("uses the landscape service hero readability fallback", async () => {
     await act(async () => {
       root!.render(

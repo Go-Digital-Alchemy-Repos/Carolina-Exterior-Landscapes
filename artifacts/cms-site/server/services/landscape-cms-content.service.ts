@@ -61,6 +61,7 @@ type CmsBuilderBlock = {
 
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
 const LANDSCAPE_CMS_WIRING_VERSION = 3;
+const LANDSCAPE_QUOTE_LAYOUT_VERSION = 1;
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 const CONTACT_PAGE_SLUG = "contact";
 const NOT_FOUND_PAGE_SLUG = "404";
@@ -196,7 +197,7 @@ const HERO_IMAGES: Record<string, string> = {
   "commercial-drainage": imageUrl("hero-commercial-drainage.png"),
   "commercial-pressure-washing": imageUrl("hero-commercial.png"),
   "hoa-services": imageUrl("hero-hoa.png"),
-  "get-a-quote": imageUrl("hero-home.png"),
+  "get-a-quote": imageUrl("hero-quote.png"),
 };
 
 const GALLERY_PROJECTS: NonNullable<LandscapeMedia["projects"]> = [
@@ -507,8 +508,8 @@ function buildBuilderBlocks(
         eyebrow: options.kind === "blog" ? "Landscape Journal" : isCommercial ? "Commercial Services" : "Carolina Exterior Landscapes",
         heading: options.title,
         subheading: richParagraph(options.seoDescription),
-        ctaText: options.kind === "blog" || slug === "gallery" ? "" : "Request a Quote",
-        ctaLink: options.kind === "blog" || slug === "gallery" ? "" : isCommercial ? "/commercial-quote" : "/get-a-quote",
+        ctaText: options.kind === "blog" || slug === "gallery" || slug.includes("quote") ? "" : "Request a Quote",
+        ctaLink: options.kind === "blog" || slug === "gallery" || slug.includes("quote") ? "" : isCommercial ? "/commercial-quote" : "/get-a-quote",
         backgroundImageUrl: heroImageUrl,
         backgroundImageAlt: heroAlt,
         backgroundPositionX: 50,
@@ -521,9 +522,21 @@ function buildBuilderBlocks(
         gradientOpacity: 35,
         gradientHeight: 40,
         alignment: slug === "home" ? "left" : "center",
+        variant: slug.includes("quote") ? "quote" : undefined,
       },
     },
   ];
+
+  if (slug === "get-a-quote" || slug === "commercial-quote") {
+    blocks.push({
+      id: `${slug}-form`,
+      type: "form-embed",
+      props: {
+        formSlug: slug === "commercial-quote" ? "commercial-quote" : "residential-quote",
+      },
+    });
+    return blocks;
+  }
 
   if (slug === "service-areas") {
     blocks.push({
@@ -663,16 +676,6 @@ function buildBuilderBlocks(
     });
   }
 
-  if (slug === "get-a-quote" || slug === "commercial-quote") {
-    blocks.push({
-      id: `${slug}-form`,
-      type: "form-embed",
-      props: {
-        formSlug: slug === "commercial-quote" ? "commercial-quote" : "residential-quote",
-      },
-    });
-  }
-
   if (options.kind !== "blog" && !slug.includes("quote")) {
     blocks.push({
       id: `${slug}-cta`,
@@ -718,6 +721,7 @@ function pageRecord(
     content: {
       source: LANDSCAPE_CONTENT_VERSION,
       landscapeCmsWiringVersion: LANDSCAPE_CMS_WIRING_VERSION,
+      ...(options.slug.includes("quote") ? { landscapeQuoteLayoutVersion: LANDSCAPE_QUOTE_LAYOUT_VERSION } : {}),
       landscape: {
         kind: options.kind,
         path: options.path,
@@ -769,6 +773,12 @@ function hasBuilderBlocks(content: unknown): boolean {
 function landscapeCmsWiringVersion(content: unknown): number {
   if (!content || typeof content !== "object") return 0;
   const version = (content as { landscapeCmsWiringVersion?: unknown }).landscapeCmsWiringVersion;
+  return typeof version === "number" ? version : 0;
+}
+
+function landscapeQuoteLayoutVersion(content: unknown): number {
+  if (!content || typeof content !== "object") return 0;
+  const version = (content as { landscapeQuoteLayoutVersion?: unknown }).landscapeQuoteLayoutVersion;
   return typeof version === "number" ? version : 0;
 }
 
@@ -1237,7 +1247,13 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
 
-    if (!isLandscapePageContent(existing.content) || landscapeCmsWiringVersion(existing.content) < LANDSCAPE_CMS_WIRING_VERSION) {
+    const needsQuoteLayoutMigration = page.slug.includes("quote")
+      && landscapeQuoteLayoutVersion(existing.content) < LANDSCAPE_QUOTE_LAYOUT_VERSION;
+    if (
+      !isLandscapePageContent(existing.content)
+      || landscapeCmsWiringVersion(existing.content) < LANDSCAPE_CMS_WIRING_VERSION
+      || needsQuoteLayoutMigration
+    ) {
       await storage.cmsPages.updatePage(existing.id, {
         ...page,
         publishedAt: existing.publishedAt ?? page.publishedAt,
