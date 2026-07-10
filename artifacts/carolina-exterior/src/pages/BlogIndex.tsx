@@ -16,7 +16,7 @@ export default function BlogIndex() {
   return (
     <div className="w-full bg-background min-h-screen pb-24">
       <Seo 
-        title="Landscaping & Lawn Care Blog | Carolina Exterior" 
+        title="Landscaping & Lawn Care Blog | Carolina Exterior Landscapes"
         description="Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region." 
       />
       

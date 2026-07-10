@@ -304,7 +304,7 @@ function mediaForPage(page: LandscapePage | LandscapeLocation | LandscapeBlogPos
       heroImageUrl: HERO_IMAGES.home,
       heroImageAlt: "Carolina beautiful lawn",
       sidebarImageUrl: imageUrl("about-story.png"),
-      sidebarImageAlt: "Carolina Exterior crew installing a natural stone patio",
+      sidebarImageAlt: "Carolina Exterior Landscapes crew installing a natural stone patio",
       featureCards: [
         { title: "Residential", imageUrl: imageUrl("gallery-res-1.png"), imageAlt: "Residential landscaping" },
         { title: "Commercial", imageUrl: imageUrl("hero-commercial.png"), imageAlt: "Commercial landscaping" },
@@ -944,7 +944,7 @@ function buildLandscapePages(): InsertCmsPage[] {
       {
         slug: "blog",
         h1: "The Landscape Journal",
-        titleTag: "Landscaping & Lawn Care Blog | Carolina Exterior",
+        titleTag: "Landscaping & Lawn Care Blog | Carolina Exterior Landscapes",
         metaDescription: "Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region.",
         posts: blogPosts,
       },
@@ -954,7 +954,7 @@ function buildLandscapePages(): InsertCmsPage[] {
         path: "/blog",
         kind: "virtual",
         pageType: "blog-index",
-        seoTitle: "Landscaping & Lawn Care Blog | Carolina Exterior",
+        seoTitle: "Landscaping & Lawn Care Blog | Carolina Exterior Landscapes",
         seoDescription: "Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region.",
       },
     ),

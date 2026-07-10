@@ -49,7 +49,7 @@ type BlogDraft = {
   noindex: boolean;
 };
 
-const DEFAULT_AUTHOR = "Carolina Exterior Team";
+const DEFAULT_AUTHOR = "Carolina Exterior Landscapes Team";
 
 function normalizeSlug(value: string) {
   return value
@@ -220,7 +220,7 @@ export function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
   const slug = normalizeSlug(draft.slug || draft.title);
   const title = draft.title.trim();
   const excerpt = draft.excerpt.trim();
-  const seoTitle = draft.seoTitle.trim() || `${title} | Carolina Exterior`;
+  const seoTitle = draft.seoTitle.trim() || `${title} | Carolina Exterior Landscapes`;
   const seoDescription = draft.seoDescription.trim() || excerpt;
   const tags = draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
   const existingContent = getObject(currentContent);

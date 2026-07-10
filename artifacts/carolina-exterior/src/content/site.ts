@@ -1,6 +1,6 @@
 export const BRAND = {
   name: "Carolina Exterior Landscapes",
-  shortName: "Carolina Exterior",
+  shortName: "Carolina Exterior Landscapes",
   tagline: "Rooted in Carolina. Built for Life.",
   subTagline: "Design \u2022 Build \u2022 Maintain",
   phoneDisplay: "(704) 975-5867",

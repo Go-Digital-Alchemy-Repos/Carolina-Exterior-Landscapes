@@ -188,7 +188,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             <div className="lg:col-span-1">
-              <h2 className="text-3xl md:text-4xl font-extrabold mb-6 tracking-tight text-white">Why Carolina Exterior?</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold mb-6 tracking-tight text-white">Why Carolina Exterior Landscapes?</h2>
               <p className="text-background/70 font-medium leading-relaxed mb-8">
                 We bring a craftsman's approach to landscaping, treating every property with respect and delivering reliable, lasting results.
               </p>
@@ -216,7 +216,7 @@ export default function Home() {
       {/* Craft Band */}
       <section className="relative w-full py-28 md:py-36 bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={aboutStory} alt="Carolina Exterior crew installing a natural stone patio" className="w-full h-full object-cover opacity-30" />
+          <img src={aboutStory} alt="Carolina Exterior Landscapes crew installing a natural stone patio" className="w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/40"></div>
         </div>
         <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>

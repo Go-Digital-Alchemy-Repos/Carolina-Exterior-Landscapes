@@ -33,7 +33,7 @@ type MediaUsageContext = {
 };
 
 const BRAND_NAME = "Carolina Exterior Landscapes";
-const BRAND_SHORT_NAME = "Carolina Exterior";
+const BRAND_SHORT_NAME = "Carolina Exterior Landscapes";
 const SITE_URL = "https://carolinaexteriorlandscapes.com";
 const DEFAULT_OG_IMAGE_URL = "/images/logo-full.png";
 const ORGANIZATION_LOGO_URL = "/images/header-logo-horizontal.svg";
