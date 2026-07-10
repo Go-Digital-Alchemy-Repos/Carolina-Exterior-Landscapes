@@ -11,8 +11,6 @@
 }
 
 .landscape-site {
-  --font-sans: 'DM Sans', sans-serif;
-  --font-serif: 'EB Garamond', Georgia, serif;
   --brand-forest: 153 55% 15%;
   --brand-leaf: 92 38% 36%;
   --brand-water: 205 36% 39%;
@@ -325,7 +323,7 @@
   --chart-4: 153 20% 71%;
   --chart-5: 222 25% 35%;
 
-  --font-sans: 'Nunito Sans', sans-serif;
+  --font-sans: 'DM Sans', sans-serif;
   --font-serif: 'EB Garamond', serif;
   --font-mono: 'JetBrains Mono', monospace;
   --public-text-h1: var(--foreground);
