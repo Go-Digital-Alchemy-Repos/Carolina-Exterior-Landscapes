@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ArrowLeft, Eye, FileText, Globe, Image as ImageIcon, Loader2, Save, Search } from "lucide-react";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { CmsImageUpload } from "@/features/admin/cms/components/cms-image-upload";
+import { ImagePositionPicker } from "@/features/admin/cms/components/image-position-picker";
 import { EditorLockBanner } from "@/components/shared/editor-lock-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,8 @@ type BlogDraft = {
   excerpt: string;
   body: string;
   imageUrl: string;
+  imagePositionX: number;
+  imagePositionY: number;
   staticImage: string;
   status: "draft" | "published";
   seoTitle: string;
@@ -70,6 +73,8 @@ function emptyDraft(): BlogDraft {
     excerpt: "",
     body: "",
     imageUrl: "",
+    imagePositionX: 50,
+    imagePositionY: 50,
     staticImage: "",
     status: "draft",
     seoTitle: "",
@@ -81,6 +86,10 @@ function emptyDraft(): BlogDraft {
 
 function getObject(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function positionValue(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 50;
 }
 
 function blocksToBody(blocks: unknown): string {
@@ -133,6 +142,8 @@ function draftFromPage(page: CmsPage): BlogDraft {
     excerpt: typeof data.excerpt === "string" ? data.excerpt : "",
     body: bodyText,
     imageUrl: typeof data.imageUrl === "string" ? data.imageUrl : "",
+    imagePositionX: positionValue(data.imagePositionX),
+    imagePositionY: positionValue(data.imagePositionY),
     staticImage: typeof data.image === "string" ? data.image : "",
     status: page.status === "published" ? "published" : "draft",
     seoTitle: page.seoTitle || (typeof data.titleTag === "string" ? data.titleTag : ""),
@@ -142,7 +153,7 @@ function draftFromPage(page: CmsPage): BlogDraft {
   };
 }
 
-function buildPagePayload(draft: BlogDraft) {
+function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
   const slug = normalizeSlug(draft.slug || draft.title);
   const title = draft.title.trim();
   const excerpt = draft.excerpt.trim();
@@ -150,6 +161,21 @@ function buildPagePayload(draft: BlogDraft) {
   const seoDescription = draft.seoDescription.trim() || excerpt;
   const tags = draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
   const blocks = bodyToBlocks(draft.body);
+  const existingContent = getObject(currentContent);
+  const existingBuilderBlocks = Array.isArray(existingContent.blocks) ? existingContent.blocks : [];
+  const builderBlocks = existingBuilderBlocks.map((block) => {
+    const item = getObject(block);
+    if (item.type !== "hero") return block;
+    return {
+      ...item,
+      props: {
+        ...getObject(item.props),
+        backgroundImageUrl: draft.imageUrl,
+        backgroundPositionX: draft.imagePositionX,
+        backgroundPositionY: draft.imagePositionY,
+      },
+    };
+  });
 
   return {
     title,
@@ -179,6 +205,8 @@ function buildPagePayload(draft: BlogDraft) {
           excerpt,
           image: draft.imageUrl ? "" : draft.staticImage,
           imageUrl: draft.imageUrl,
+          imagePositionX: draft.imagePositionX,
+          imagePositionY: draft.imagePositionY,
         },
       },
       blog: {
@@ -186,6 +214,7 @@ function buildPagePayload(draft: BlogDraft) {
         tags,
         bodyText: draft.body,
       },
+      ...(builderBlocks.length > 0 ? { blocks: builderBlocks } : {}),
     },
     seoTitle,
     seoDescription,
@@ -225,7 +254,7 @@ export default function CmsBlogEditorPage() {
   });
   const isReadOnly = editorLock.hasLocking && editorLock.isReadOnly;
 
-  const payload = useMemo(() => buildPagePayload(draft), [draft]);
+  const payload = useMemo(() => buildPagePayload(draft, page?.content), [draft, page?.content]);
   const canSave = payload.title.trim().length > 0 && payload.slug.trim().length > 0 && !isReadOnly;
 
   const saveMutation = useMutation({
@@ -410,10 +439,27 @@ export default function CmsBlogEditorPage() {
               <CardContent>
                 <CmsImageUpload
                   value={draft.imageUrl}
-                  onChange={(url) => updateDraft("imageUrl", url)}
+                  onChange={(imageUrl) => setDraft((current) => ({
+                    ...current,
+                    imageUrl,
+                    imagePositionX: imageUrl === current.imageUrl ? current.imagePositionX : 50,
+                    imagePositionY: imageUrl === current.imageUrl ? current.imagePositionY : 50,
+                  }))}
                   helpText="Displayed at the top of the article and on blog cards."
                   data-testid="upload-blog-cover"
                 />
+                {draft.imageUrl ? (
+                  <div className="mt-5">
+                    <ImagePositionPicker
+                      imageUrl={draft.imageUrl}
+                      positionX={draft.imagePositionX}
+                      positionY={draft.imagePositionY}
+                      onPositionChange={(imagePositionX, imagePositionY) => {
+                        setDraft((current) => ({ ...current, imagePositionX, imagePositionY }));
+                      }}
+                    />
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           </TabsContent>

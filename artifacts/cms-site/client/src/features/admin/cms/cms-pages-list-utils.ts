@@ -67,6 +67,8 @@ export function getCmsBlogPostMetadata(page: CmsPage): {
   category: string;
   publishedDate: string;
   featuredImageUrl: string;
+  imagePositionX: number;
+  imagePositionY: number;
   excerpt: string;
   readMinutes: number | null;
 } {
@@ -80,10 +82,12 @@ export function getCmsBlogPostMetadata(page: CmsPage): {
   const media = data.media && typeof data.media === "object" ? data.media as Record<string, unknown> : {};
   const featuredImageUrl = [data.imageUrl, media.heroImageUrl, page.ogImageUrl]
     .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? "";
+  const imagePositionX = typeof data.imagePositionX === "number" ? data.imagePositionX : 50;
+  const imagePositionY = typeof data.imagePositionY === "number" ? data.imagePositionY : 50;
   const excerpt = typeof data.excerpt === "string" ? data.excerpt : "";
   const readMinutes = typeof data.readMinutes === "number" ? data.readMinutes : null;
 
-  return { category, publishedDate, featuredImageUrl, excerpt, readMinutes };
+  return { category, publishedDate, featuredImageUrl, imagePositionX, imagePositionY, excerpt, readMinutes };
 }
 
 export function sortCmsPages(pages: CmsPage[], sort: CmsPageSort): CmsPage[] {

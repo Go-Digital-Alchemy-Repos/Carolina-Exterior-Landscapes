@@ -97,7 +97,7 @@ describe("CMS Blog page", () => {
           slug: "mulching-guide",
           pageType: "blog-post",
           content: {
-            landscape: { data: { category: "residential", date: "2026-07-09", imageUrl: "/uploads/mulch.webp", excerpt: "Pine straw and mulch.", readMinutes: 5 } },
+            landscape: { data: { category: "residential", date: "2026-07-09", imageUrl: "/uploads/mulch.webp", imagePositionX: 72, imagePositionY: 35, excerpt: "Pine straw and mulch.", readMinutes: 5 } },
           },
         }),
         page({
@@ -121,7 +121,9 @@ describe("CMS Blog page", () => {
     expect(container.textContent).toContain("Mulching Guide");
     expect(container.textContent).toContain("Commercial Contract");
     expect(container.textContent).not.toContain("About");
-    expect(container.querySelector('[data-testid="image-blog-mulch"]')?.getAttribute("src")).toBe("/uploads/mulch.webp");
+    const featuredImage = container.querySelector('[data-testid="image-blog-mulch"]') as HTMLImageElement;
+    expect(featuredImage.getAttribute("src")).toBe("/uploads/mulch.webp");
+    expect(featuredImage.style.objectPosition).toBe("72% 35%");
     expect(container.querySelector("thead")?.textContent).toContain("Date Published");
     expect(Array.from(container.querySelectorAll('[data-testid^="row-blog-post-"]')).map((row) => row.getAttribute("data-testid"))).toEqual([
       "row-blog-post-mulch",

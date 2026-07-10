@@ -173,7 +173,7 @@ export default function CmsBlogPage() {
                       <td className="px-4 py-3 align-middle">
                         <div className="flex h-16 w-24 items-center justify-center overflow-hidden rounded-md border bg-muted">
                           {meta.featuredImageUrl ? (
-                            <img src={meta.featuredImageUrl} alt="" className="h-full w-full object-cover" loading="lazy" data-testid={`image-blog-${post.id}`} />
+                            <img src={meta.featuredImageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: `${meta.imagePositionX}% ${meta.imagePositionY}%` }} loading="lazy" data-testid={`image-blog-${post.id}`} />
                           ) : (
                             <ImageIcon className="h-5 w-5 text-muted-foreground" aria-label="No featured image" />
                           )}

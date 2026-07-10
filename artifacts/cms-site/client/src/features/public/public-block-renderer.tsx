@@ -698,7 +698,15 @@ function BlogListingBlock({ props }: { props: Record<string, unknown> }) {
                 : "";
               return (
                 <article key={post.id} className="overflow-hidden rounded-lg border border-border/80 bg-white shadow-natural transition-all hover:-translate-y-0.5 hover:shadow-natural-lg">
-                  {imageUrl ? <img src={imageUrl} alt="" loading="lazy" className="aspect-[16/10] w-full object-cover" /> : null}
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      loading="lazy"
+                      className="aspect-[16/10] w-full object-cover"
+                      style={{ objectPosition: `${percent(data.imagePositionX)}% ${percent(data.imagePositionY)}%` }}
+                    />
+                  ) : null}
                   <div className="p-6">
                     {formattedDate ? <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{formattedDate}</p> : null}
                     <h3 className="font-heading text-xl font-bold leading-snug text-foreground">

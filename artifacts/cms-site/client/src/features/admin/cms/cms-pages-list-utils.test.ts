@@ -167,6 +167,8 @@ describe("CMS page list helpers", () => {
             category: "commercial",
             date: "2026-07-09",
             imageUrl: "/uploads/featured.webp",
+            imagePositionX: 72,
+            imagePositionY: 35,
             excerpt: "A short post summary.",
             readMinutes: 7,
           },
@@ -178,6 +180,8 @@ describe("CMS page list helpers", () => {
       category: "commercial",
       publishedDate: "2026-07-09",
       featuredImageUrl: "/uploads/featured.webp",
+      imagePositionX: 72,
+      imagePositionY: 35,
       excerpt: "A short post summary.",
       readMinutes: 7,
     });
