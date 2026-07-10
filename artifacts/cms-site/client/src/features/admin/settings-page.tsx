@@ -198,6 +198,13 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
       }
       toast({ title: "Setting saved" });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Setting not saved",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const testIntegration = useMutation({
@@ -245,6 +252,7 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
   });
 
   const mailgun = settings.mailgun ?? {};
+  const emailNotifications = settings.email_notifications ?? {};
   const analytics = settings.google_analytics ?? {};
   const googleReviews = settings.google_reviews ?? {};
   const codeSnippets = settings.code_snippets ?? {};
@@ -397,6 +405,45 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
                 {testIntegration.isPending ? "Verifying..." : "Verify Connection"}
               </Button>
               <p className="text-xs text-muted-foreground">Checks the saved API key against the configured Mailgun sending domain.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Form Submission Recipients</CardTitle>
+            <CardDescription>Choose where new contact and quote requests are delivered.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="contact-form-recipient">Contact Form Recipient</Label>
+              <Input
+                id="contact-form-recipient"
+                type="email"
+                defaultValue={emailNotifications.contact_form_recipient_email?.value ?? ""}
+                placeholder="contact@example.com"
+                onBlur={(event) => saveSetting.mutate({
+                  category: "email_notifications",
+                  key: "contact_form_recipient_email",
+                  value: event.currentTarget.value.trim(),
+                })}
+              />
+              <p className="text-xs text-muted-foreground">Receives submissions from the website contact form.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="quote-form-recipient">Quote Form Recipient</Label>
+              <Input
+                id="quote-form-recipient"
+                type="email"
+                defaultValue={emailNotifications.quote_form_recipient_email?.value ?? ""}
+                placeholder="quotes@example.com"
+                onBlur={(event) => saveSetting.mutate({
+                  category: "email_notifications",
+                  key: "quote_form_recipient_email",
+                  value: event.currentTarget.value.trim(),
+                })}
+              />
+              <p className="text-xs text-muted-foreground">Receives residential and commercial quote requests.</p>
             </div>
           </CardContent>
         </Card>
