@@ -19,7 +19,7 @@ export default function About() {
       
       <div className="relative w-full h-[55vh] min-h-[450px] flex items-center bg-foreground overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={heroImg} alt="About Carolina Exterior" className="w-full h-full object-cover opacity-85" />
+          <img src={heroImg} alt="About Carolina Exterior Landscapes" className="w-full h-full object-cover opacity-85" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent"></div>
           <div className="absolute inset-0 bg-topo-light opacity-50 mix-blend-overlay pointer-events-none"></div>
         </div>

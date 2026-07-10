@@ -182,7 +182,7 @@ function buildBlogLandscapeContent(
         ...existingData,
         slug: formData.slug,
         h1: formData.title,
-        titleTag: formData.seoTitle || `${formData.title} | Carolina Exterior`,
+        titleTag: formData.seoTitle || `${formData.title} | Carolina Exterior Landscapes`,
         metaDescription: formData.seoDescription || blogMeta.excerpt,
         primaryKeyword: typeof existingData.primaryKeyword === "string" ? existingData.primaryKeyword : "",
         secondaryKeywords: Array.isArray(existingData.secondaryKeywords) ? existingData.secondaryKeywords : [],
