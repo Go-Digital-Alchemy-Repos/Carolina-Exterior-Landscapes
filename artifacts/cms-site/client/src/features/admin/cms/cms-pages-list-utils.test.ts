@@ -132,6 +132,20 @@ describe("CMS page list helpers", () => {
     expect(filterAndSortCmsBlogPosts(pages, "pine straw", "title-asc").map((item) => item.slug)).toEqual(["mulching-guide"]);
   });
 
+  it("sorts blog posts by published date with newest first", () => {
+    const posts = [
+      page({ title: "Older", slug: "older", pageType: "blog-post", content: { landscape: { data: { date: "2026-05-15" } } } }),
+      page({ title: "Newest", slug: "newest", pageType: "blog-post", content: { landscape: { data: { date: "2026-07-03" } } } }),
+      page({ title: "Middle", slug: "middle", pageType: "blog-post", content: { landscape: { data: { date: "2026-06-05" } } } }),
+    ];
+
+    expect(filterAndSortCmsBlogPosts(posts, "", "published-desc").map((item) => item.slug)).toEqual([
+      "newest",
+      "middle",
+      "older",
+    ]);
+  });
+
   it("extracts blog metadata from landscape CMS content", () => {
     const metadata = getCmsBlogPostMetadata(page({
       pageType: "blog-post",
@@ -142,6 +156,7 @@ describe("CMS page list helpers", () => {
           data: {
             category: "commercial",
             date: "2026-07-09",
+            imageUrl: "/uploads/featured.webp",
             excerpt: "A short post summary.",
             readMinutes: 7,
           },
@@ -152,6 +167,7 @@ describe("CMS page list helpers", () => {
     expect(metadata).toEqual({
       category: "commercial",
       publishedDate: "2026-07-09",
+      featuredImageUrl: "/uploads/featured.webp",
       excerpt: "A short post summary.",
       readMinutes: 7,
     });

@@ -1,6 +1,10 @@
 import type { CmsPage } from "@shared/schema";
 
 export type CmsPageSort =
+  | "published-desc"
+  | "published-asc"
+  | "image-desc"
+  | "image-asc"
   | "title-asc"
   | "title-desc"
   | "updated-desc"
@@ -62,6 +66,7 @@ export function isStandardCmsPage(page: CmsPage): boolean {
 export function getCmsBlogPostMetadata(page: CmsPage): {
   category: string;
   publishedDate: string;
+  featuredImageUrl: string;
   excerpt: string;
   readMinutes: number | null;
 } {
@@ -69,11 +74,16 @@ export function getCmsBlogPostMetadata(page: CmsPage): {
   const landscape = content.landscape && typeof content.landscape === "object" ? content.landscape as Record<string, unknown> : {};
   const data = landscape.data && typeof landscape.data === "object" ? landscape.data as Record<string, unknown> : {};
   const category = typeof data.category === "string" && data.category.trim() ? data.category : "uncategorized";
-  const publishedDate = typeof data.date === "string" ? data.date : "";
+  const publishedDate = typeof data.date === "string" && data.date
+    ? data.date
+    : page.publishedAt ? new Date(page.publishedAt).toISOString() : "";
+  const media = data.media && typeof data.media === "object" ? data.media as Record<string, unknown> : {};
+  const featuredImageUrl = [data.imageUrl, media.heroImageUrl, page.ogImageUrl]
+    .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? "";
   const excerpt = typeof data.excerpt === "string" ? data.excerpt : "";
   const readMinutes = typeof data.readMinutes === "number" ? data.readMinutes : null;
 
-  return { category, publishedDate, excerpt, readMinutes };
+  return { category, publishedDate, featuredImageUrl, excerpt, readMinutes };
 }
 
 export function sortCmsPages(pages: CmsPage[], sort: CmsPageSort): CmsPage[] {
@@ -81,7 +91,18 @@ export function sortCmsPages(pages: CmsPage[], sort: CmsPageSort): CmsPage[] {
   sorted.sort((a, b) => {
     const titleCompare = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
     const statusCompare = statusRank(a.status) - statusRank(b.status);
+    const aBlogMeta = getCmsBlogPostMetadata(a);
+    const bBlogMeta = getCmsBlogPostMetadata(b);
+    const imageCompare = Number(Boolean(bBlogMeta.featuredImageUrl)) - Number(Boolean(aBlogMeta.featuredImageUrl));
     switch (sort) {
+      case "published-desc":
+        return timeValue(bBlogMeta.publishedDate) - timeValue(aBlogMeta.publishedDate) || titleCompare;
+      case "published-asc":
+        return timeValue(aBlogMeta.publishedDate) - timeValue(bBlogMeta.publishedDate) || titleCompare;
+      case "image-desc":
+        return imageCompare || titleCompare;
+      case "image-asc":
+        return -imageCompare || titleCompare;
       case "title-desc":
         return b.title.localeCompare(a.title, undefined, { sensitivity: "base" });
       case "updated-desc":
