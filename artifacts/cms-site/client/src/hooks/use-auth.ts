@@ -3,10 +3,10 @@ import { apiRequest, getQueryFn, queryClient, STALE_TIMES } from "@/lib/queryCli
 import type { User } from "@shared/schema";
 import { AdminPermission, type AdminPermission as AdminPermissionType } from "@shared/types";
 
-function getAdminPermissions(user: User | null): AdminPermissionType[] {
+export function getAdminPermissions(user: User | null): AdminPermissionType[] {
   if (!user) return [];
   if (user.role === "admin") {
-    return [AdminPermission.CONTENT, AdminPermission.DESIGN];
+    return [AdminPermission.CONTENT, AdminPermission.DESIGN, AdminPermission.CRM];
   }
 
   if (user.role !== "editor" || !Array.isArray(user.adminPermissions)) {
@@ -15,7 +15,8 @@ function getAdminPermissions(user: User | null): AdminPermissionType[] {
 
   return user.adminPermissions.filter((permission): permission is AdminPermissionType =>
     permission === AdminPermission.CONTENT ||
-    permission === AdminPermission.DESIGN
+    permission === AdminPermission.DESIGN ||
+    permission === AdminPermission.CRM
   );
 }
 
