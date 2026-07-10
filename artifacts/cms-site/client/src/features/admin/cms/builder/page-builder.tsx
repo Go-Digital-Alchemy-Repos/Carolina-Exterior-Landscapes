@@ -11,7 +11,6 @@ import {
   Bookmark,
   ListOrdered,
   Monitor,
-  Plus,
   Settings2,
   Sparkles,
 } from "lucide-react";
@@ -560,17 +559,6 @@ export function PageBuilder({ content, onChange }: PageBuilderProps) {
           >
             <Monitor className="mr-1.5 h-4 w-4" />
             Frontend Preview
-          </Button>
-          <Button
-            data-testid="button-add-block-toolbar"
-            onClick={() => {
-              setInsertAtIndex(selectedId ? resolveInsertIndex() : null);
-              setLeftRailMode("inserter");
-              setStructurePanelOpen(true);
-            }}
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Content
           </Button>
         </div>
       </div>

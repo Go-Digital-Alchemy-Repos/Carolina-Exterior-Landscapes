@@ -220,6 +220,14 @@ function mergeBuilderContentForSave(existingContent: unknown, builderContent: Bu
   };
 }
 
+export function publicPathForPage(pageType: EditorForm["pageType"], slug: string) {
+  const normalizedSlug = slug.replace(/^\/+|\/+$/g, "");
+  if (pageType === "home" || normalizedSlug === "home") return "/";
+  if (pageType === "location") return `/service-areas/${normalizedSlug}`;
+  if (pageType === "blog-post") return `/blog/${normalizedSlug}`;
+  return `/${normalizedSlug}`;
+}
+
 export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -652,8 +660,8 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
           />
         ) : null}
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3" data-testid="editor-heading-row">
             <Button
               variant="ghost"
               size="icon"
@@ -675,39 +683,7 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {!isNew && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyDraftPreview()}
-                  disabled={previewLinkMutation.isPending}
-                  data-testid="button-copy-draft-preview"
-                >
-                  {previewLinkMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-1.5" />
-                  )}
-                  Copy Preview Link
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openDraftPreview()}
-                  disabled={previewLinkMutation.isPending}
-                  data-testid="button-open-draft-preview"
-                >
-                  {previewLinkMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4 mr-1.5" />
-                  )}
-                  Draft Preview
-                </Button>
-              </>
-            )}
+          <div className="flex flex-wrap items-center justify-end gap-2" data-testid="editor-actions-row">
             {qualityIssues.length > 0 ? (
               <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800" data-testid="badge-quality-issues">
                 <AlertTriangle className="mr-1 h-3 w-3" />
@@ -845,6 +821,23 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
                 </Popover>
               </>
             )}
+            {!isNew ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  unsavedChangesGuard.confirmDiscardChanges(() => {
+                    window.location.assign(
+                      publicPathForPage(form.getValues("pageType"), form.getValues("slug")),
+                    );
+                  })
+                }
+                data-testid="button-return-to-page"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Return to Page
+              </Button>
+            ) : null}
             <Button
               onClick={onSave}
               disabled={isPending || editorLock.isReadOnly}

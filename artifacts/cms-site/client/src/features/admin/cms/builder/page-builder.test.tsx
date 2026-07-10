@@ -65,6 +65,8 @@ describe("PageBuilder", () => {
 
     expect(container.textContent).toContain("Visual Builder");
     expect(container.textContent).toContain("0 block");
+    expect(container.querySelector('[data-testid="button-open-frontend-preview"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="button-add-block-toolbar"]')).toBeNull();
   });
 
   it("renders a realistic mixed block fixture with retained CMS blocks", async () => {

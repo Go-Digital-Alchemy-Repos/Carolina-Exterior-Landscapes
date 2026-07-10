@@ -3,7 +3,7 @@
 import React, { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
-import CmsPageEditorPage from "@/features/admin/cms/cms-page-editor-page";
+import CmsPageEditorPage, { publicPathForPage } from "@/features/admin/cms/cms-page-editor-page";
 
 const navigateMock = vi.fn();
 const lockGuardMock = vi.fn();
@@ -275,6 +275,13 @@ describe("CmsPageEditorPage", () => {
     document.body.innerHTML = "";
   });
 
+  it("builds the published route for each CMS page type", () => {
+    expect(publicPathForPage("home", "home")).toBe("/");
+    expect(publicPathForPage("location", "/waxhaw-nc/")).toBe("/service-areas/waxhaw-nc");
+    expect(publicPathForPage("blog-post", "lawn-care-guide")).toBe("/blog/lawn-care-guide");
+    expect(publicPathForPage("service", "commercial-landscaping")).toBe("/commercial-landscaping");
+  });
+
   it("wires lock conflicts back to the CMS pages list and disables saving in read-only mode", async () => {
     root = createRoot(container);
 
@@ -301,6 +308,23 @@ describe("CmsPageEditorPage", () => {
     expect(saveButton).not.toBeNull();
     expect(saveButton?.disabled).toBe(true);
     expect(navigateMock).toHaveBeenCalledWith("/admin/cms/pages");
+  });
+
+  it("uses a separate title row and streamlined page actions", async () => {
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(React.createElement(CmsPageEditorPage));
+    });
+
+    const headingRow = container.querySelector('[data-testid="editor-heading-row"]');
+    const actionsRow = container.querySelector('[data-testid="editor-actions-row"]');
+    expect(headingRow).not.toBeNull();
+    expect(actionsRow).not.toBeNull();
+    expect(headingRow?.parentElement).toBe(actionsRow?.parentElement);
+    expect(container.querySelector('[data-testid="button-return-to-page"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="button-copy-draft-preview"]')).toBeNull();
+    expect(container.querySelector('[data-testid="button-open-draft-preview"]')).toBeNull();
   });
 
   it("saves combined builder and settings changes through the update mutation", async () => {
