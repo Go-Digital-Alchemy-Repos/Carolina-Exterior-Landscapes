@@ -99,7 +99,7 @@ function placeholderValueForProp(prop: PropDef, existingValue: unknown): unknown
 }
 
 function createPlaceholderBlock(block: BlockDef): BlockInstance {
-  if (block.type === "cta") return createBlock(block.type);
+  if (block.type === "cta" || block.type === "service-area-map") return createBlock(block.type);
 
   const instance = createBlock(block.type);
   const nextProps: Record<string, unknown> = { ...instance.props };
@@ -115,9 +115,12 @@ function createPlaceholderBlock(block: BlockDef): BlockInstance {
 }
 
 function buildStarterSectionRecord(block: BlockDef) {
+  const isServiceAreaMap = block.type === "service-area-map";
   return {
     name: `${SYSTEM_SECTION_NAME_PREFIX}${block.label}`,
-    description: `System starter section for the ${block.label} block with placeholder Latin content.`,
+    description: isServiceAreaMap
+      ? "Reusable OpenStreetMap section with linked pins for each service-area landing page."
+      : `System starter section for the ${block.label} block with placeholder Latin content.`,
     category: mapBlockToSectionCategory(block),
     blocks: [createPlaceholderBlock(block)],
   };
@@ -157,7 +160,7 @@ export async function ensureSystemCmsSections(options?: { refreshExisting?: bool
       continue;
     }
 
-    if (refreshExisting || block.type === "cta") {
+    if (refreshExisting || block.type === "cta" || block.type === "service-area-map") {
       await storage.cmsSections.updateSection(existing.id, {
         name: starterSection.name,
         description: starterSection.description,

@@ -3,23 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-
-type ServiceArea = { slug: string; city: string; state: string; lat: number; lng: number };
-type CmsLandscapePage = {
-  slug: string;
-  content?: { landscape?: { kind?: string; data?: Partial<ServiceArea> } };
-};
+import {
+  buildServiceAreas,
+  type CmsLandscapePage,
+  type ServiceArea,
+} from "../lib/service-area-locations";
 
 async function fetchServiceAreas(): Promise<ServiceArea[]> {
   const response = await fetch("/api/cms/landscape/pages", { credentials: "include" });
   if (!response.ok) throw new Error("Unable to load CMS service areas");
   const pages = await response.json() as CmsLandscapePage[];
-  return pages.flatMap((page) => {
-    const landscape = page.content?.landscape;
-    const area = landscape?.data;
-    if (landscape?.kind !== "location" || !area?.city || !area.state || typeof area.lat !== "number" || typeof area.lng !== "number") return [];
-    return [{ slug: page.slug, city: area.city, state: area.state, lat: area.lat, lng: area.lng }];
-  });
+  return buildServiceAreas(pages);
 }
 
 const pinIcon = L.divIcon({
