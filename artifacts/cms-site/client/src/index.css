@@ -89,6 +89,10 @@
   line-height: 1.1;
 }
 
+.landscape-site .landscape-blog-post [data-testid="block-rich-text"] .prose h2 {
+  margin-top: 0.3375em;
+}
+
 .landscape-site [data-testid="block-rich-text"] .prose h3 {
   margin-top: 1.8em;
   margin-bottom: 0.55em;
