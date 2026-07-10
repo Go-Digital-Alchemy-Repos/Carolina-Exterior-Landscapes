@@ -177,10 +177,12 @@ function ChoiceGroup({
   field,
   value,
   onChange,
+  appearance = "default",
 }: {
   field: CmsFormField;
   value: unknown;
   onChange: (next: unknown) => void;
+  appearance?: "default" | "quote";
 }) {
   const choiceLayout = field.config?.choiceLayout === "grid"
     ? "grid gap-3 sm:grid-cols-2"
@@ -244,12 +246,18 @@ function ChoiceGroup({
         }
 
         return (
-          <label key={option.value} className="flex items-start gap-3 rounded-lg border px-3 py-2">
+          <label
+            key={option.value}
+            className={cn(
+              "flex items-start gap-3",
+              appearance === "quote" ? "py-1" : "rounded-lg border px-3 py-2",
+            )}
+          >
             <input
               type="radio"
               checked={checked}
               onChange={() => onChange(option.value)}
-              className="mt-1 h-4 w-4"
+              className="mt-0.5 h-4 w-4 accent-[hsl(var(--primary))]"
             />
             <span className="text-sm">{option.label}</span>
           </label>
@@ -380,7 +388,7 @@ function renderFieldInput(
 
   if (field.type === "multiselect") {
     if (field.config?.selectionMode === "multiple" && field.config?.choiceLayout === "grid") {
-      return <ChoiceGroup field={field} value={value} onChange={setValue} />;
+      return <ChoiceGroup field={field} value={value} onChange={setValue} appearance={appearance} />;
     }
 
     const current = arrayValue(value).map((item) => text(item));
@@ -403,7 +411,7 @@ function renderFieldInput(
   }
 
   if (supportsChoices(field.type)) {
-    return <ChoiceGroup field={field} value={value} onChange={setValue} />;
+    return <ChoiceGroup field={field} value={value} onChange={setValue} appearance={appearance} />;
   }
 
   if (field.type === "consent") {

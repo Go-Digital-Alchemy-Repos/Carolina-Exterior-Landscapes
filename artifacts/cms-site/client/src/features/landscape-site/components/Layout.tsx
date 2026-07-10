@@ -35,11 +35,11 @@ function FooterMenuColumn({ title, items, className }: { title: string; items: M
   if (items.length === 0) return null;
   return (
     <div className={className}>
-      <h4 className="font-extrabold text-xl mb-6 text-white">{title}</h4>
+      <h4 className="mb-6 text-lg font-extrabold text-white">{title}</h4>
       <ul className="space-y-4 text-sm font-medium text-background/70">
         {items.map((item) => (
           <li key={item.id}>
-            <div className="flex items-center gap-3 group text-base">
+            <div className="group flex items-center gap-3">
               <ArrowRight className="h-4 w-4 text-primary opacity-0 -ml-6 group-hover:opacity-100 group-hover:ml-0 transition-all" />
               <MenuLink
                 item={item}
@@ -56,6 +56,7 @@ function FooterMenuColumn({ title, items, className }: { title: string; items: M
 export function Layout({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<string | null>(null);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState<string | null>(null);
   const [location] = useLocation();
   const {
@@ -91,6 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    setMobileSubmenuOpen(null);
     setDesktopMenuOpen(null);
     window.scrollTo(0, 0);
   }, [location]);
@@ -145,7 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="max-w-[1440px] mx-auto px-4 xl:px-6 flex justify-between items-center gap-5">
           <Link href="/" className="flex items-center group z-50">
-            {frontendLogoUrl ? <img src={frontendLogoUrl} alt={companyName ?? ""} width={471} height={126} fetchPriority="high" decoding="async" className="h-[3.75rem] md:h-12 w-auto group-hover:opacity-90 transition-opacity" /> : <span className="font-heading text-lg font-bold">{companyName}</span>}
+            {frontendLogoUrl ? <img src={frontendLogoUrl} alt={companyName ?? ""} width={471} height={126} fetchPriority="high" decoding="async" className="h-12 w-auto group-hover:opacity-90 transition-opacity" /> : <span className="font-heading text-lg font-bold">{companyName}</span>}
           </Link>
 
           {/* Desktop Nav */}
@@ -227,30 +229,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {companyPhoneNumbers}
             </a> : null}
             <div className="h-px bg-border/50 my-2" />
-            {mainNavigation.map((item) => {
-              if (item.children.length === 0) {
-                return (
-                  <MenuLink
-                    key={item.id}
-                    item={item}
-                    className="hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  />
-                );
-              }
-
-              return (
-                <div key={item.id} className="contents">
-                  <div className="h-px bg-border/50 my-2" />
-                  <span className="text-primary text-sm tracking-widest uppercase">{item.label}</span>
-                  <div className="flex flex-col gap-5 text-xl text-foreground/80 font-bold ml-4">
+            {mainNavigation.map((item) => item.children.length === 0 ? (
+              <MenuLink
+                key={item.id}
+                item={item}
+                className="border-b border-border/50 pb-5 hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+            ) : (
+              <div key={item.id} className="border-b border-border/50 pb-5">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-4 text-left hover:text-primary"
+                  aria-expanded={mobileSubmenuOpen === item.id}
+                  onClick={() => setMobileSubmenuOpen((current) => current === item.id ? null : item.id)}
+                >
+                  <span>{item.label}</span>
+                  <ChevronDown className={`h-6 w-6 shrink-0 transition-transform ${mobileSubmenuOpen === item.id ? "rotate-180" : ""}`} />
+                </button>
+                {mobileSubmenuOpen === item.id ? (
+                  <div className="ml-4 mt-5 flex flex-col gap-5 text-lg font-bold text-foreground/75">
                     {item.children.map((child) => (
                       <MenuLink key={child.id} item={child} className="hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)} />
                     ))}
                   </div>
-                </div>
-              );
-            })}
+                ) : null}
+              </div>
+            ))}
 
             <div className="mt-8 flex flex-col gap-4">
               <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-primary/20">
@@ -268,13 +273,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <footer className="bg-foreground text-background pt-24 pb-12 relative overflow-hidden">
-        {/* Decorative background element */}
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
         <div className="absolute inset-0 bg-topo-light opacity-50 pointer-events-none"></div>
         <BotanicalAccent variant="fern" className="hidden lg:block absolute left-2 bottom-8 h-64 w-auto text-primary/10" />
 
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12 xl:gap-8 mb-16">
+          <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1.2fr_0.9fr] xl:gap-8">
             
             <div className="space-y-8">
               {footerLogoUrl ? <img src={footerLogoUrl} alt={companyName ?? ""} width={486} height={135} loading="lazy" decoding="async" className="h-16 w-auto max-w-full" /> : <p className="font-heading text-xl font-bold text-white">{companyName}</p>}
@@ -284,15 +287,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="space-y-4 font-bold text-sm">
                 {phoneLink ? <a href={phoneLink} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Phone className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{companyPhoneNumbers}</span>
+                  <span className="text-sm tracking-wide 2xl:text-base">{companyPhoneNumbers}</span>
                 </a> : null}
                 {companyEmail ? <a href={`mailto:${companyEmail}`} className="flex items-center gap-4 hover:text-primary transition-colors group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background group-hover:bg-primary group-hover:text-primary-foreground transition-colors"><Mail className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{companyEmail}</span>
+                  <span className="min-w-0 break-words text-sm tracking-wide 2xl:text-base">{companyEmail}</span>
                 </a> : null}
                 {companyAddress ? <div className="flex items-center gap-4 group">
                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-background"><MapPin className="h-4 w-4" /></div>
-                  <span className="text-base tracking-wide">{companyAddress}</span>
+                  <span className="text-sm tracking-wide 2xl:text-base">{companyAddress}</span>
                 </div> : null}
               </div>
             </div>

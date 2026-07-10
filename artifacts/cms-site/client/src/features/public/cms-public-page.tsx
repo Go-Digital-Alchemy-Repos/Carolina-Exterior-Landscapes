@@ -4,7 +4,6 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Layout } from "@/features/landscape-site/components/Layout";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { PublicBlockRenderer, PublicPageRenderer } from "@/features/public/public-block-renderer";
 import { PublicSidebar } from "@/features/public/public-sidebar";
 import { Loader2 } from "lucide-react";
@@ -65,42 +64,25 @@ function isLandscapeContent(content: unknown) {
   return Boolean(content && typeof content === "object" && (content as { source?: unknown }).source === "carolina-landscape-v1");
 }
 
-type LandscapeTone = "cta" | "dark" | "stone" | "sand" | "white";
+type LandscapeTone = "cta" | "dark" | "stone";
 
-function landscapeSectionTone(block: BlockInstance, index: number): LandscapeTone {
+function landscapeSectionTone(block: BlockInstance): LandscapeTone {
   if (block.type === "cta") return "cta";
   if (block.type === "hero") return "dark";
   const background = typeof block.props?.background === "string" ? block.props.background : "";
   if (background === "dark") return "dark";
   if (background === "muted" || background === "off-white") return "stone";
-  return index % 2 === 0 ? "sand" : "white";
-}
-
-function landscapeToneColor(tone: LandscapeTone) {
-  if (tone === "cta") return "hsl(var(--brand-sand))";
-  if (tone === "dark") return "hsl(var(--foreground))";
-  if (tone === "stone") return "hsl(var(--surface-stone))";
-  if (tone === "sand") return "hsl(var(--surface-sand))";
-  return "hsl(var(--background))";
+  return "stone";
 }
 
 function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
   return (
     <div className="landscape-cms-page w-full">
       {blocks.map((block, index) => {
-        const tone = landscapeSectionTone(block, index);
-        const previousTone = index > 0 ? landscapeSectionTone(blocks[index - 1], index - 1) : tone;
+        const tone = landscapeSectionTone(block);
         const showBotanical = block.type === "cards-grid" || block.type === "faq" || block.type === "rich-text";
         return (
           <div key={block.id}>
-            {index > 0 && block.type !== "cta" ? (
-              <SectionDivider
-                variant={index % 3 === 0 ? "leaf" : "hills"}
-                bgColor={landscapeToneColor(previousTone)}
-                fillColor={landscapeToneColor(tone)}
-                heightClassName="h-8 md:h-12 lg:h-16"
-              />
-            ) : null}
             <div className={`landscape-cms-section landscape-cms-section--${tone} relative overflow-hidden`}>
               {tone !== "dark" ? <div className="pointer-events-none absolute inset-0 bg-topo opacity-35" aria-hidden="true" /> : null}
               {showBotanical ? (

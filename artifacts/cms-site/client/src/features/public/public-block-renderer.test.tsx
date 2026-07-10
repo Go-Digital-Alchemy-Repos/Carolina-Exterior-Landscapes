@@ -146,6 +146,19 @@ describe("PublicBlockRenderer hero", () => {
     expect(eyebrow?.className).not.toContain("text-primary");
   });
 
+  it("supports legacy hero imageUrl fields used by published CMS pages", async () => {
+    await act(async () => {
+      root!.render(
+        React.createElement(PublicBlockRenderer, {
+          block: heroBlock({ backgroundImageUrl: "", imageUrl: "/images/landscape/hero-home.webp" }),
+        }),
+      );
+    });
+
+    const image = container.querySelector('[data-testid="hero-background-image"]') as HTMLImageElement | null;
+    expect(image?.getAttribute("src")).toBe("/images/landscape/hero-home.webp");
+  });
+
   it("gives interior heroes additional vertical breathing room", async () => {
     await act(async () => {
       root!.render(React.createElement(PublicBlockRenderer, { block: heroBlock({ variant: "interior" }) }));
