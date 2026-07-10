@@ -225,6 +225,13 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
       }
       toast({ title: "Setting saved" });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Setting not saved",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const testIntegration = useMutation({
@@ -272,6 +279,7 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
   });
 
   const mailgun = settings.mailgun ?? {};
+  const emailNotifications = settings.email_notifications ?? {};
   const analytics = settings.google_analytics ?? {};
   const googleReviews = settings.google_reviews ?? {};
   const codeSnippets = settings.code_snippets ?? {};
@@ -431,9 +439,43 @@ export default function AdminSettingsPage({ initialSubview = "email" }: { initia
         <Card>
           <CardHeader>
             <CardTitle>Form Submission Recipients</CardTitle>
-            <CardDescription>Choose which system users receive an email when each active form is submitted.</CardDescription>
+            <CardDescription>
+              Choose override inboxes for contact and quote forms, then assign system users per active form.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contact-form-recipient">Contact Form Recipient</Label>
+                <Input
+                  id="contact-form-recipient"
+                  type="email"
+                  defaultValue={emailNotifications.contact_form_recipient_email?.value ?? ""}
+                  placeholder="contact@example.com"
+                  onBlur={(event) => saveSetting.mutate({
+                    category: "email_notifications",
+                    key: "contact_form_recipient_email",
+                    value: event.currentTarget.value.trim(),
+                  })}
+                />
+                <p className="text-xs text-muted-foreground">Overrides assigned users for website contact form submissions.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="quote-form-recipient">Quote Form Recipient</Label>
+                <Input
+                  id="quote-form-recipient"
+                  type="email"
+                  defaultValue={emailNotifications.quote_form_recipient_email?.value ?? ""}
+                  placeholder="quotes@example.com"
+                  onBlur={(event) => saveSetting.mutate({
+                    category: "email_notifications",
+                    key: "quote_form_recipient_email",
+                    value: event.currentTarget.value.trim(),
+                  })}
+                />
+                <p className="text-xs text-muted-foreground">Overrides assigned users for residential and commercial quote requests.</p>
+              </div>
+            </div>
             {activeForms.length === 0 ? (
               <p className="text-sm text-muted-foreground">No active forms are available.</p>
             ) : notificationUsers.length === 0 ? (
