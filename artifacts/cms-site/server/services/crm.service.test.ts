@@ -167,6 +167,7 @@ describe("crm service", () => {
       formName: "Residential Quote Form",
       formSubmissionId: "submission-2",
       data,
+      clientIp: "203.0.113.42",
     });
 
     expect(mockFindDuplicateLead).not.toHaveBeenCalled();
@@ -176,7 +177,11 @@ describe("crm service", () => {
         source: "website_form",
         formSubmissionId: "submission-2",
         formData: data,
-        metadata: { formName: "Residential Quote Form", leadType: "residential" },
+        metadata: {
+          formName: "Residential Quote Form",
+          leadType: "residential",
+          clientIp: "203.0.113.42",
+        },
       }),
     );
     expect(result.duplicate).toBe(false);

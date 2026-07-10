@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -82,6 +82,86 @@ function LeadTypeBadge({ lead }: { lead: CrmLead }) {
       {label}
     </Badge>
   );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  name: "Full Name",
+  fullName: "Full Name",
+  contactName: "Contact Name",
+  email: "Email Address",
+  phone: "Phone Number",
+  companyName: "Company / HOA Name",
+  servicesInterested: "Services Needed",
+  servicesNeeded: "Services Needed",
+  message: "Project Details / Message",
+  notes: "Additional Notes",
+  sourcePage: "Submitted From",
+};
+
+function formFieldLabel(key: string) {
+  return (
+    FIELD_LABELS[key] ??
+    key
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase())
+  );
+}
+
+function FormDataValue({ fieldKey, value }: { fieldKey: string; value: unknown }) {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">Not provided</span>;
+  }
+  if (Array.isArray(value)) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {value.map((item, index) => (
+          <Badge key={`${String(item)}-${index}`} variant="secondary">
+            {String(item)}
+          </Badge>
+        ))}
+      </div>
+    );
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).filter(
+      ([, item]) => item !== "",
+    );
+    return (
+      <div className="space-y-1">
+        {entries.map(([key, item]) => (
+          <div key={key}>
+            <span className="font-medium">{formFieldLabel(key)}:</span> {String(item)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (typeof value === "boolean") return <span>{value ? "Yes" : "No"}</span>;
+  const display = String(value);
+  if (fieldKey.toLowerCase().includes("email")) {
+    return (
+      <a className="text-primary underline-offset-4 hover:underline" href={`mailto:${display}`}>
+        {display}
+      </a>
+    );
+  }
+  if (fieldKey.toLowerCase().includes("phone")) {
+    return (
+      <a className="text-primary underline-offset-4 hover:underline" href={`tel:${display}`}>
+        {display}
+      </a>
+    );
+  }
+  return <span className="whitespace-pre-wrap">{display}</span>;
+}
+
+function leadMetadata(lead: CrmLead) {
+  return lead.metadata && typeof lead.metadata === "object" ? lead.metadata : {};
+}
+
+function formatDateTime(value?: string | Date | null) {
+  return value ? format(new Date(value), "MMM d, yyyy 'at' h:mm a") : "Not recorded";
 }
 
 function stageMeta(stage: string) {
@@ -474,14 +554,73 @@ export default function CrmPage() {
                     </label>
                   ))}
                 </TabsContent>
-                <TabsContent value="data">
-                  <pre className="overflow-auto rounded-md bg-muted p-4 text-xs">
-                    {JSON.stringify(
-                      { formData: detail.formData, metadata: detail.metadata },
-                      null,
-                      2,
-                    )}
-                  </pre>
+                <TabsContent value="data" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Submission Details</CardTitle>
+                      <CardDescription>
+                        When and where this lead entered the system.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
+                      <div>
+                        <p className="font-medium">Date and Time</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {formatDateTime(detail.createdAt)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">IP Address</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {typeof leadMetadata(detail).clientIp === "string"
+                            ? String(leadMetadata(detail).clientIp)
+                            : "Not recorded"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Form</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {typeof leadMetadata(detail).formName === "string"
+                            ? String(leadMetadata(detail).formName)
+                            : "Not recorded"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Lead Source</p>
+                        <p className="mt-1 text-muted-foreground">{detail.source}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Information Submitted</CardTitle>
+                      <CardDescription>The information provided by this lead.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {Object.entries(detail.formData ?? {}).length > 0 ? (
+                        <dl className="divide-y">
+                          {Object.entries(detail.formData ?? {}).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className="grid gap-1 py-3 sm:grid-cols-[11rem_1fr] sm:gap-4"
+                            >
+                              <dt className="text-sm font-medium text-muted-foreground">
+                                {formFieldLabel(key)}
+                              </dt>
+                              <dd className="min-w-0 text-sm">
+                                <FormDataValue fieldKey={key} value={value} />
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No submitted form data is available.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
             ) : null}

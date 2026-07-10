@@ -11,9 +11,10 @@ router.post(
     const result = await submitManagedFormBySlug("contact-form", req.body, {
       baseUrl,
       source: "contact-route",
+      clientIp: req.ip,
     });
     res.status(201).json({ message: result.successMessage });
-  })
+  }),
 );
 
 export default router;

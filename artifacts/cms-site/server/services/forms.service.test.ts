@@ -53,7 +53,10 @@ describe("submitManagedFormBySlug", () => {
     mockSendManagedFormSubmissionEmail.mockResolvedValue(undefined);
     mockCreateSubmission.mockResolvedValue({ id: "submission-1" });
     mockCreateMessage.mockResolvedValue({ id: "message-1" });
-    mockCreateCrmLeadFromFormSubmission.mockResolvedValue({ duplicate: false, lead: { id: "lead-1" } });
+    mockCreateCrmLeadFromFormSubmission.mockResolvedValue({
+      duplicate: false,
+      lead: { id: "lead-1" },
+    });
     mockGetFormNotificationUsers.mockResolvedValue([{ email: "editor@example.com" }]);
     mockGetUsersByRole.mockResolvedValue([{ email: "admin@example.com" }]);
   });
@@ -92,7 +95,7 @@ describe("submitManagedFormBySlug", () => {
         city: "Fort Mill",
         message: "Need cameras for a warehouse.",
       },
-      { baseUrl: "https://carolinaexteriorlandscapes.com" },
+      { baseUrl: "https://carolinaexteriorlandscapes.com", clientIp: "203.0.113.42" },
     );
 
     expect(mockCreateMessage).toHaveBeenCalledWith({
@@ -114,13 +117,16 @@ describe("submitManagedFormBySlug", () => {
         sourcePage: "contact-form",
       },
     );
-    expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Service of Interest: Security Camera Installation");
+    expect(mockSendContactFormEmail.mock.calls[0][3]).toContain(
+      "Service of Interest: Security Camera Installation",
+    );
     expect(mockSendContactFormEmail.mock.calls[0][3]).toContain("Property Type: Commercial");
     expect(mockGetFormNotificationUsers).toHaveBeenCalledWith("contact-form-id");
     expect(mockGetUsersByRole).not.toHaveBeenCalled();
     expect(mockCreateCrmLeadFromFormSubmission).toHaveBeenCalledWith({
       formName: "Contact Form",
       formSubmissionId: "submission-1",
+      clientIp: "203.0.113.42",
       data: {
         fullName: "Van Orcutt",
         phone: "(803) 995-1522",

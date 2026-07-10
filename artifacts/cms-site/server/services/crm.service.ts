@@ -109,17 +109,23 @@ export async function createCrmLeadFromFormSubmission({
   formName,
   formSubmissionId,
   data,
+  clientIp,
 }: {
   formName: string;
   formSubmissionId: string;
   data: Record<string, unknown>;
+  clientIp?: string;
 }) {
   const parsed = crmLeadInputSchema.parse({
     ...inferCrmLeadFromFormData(data),
     source: "website_form",
     formSubmissionId,
     formData: data,
-    metadata: { formName, leadType: leadTypeFromFormName(formName) },
+    metadata: {
+      formName,
+      leadType: leadTypeFromFormName(formName),
+      ...(clientIp ? { clientIp } : {}),
+    },
   });
   const lead = await storage.crm.createLead(parsed);
   return { lead, duplicate: false };
