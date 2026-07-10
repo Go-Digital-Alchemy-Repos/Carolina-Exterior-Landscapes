@@ -921,7 +921,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-rich-text">
-        <div className={`mx-auto max-w-4xl px-4 py-8 sm:px-6 ${alignmentClass(props.alignment)}`}>
+        <div className={`mx-auto max-w-4xl px-4 py-2 sm:px-6 ${alignmentClass(props.alignment)}`}>
           <div className="prose prose-slate max-w-none">{renderRichTextWithGalleries(str(props.content, "<p></p>"))}</div>
         </div>
       </section>

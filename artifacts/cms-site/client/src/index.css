@@ -83,14 +83,10 @@
 }
 
 .landscape-site [data-testid="block-rich-text"] .prose h2 {
-  margin-top: 2.25em;
+  margin-top: 0.15em;
   margin-bottom: 0.65em;
   font-size: clamp(1.8rem, 3vw, 2.35rem);
   line-height: 1.1;
-}
-
-.landscape-site .landscape-blog-post [data-testid="block-rich-text"] .prose h2 {
-  margin-top: 0.3375em;
 }
 
 .landscape-site [data-testid="block-rich-text"] .prose h3 {

@@ -75,9 +75,9 @@ function landscapeSectionTone(block: BlockInstance): LandscapeTone {
   return "stone";
 }
 
-function LandscapeCmsBlocks({ blocks, isBlogPost = false }: { blocks: BlockInstance[]; isBlogPost?: boolean }) {
+function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
   return (
-    <div className={`landscape-cms-page w-full ${isBlogPost ? "landscape-blog-post" : ""}`}>
+    <div className="landscape-cms-page w-full">
       {blocks.map((block, index) => {
         const tone = landscapeSectionTone(block);
         const showBotanical = block.type === "cards-grid" || block.type === "faq" || block.type === "rich-text";
@@ -324,7 +324,7 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
     ) : isQuoteLandingPage ? (
       <LandscapeQuoteBlocks blocks={blocks} />
     ) : useLandscapeShell ? (
-      <LandscapeCmsBlocks blocks={blocks} isBlogPost={page.pageType === "blog-post"} />
+      <LandscapeCmsBlocks blocks={blocks} />
     ) : (
       <PublicPageRenderer blocks={blocks} />
     )
