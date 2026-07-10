@@ -76,6 +76,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     staleTime: 60_000,
   });
   const mainNavigation = menuItems(publicMenus?.main_navigation);
+  const mobileNavigation = menuItems(publicMenus?.mobile_navigation);
   const footerResidential = menuItems(publicMenus?.footer_platform);
   const footerCommercial = menuItems(publicMenus?.footer_secondary);
   const footerServiceAreas = menuItems(publicMenus?.footer_resources);
@@ -229,7 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {companyPhoneNumbers}
             </a> : null}
             <div className="h-px bg-border/50 my-2" />
-            {mainNavigation.map((item) => item.children.length === 0 ? (
+            {mobileNavigation.map((item) => item.children.length === 0 ? (
               <MenuLink
                 key={item.id}
                 item={item}

@@ -72,4 +72,38 @@ describe("landscape Layout", () => {
     expect(container.querySelector("#desktop-menu-managed-residential")?.className).toContain("visible");
     expect(container.textContent).toContain("Managed Service");
   });
+
+  it("renders the dedicated CMS mobile navigation in the mobile overlay", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(["/api/cms/menus"], {
+      main_navigation: {
+        id: "desktop-menu",
+        name: "Main Navigation",
+        location: "main_navigation",
+        items: [{ id: "desktop-only", label: "Desktop Only", url: "/about", openInNewTab: false, children: [] }],
+      },
+      mobile_navigation: {
+        id: "mobile-menu",
+        name: "Mobile Navigation",
+        location: "mobile_navigation",
+        items: [{ id: "mobile-only", label: "Mobile Only", url: "/contact", openInNewTab: false, children: [] }],
+      },
+    });
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(
+        <QueryClientProvider client={queryClient}>
+          <Layout><div>Content</div></Layout>
+        </QueryClientProvider>,
+      );
+    });
+
+    const toggle = container.querySelector('[aria-label="Open navigation menu"]') as HTMLButtonElement | null;
+    expect(toggle).not.toBeNull();
+    await act(async () => toggle?.click());
+
+    const mobileOverlay = container.querySelector("#mobile-navigation");
+    expect(mobileOverlay?.textContent).toContain("Mobile Only");
+    expect(mobileOverlay?.textContent).not.toContain("Desktop Only");
+  });
 });
