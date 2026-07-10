@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useParams } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ArrowLeft, Eye, FileText, Globe, Image as ImageIcon, Loader2, Save, Search } from "lucide-react";
+import { ArrowLeft, ChevronDown, Eye, FileText, Globe, Image as ImageIcon, Loader2, Plus, Save, Search, Trash2 } from "lucide-react";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { CmsImageUpload } from "@/features/admin/cms/components/cms-image-upload";
 import { ImagePositionPicker } from "@/features/admin/cms/components/image-position-picker";
@@ -11,6 +11,7 @@ import { EditorLockBanner } from "@/components/shared/editor-lock-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +25,7 @@ import type { CmsPage } from "@shared/schema";
 
 type BlogCategory = "residential" | "commercial";
 type BlogBlock = { type: "h2" | "h3" | "p" | "li"; text: string };
+type BlogFaqItem = { question: string; answer: string };
 type BlogDraft = {
   title: string;
   slug: string;
@@ -34,6 +36,9 @@ type BlogDraft = {
   readMinutes: number;
   excerpt: string;
   body: string;
+  faqTitle: string;
+  faqDescription: string;
+  faqItems: BlogFaqItem[];
   heroEyebrow: string;
   heroHeading: string;
   heroSubheading: string;
@@ -50,6 +55,29 @@ type BlogDraft = {
 };
 
 const DEFAULT_AUTHOR = "Carolina Exterior Team";
+
+function CollapsibleEditorCard({ title, children, contentClassName }: { title: string; children: ReactNode; contentClassName?: string }) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
+      <Card>
+        <CardHeader className="p-0">
+          <CollapsibleTrigger
+            className="flex w-full items-center justify-between gap-4 rounded-t-xl p-6 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            data-testid={`button-toggle-${title.toLowerCase().replace(/\s+/g, "-")}`}
+          >
+            <CardTitle>{title}</CardTitle>
+            <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className={contentClassName}>{children}</CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
 
 function normalizeSlug(value: string) {
   return value
@@ -77,6 +105,9 @@ function emptyDraft(): BlogDraft {
     readMinutes: 3,
     excerpt: "",
     body: "",
+    faqTitle: "Frequently Asked Questions",
+    faqDescription: "",
+    faqItems: [],
     heroEyebrow: "Landscape Journal",
     heroHeading: "",
     heroSubheading: "",
@@ -104,22 +135,6 @@ function positionValue(value: unknown) {
 function dateTimeLocalValue(value: Date | string | null | undefined) {
   if (!value) return "";
   return format(new Date(value), "yyyy-MM-dd'T'HH:mm");
-}
-
-function blocksToBody(blocks: unknown): string {
-  if (!Array.isArray(blocks)) return "";
-  return blocks
-    .map((block) => {
-      const item = getObject(block);
-      const text = typeof item.text === "string" ? item.text.trim() : "";
-      if (!text) return "";
-      if (item.type === "h2") return `## ${text}`;
-      if (item.type === "h3") return `### ${text}`;
-      if (item.type === "li") return `- ${text}`;
-      return text;
-    })
-    .filter(Boolean)
-    .join("\n\n");
 }
 
 function escapeHtml(value: string) {
@@ -161,6 +176,57 @@ function htmlToPlainText(html: string) {
     .trim();
 }
 
+function faqItemsFrom(value: unknown): BlogFaqItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => {
+    const item = getObject(entry);
+    return {
+      question: typeof item.question === "string" ? item.question : "",
+      answer: typeof item.answer === "string" ? item.answer : "",
+    };
+  });
+}
+
+function extractLegacyFaqFromHtml(bodyHtml: string): { bodyHtml: string; faq: { title: string; description: string; items: BlogFaqItem[] } | null } {
+  const headingPattern = /<h2\b[^>]*>([\s\S]*?)<\/h2>/gi;
+  let faqHeading: RegExpExecArray | null = null;
+  let headingMatch: RegExpExecArray | null;
+
+  while ((headingMatch = headingPattern.exec(bodyHtml))) {
+    if (/\bfaq\b|frequently asked/i.test(htmlToPlainText(headingMatch[1]))) {
+      faqHeading = headingMatch;
+      break;
+    }
+  }
+
+  if (!faqHeading || faqHeading.index === undefined) return { bodyHtml, faq: null };
+
+  const nextHeading = headingPattern.exec(bodyHtml);
+  const sectionEnd = nextHeading?.index ?? bodyHtml.length;
+  const sectionStart = faqHeading.index + faqHeading[0].length;
+  const sectionHtml = bodyHtml.slice(sectionStart, sectionEnd);
+  const questionPattern = /<h3\b[^>]*>([\s\S]*?)<\/h3>/gi;
+  const questions = Array.from(sectionHtml.matchAll(questionPattern));
+  if (questions.length === 0) return { bodyHtml, faq: null };
+
+  const items = questions.map((question, index) => {
+    const answerStart = (question.index ?? 0) + question[0].length;
+    const answerEnd = questions[index + 1]?.index ?? sectionHtml.length;
+    return { question: htmlToPlainText(question[1]), answer: sectionHtml.slice(answerStart, answerEnd).trim() };
+  }).filter((item) => item.question && htmlToPlainText(item.answer));
+
+  if (items.length !== questions.length) return { bodyHtml, faq: null };
+
+  return {
+    bodyHtml: `${bodyHtml.slice(0, faqHeading.index)}${bodyHtml.slice(sectionEnd)}`.trim(),
+    faq: {
+      title: htmlToPlainText(faqHeading[1]) || "Frequently Asked Questions",
+      description: sectionHtml.slice(0, questions[0].index ?? 0).trim(),
+      items,
+    },
+  };
+}
+
 function bodyToBlocks(body: string): BlogBlock[] {
   return body
     .split(/\n{2,}/)
@@ -182,11 +248,17 @@ export function draftFromPage(page: CmsPage): BlogDraft {
   const builderBlocks = Array.isArray(content.blocks) ? content.blocks : [];
   const heroBlock = builderBlocks.map(getObject).find((block) => block.type === "hero");
   const heroProps = getObject(heroBlock?.props);
+  const faqBlock = builderBlocks.map(getObject).find((block) => block.type === "faq");
+  const faqProps = getObject(faqBlock?.props);
   const category = data.category === "commercial" ? "commercial" : "residential";
   const bodyText = typeof blog.bodyText === "string" ? blog.bodyText : "";
   const bodyHtml = typeof blog.bodyHtml === "string"
     ? blog.bodyHtml
     : legacyBodyToHtml(bodyText, data.blocks);
+  const legacyFaq = extractLegacyFaqFromHtml(bodyHtml);
+  const savedFaq = getObject(blog.faq);
+  const hasSavedFaq = Boolean(blog.faq && typeof blog.faq === "object" && !Array.isArray(blog.faq));
+  const faqSource = hasSavedFaq ? savedFaq : faqBlock ? faqProps : getObject(legacyFaq.faq);
 
   return {
     title: page.title || (typeof data.h1 === "string" ? data.h1 : ""),
@@ -199,7 +271,10 @@ export function draftFromPage(page: CmsPage): BlogDraft {
       : typeof data.date === "string" ? data.date : todayIso(),
     readMinutes: typeof data.readMinutes === "number" ? data.readMinutes : 3,
     excerpt: typeof data.excerpt === "string" ? data.excerpt : "",
-    body: bodyHtml,
+    body: legacyFaq.bodyHtml,
+    faqTitle: typeof faqSource.title === "string" ? faqSource.title : "Frequently Asked Questions",
+    faqDescription: typeof faqSource.description === "string" ? faqSource.description : typeof faqSource.subtext === "string" ? faqSource.subtext : "",
+    faqItems: faqItemsFrom(faqSource.items),
     heroEyebrow: typeof heroProps.eyebrow === "string" ? heroProps.eyebrow : "Landscape Journal",
     heroHeading: typeof heroProps.heading === "string" ? heroProps.heading : page.title,
     heroSubheading: typeof heroProps.subheading === "string" ? heroProps.subheading : (typeof data.excerpt === "string" ? `<p>${escapeHtml(data.excerpt)}</p>` : ""),
@@ -226,7 +301,10 @@ export function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
   const existingContent = getObject(currentContent);
   const existingBuilderBlocks = Array.isArray(existingContent.blocks) ? existingContent.blocks : [];
   const existingHero = existingBuilderBlocks.map(getObject).find((block) => block.type === "hero");
+  const existingFaq = existingBuilderBlocks.map(getObject).find((block) => block.type === "faq");
   const preservedCtas = existingBuilderBlocks.map(getObject).filter((block) => block.type === "cta");
+  const faqItems = draft.faqItems.map((item) => ({ question: item.question.trim(), answer: item.answer.trim() }));
+  const completeFaqItems = faqItems.filter((item) => item.question && htmlToPlainText(item.answer));
   const builderBlocks = [
     {
       ...existingHero,
@@ -254,6 +332,17 @@ export function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
       },
     },
     ...preservedCtas,
+    ...(completeFaqItems.length > 0 ? [{
+      ...existingFaq,
+      id: typeof existingFaq?.id === "string" ? existingFaq.id : `${slug}-faq`,
+      type: "faq",
+      props: {
+        ...getObject(existingFaq?.props),
+        title: draft.faqTitle.trim() || "Frequently Asked Questions",
+        subtext: draft.faqDescription,
+        items: completeFaqItems,
+      },
+    }] : []),
   ];
 
   return {
@@ -293,6 +382,7 @@ export function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
         tags,
         bodyHtml: draft.body,
         bodyText: htmlToPlainText(draft.body),
+        faq: { title: draft.faqTitle, description: draft.faqDescription, items: faqItems },
       },
       blocks: builderBlocks,
     },
@@ -388,6 +478,19 @@ export default function CmsBlogEditorPage() {
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
+  const addFaqItem = () => setDraft((current) => ({ ...current, faqItems: [...current.faqItems, { question: "", answer: "" }] }));
+
+  const updateFaqItem = (index: number, key: keyof BlogFaqItem, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      faqItems: current.faqItems.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item),
+    }));
+  };
+
+  const removeFaqItem = (index: number) => {
+    setDraft((current) => ({ ...current, faqItems: current.faqItems.filter((_, itemIndex) => itemIndex !== index) }));
+  };
+
   const handleTitleChange = (title: string) => {
     setDraft((current) => ({
       ...current,
@@ -434,15 +537,32 @@ export default function CmsBlogEditorPage() {
             </div>
             <p className="text-sm text-muted-foreground">Simple article editor. Saved content is the same structured CMS data the website renders.</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => window.open(`/blog/${payload.slug}`, "_blank")} disabled={!payload.slug}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Live
-            </Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={!canSave || saveMutation.isPending} data-testid="button-save-blog-post">
-              {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Save Post
-            </Button>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label htmlFor="blog-status" className="sr-only">Post Status</Label>
+              <Select value={draft.status} onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])} disabled={isReadOnly}>
+                <SelectTrigger id="blog-status" className="w-[145px]" data-testid="select-blog-status"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={() => window.open(`/blog/${payload.slug}`, "_blank")} disabled={!payload.slug}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Live
+              </Button>
+              <Button onClick={() => saveMutation.mutate()} disabled={!canSave || saveMutation.isPending} data-testid="button-save-blog-post">
+                {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save Post
+              </Button>
+            </div>
+            {draft.status === "scheduled" ? (
+              <div className="ml-auto grid max-w-xs gap-1.5">
+                <Label htmlFor="blog-scheduled-at" className="text-xs">Publish On</Label>
+                <Input id="blog-scheduled-at" type="datetime-local" value={draft.scheduledAt} min={dateTimeLocalValue(new Date())} onChange={(event) => updateDraft("scheduledAt", event.target.value)} disabled={isReadOnly} data-testid="input-blog-scheduled-at" />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -454,11 +574,7 @@ export default function CmsBlogEditorPage() {
           </TabsList>
 
           <TabsContent value="content" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Hero Content</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-5">
+            <CollapsibleEditorCard title="Hero Content" contentClassName="grid gap-5">
                 <div className="grid gap-2">
                   <Label htmlFor="blog-hero-eyebrow">Eyebrow</Label>
                   <Input id="blog-hero-eyebrow" value={draft.heroEyebrow} onChange={(event) => updateDraft("heroEyebrow", event.target.value)} disabled={isReadOnly} data-testid="input-blog-hero-eyebrow" />
@@ -471,14 +587,9 @@ export default function CmsBlogEditorPage() {
                   <Label>Supporting Copy</Label>
                   <CmsRichTextEditor value={draft.heroSubheading} onChange={(heroSubheading) => updateDraft("heroSubheading", heroSubheading)} readOnly={isReadOnly} placeholder="Add supporting copy beneath the hero heading..." data-testid="editor-blog-hero-subheading" />
                 </div>
-              </CardContent>
-            </Card>
+            </CollapsibleEditorCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Post Details</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-5">
+            <CollapsibleEditorCard title="Post Details" contentClassName="grid gap-5">
                 <div className="grid gap-2">
                   <Label htmlFor="blog-title">Title</Label>
                   <Input id="blog-title" value={draft.title} onChange={(event) => handleTitleChange(event.target.value)} disabled={isReadOnly} data-testid="input-blog-title" />
@@ -550,43 +661,50 @@ export default function CmsBlogEditorPage() {
                     <CmsRichTextEditor value={draft.body} onChange={(body) => updateDraft("body", body)} readOnly={isReadOnly} placeholder="Write the article content..." data-testid="editor-blog-body" />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </CollapsibleEditorCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Publication</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-5 md:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label>Post Status</Label>
-                  <Select value={draft.status} onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])} disabled={isReadOnly}>
-                    <SelectTrigger data-testid="select-blog-status"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Choose Draft to unpublish a live post.</p>
-                </div>
-                {draft.status === "scheduled" ? (
-                  <div className="grid gap-2">
-                    <Label htmlFor="blog-scheduled-at">Publish On</Label>
-                    <Input id="blog-scheduled-at" type="datetime-local" value={draft.scheduledAt} min={dateTimeLocalValue(new Date())} onChange={(event) => updateDraft("scheduledAt", event.target.value)} disabled={isReadOnly} data-testid="input-blog-scheduled-at" />
-                    <p className="text-xs text-muted-foreground">The post remains unavailable until this date and time.</p>
-                  </div>
+            <CollapsibleEditorCard title="FAQ" contentClassName="grid gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="blog-faq-title">Title</Label>
+                <Input id="blog-faq-title" value={draft.faqTitle} onChange={(event) => updateDraft("faqTitle", event.target.value)} placeholder="Frequently Asked Questions" disabled={isReadOnly} data-testid="input-blog-faq-title" />
+              </div>
+              <div className="grid gap-2">
+                <Label>Description</Label>
+                <CmsRichTextEditor value={draft.faqDescription} onChange={(faqDescription) => updateDraft("faqDescription", faqDescription)} readOnly={isReadOnly} placeholder="Optional supporting text shown below the FAQ title..." data-testid="editor-blog-faq-description" />
+              </div>
+              <div className="grid gap-4">
+                {draft.faqItems.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">No questions yet. Add a question to include an FAQ section at the bottom of this post.</div>
                 ) : null}
-              </CardContent>
-            </Card>
+                {draft.faqItems.map((item, index) => (
+                  <div key={index} className="grid gap-4 rounded-lg border bg-muted/20 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold">Question {index + 1}</p>
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFaqItem(index)} disabled={isReadOnly} aria-label={`Remove question ${index + 1}`} data-testid={`button-remove-blog-faq-${index}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`blog-faq-question-${index}`}>Question</Label>
+                      <Input id={`blog-faq-question-${index}`} value={item.question} onChange={(event) => updateFaqItem(index, "question", event.target.value)} disabled={isReadOnly} data-testid={`input-blog-faq-question-${index}`} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Answer</Label>
+                      <CmsRichTextEditor value={item.answer} onChange={(answer) => updateFaqItem(index, "answer", answer)} readOnly={isReadOnly} placeholder="Answer the question..." data-testid={`editor-blog-faq-answer-${index}`} />
+                    </div>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={addFaqItem} disabled={isReadOnly} data-testid="button-add-blog-faq">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Question
+                </Button>
+                <p className="text-xs text-muted-foreground">Complete question-and-answer pairs render as a bottom-of-post accordion and are included in FAQPage structured data.</p>
+              </div>
+            </CollapsibleEditorCard>
           </TabsContent>
 
           <TabsContent value="media" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cover Image</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <CollapsibleEditorCard title="Cover Image">
                 <CmsImageUpload
                   value={draft.imageUrl}
                   onChange={(imageUrl) => setDraft((current) => ({
@@ -610,16 +728,11 @@ export default function CmsBlogEditorPage() {
                     />
                   </div>
                 ) : null}
-              </CardContent>
-            </Card>
+            </CollapsibleEditorCard>
           </TabsContent>
 
           <TabsContent value="seo" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Search Metadata</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-5">
+            <CollapsibleEditorCard title="Search Metadata" contentClassName="grid gap-5">
                 <div className="grid gap-2">
                   <Label htmlFor="blog-seo-title">SEO Title</Label>
                   <Input id="blog-seo-title" value={draft.seoTitle} onChange={(event) => updateDraft("seoTitle", event.target.value)} disabled={isReadOnly} />
@@ -642,8 +755,7 @@ export default function CmsBlogEditorPage() {
                   </div>
                   <Switch id="blog-noindex" checked={!draft.noindex} onCheckedChange={(checked) => updateDraft("noindex", !checked)} disabled={isReadOnly} />
                 </div>
-              </CardContent>
-            </Card>
+            </CollapsibleEditorCard>
           </TabsContent>
         </Tabs>
       </div>
