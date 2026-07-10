@@ -11,7 +11,11 @@ import { removeLegacySiteContent } from "./legacy-site-cleanup.service";
 export async function runSystemBootstrap() {
   logger.app.info("Running system bootstrap");
 
-  await removeLegacySiteContent();
+  try {
+    await removeLegacySiteContent();
+  } catch (error) {
+    logger.cms.error("Legacy content cleanup failed; continuing system bootstrap", error);
+  }
   await ensureLandscapeCmsContent();
   await ensureSystemBranding();
   await populateCmsSeoMetadata();
