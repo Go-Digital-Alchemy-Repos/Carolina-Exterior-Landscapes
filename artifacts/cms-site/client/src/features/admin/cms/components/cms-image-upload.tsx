@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -77,6 +77,18 @@ export function CmsImageUpload({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<CmsMediaLibraryAsset | null>(null);
+  const [previewValue, setPreviewValue] = useState(value);
+  const [previewRevision, setPreviewRevision] = useState(0);
+
+  useEffect(() => {
+    setPreviewValue(value);
+  }, [value]);
+
+  const commitChange = useCallback((url: string) => {
+    setPreviewValue(url);
+    setPreviewRevision((current) => current + 1);
+    onChange(url);
+  }, [onChange]);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -136,7 +148,7 @@ export function CmsImageUpload({
       });
     },
     onSuccess: (asset) => {
-      onChange(asset.url);
+      commitChange(asset.url);
       setSelectedAsset(asset);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/media"] });
       toast({ title: acceptedMode === "all" ? "File uploaded successfully" : "Image uploaded successfully" });
@@ -173,10 +185,10 @@ export function CmsImageUpload({
   const handleDragLeave = () => setIsDragging(false);
 
   const isUploading = uploadMutation.isPending;
-  const displayAssetKind = value
-    ? inferAssetKindFromValue(value) === "image"
+  const displayAssetKind = previewValue
+    ? inferAssetKindFromValue(previewValue) === "image"
       ? "image"
-      : selectedAsset?.url === value
+      : selectedAsset?.url === previewValue
         ? selectedAsset.assetKind
         : "document"
     : "image";
@@ -191,11 +203,12 @@ export function CmsImageUpload({
         <p className="text-sm font-medium leading-none">{label}</p>
       )}
 
-      {value ? (
+      {previewValue ? (
         <div className="relative group rounded-lg border bg-muted/20 overflow-hidden">
           {displayAssetKind === "image" ? (
             <img
-              src={value}
+              key={`${previewValue}-${previewRevision}`}
+              src={`${previewValue}${previewValue.includes("?") ? "&" : "?"}cmsPreview=${previewRevision}`}
               alt="Preview"
               className="w-full object-cover max-h-48 rounded-lg"
               data-testid={testId ? `${testId}-preview` : "cms-image-preview"}
@@ -244,7 +257,7 @@ export function CmsImageUpload({
               size="sm"
               variant="destructive"
               className="h-7 w-7 p-0 shadow"
-              onClick={() => onChange("")}
+              onClick={() => commitChange("")}
               data-testid={testId ? `${testId}-remove` : "cms-image-remove"}
             >
               <X className="h-3 w-3" />
@@ -332,7 +345,7 @@ export function CmsImageUpload({
         typeFilter={acceptedMode === "all" ? "all" : "images"}
         onSelect={(url, asset) => {
           setSelectedAsset(asset);
-          onChange(url);
+          commitChange(url);
         }}
       />
     </div>
