@@ -1,9 +1,7 @@
 import express, { type Express, type Response } from "express";
 import fs from "fs";
 import path from "path";
-import { isLandscapePublicRoute } from "./public-landscape-routes";
 import { isRetiredPublicPath } from "./retired-public-routes";
-import { getPrerenderedPublicFilePath } from "./services/public-prerender.service";
 import { getSiteCodeSnippets, injectSiteCodeSnippets } from "./services/code-snippets.service";
 
 export function serveStatic(app: Express) {
@@ -46,14 +44,6 @@ export function serveStatic(app: Express) {
     return renderHtml(pathname, await getIndexTemplate());
   }
 
-  async function sendPrerenderedPublicHtml(pathname: string, res: Response) {
-    const htmlPath = getPrerenderedPublicFilePath(distPath, pathname);
-    if (!htmlPath || !fs.existsSync(htmlPath)) return false;
-    res.setHeader("Cache-Control", "no-cache");
-    res.type("html").send(await renderHtml(pathname, await fs.promises.readFile(htmlPath, "utf-8")));
-    return true;
-  }
-
   function looksLikeAssetRequest(pathname: string) {
     return /\.[a-z0-9]{2,8}$/i.test(pathname);
   }
@@ -81,25 +71,14 @@ export function serveStatic(app: Express) {
       return;
     }
 
-    if (await sendPrerenderedPublicHtml(pathname, res)) {
-      return;
-    }
-
     if (
       isReadRequest &&
       !isClientOnlyRoute(pathname) &&
-      !isLandscapePublicRoute(pathname) &&
       !pathname.startsWith("/api") &&
-      !pathname.startsWith("/uploads")
+      !pathname.startsWith("/uploads") &&
+      looksLikeAssetRequest(pathname)
     ) {
-      if (looksLikeAssetRequest(pathname)) {
-        res.status(404).type("text").set("Cache-Control", "no-cache").send("Not found");
-        return;
-      }
-
-      const template = await renderIndexTemplate(pathname);
-      res.status(404).setHeader("Cache-Control", "no-cache");
-      res.type("html").send(template);
+      res.status(404).type("text").set("Cache-Control", "no-cache").send("Not found");
       return;
     }
 

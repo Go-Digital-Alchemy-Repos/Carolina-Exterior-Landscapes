@@ -110,10 +110,6 @@ function plainTextLines(value: unknown) {
     .filter(Boolean);
 }
 
-function legacyContactText(value: string) {
-  return /sp\.fa|low voltage|control4|bonded/i.test(value);
-}
-
 function RichCardBody({ html, className = "" }: { html: string; className?: string }) {
   if (!html) return null;
   return html.includes("<") ? (
@@ -211,18 +207,6 @@ function alignmentClass(value: unknown) {
 
 const SERVICE_HERO_BLOCK_IDS = new Set([
   "services-hero",
-  "security-cameras-hero",
-  "access-control-systems-1-hero",
-  "gate-access-control-1-hero",
-  "burglar-alarm-installation-1-hero",
-  "fire-alarm-installation-1-hero",
-  "structured-cabling-1-hero",
-  "control4-installer-1-hero",
-  "metal-fabrication-1-hero",
-  "tega-cay-sc-1-hero",
-  "fort-mill-sc-1-hero",
-  "lake-wylie-sc-1-hero",
-  "rock-hill-sc-1-hero",
   "indian-land-sc-1-hero",
   "charlotte-nc-1-hero",
   "pineville-nc-1-hero",
@@ -230,10 +214,6 @@ const SERVICE_HERO_BLOCK_IDS = new Set([
   "indian-trail-nc-1-hero",
   "waxhaw-nc-1-hero",
   "weddington-nc-1-hero",
-  "tega-cay-hero",
-  "fort-mill-hero",
-  "lake-wylie-hero",
-  "rock-hill-hero",
   "indian-land-hero",
   "charlotte-hero",
   "pineville-hero",
@@ -847,24 +827,19 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 
   if (block.type === "contact-nap") {
       const content = record(props.content);
-      const phone = record(content.phone);
-      const email = record(content.email);
       const brandingPhone = (branding.companyPhoneNumbers || "")
         .split(/\r?\n/)
         .map((value) => value.trim())
         .filter(Boolean)[0] || "";
       const brandingEmail = branding.companyEmail?.trim() || "";
-      const fallbackCredential = str(content.credential);
-      const credentials = plainTextLines(branding.companyCredentials || (legacyContactText(fallbackCredential) ? "" : fallbackCredential));
-      const name = branding.companyName?.trim() || str(content.name);
-      const address = branding.companyAddress?.trim() || [str(content.street), str(content.cityStateZip)].filter(Boolean).join("\n");
-      const phoneDisplay = brandingPhone || str(phone.display);
-      const emailDisplay = brandingEmail || str(email.display);
-      const hours = branding.companyHours?.trim() || str(content.hours);
-      const fallbackLicense = str(content.license);
-      const fallbackLicensing = str(content.licensing);
-      const license = branding.companyLicense?.trim() || (legacyContactText(fallbackLicense) ? "" : fallbackLicense);
-      const licensing = branding.companyLicensing?.trim() || (legacyContactText(fallbackLicensing) ? "" : fallbackLicensing);
+      const credentials = plainTextLines(branding.companyCredentials);
+      const name = branding.companyName?.trim() || "";
+      const address = branding.companyAddress?.trim() || "";
+      const phoneDisplay = brandingPhone;
+      const emailDisplay = brandingEmail;
+      const hours = branding.companyHours?.trim() || "";
+      const license = branding.companyLicense?.trim() || "";
+      const licensing = branding.companyLicensing?.trim() || "";
       return (
         <section className={sectionBackgroundClass(props.background)} data-testid="block-contact-nap">
           <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -875,11 +850,11 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                 {phoneDisplay || emailDisplay ? (
                   <p>
                     {phoneDisplay ? (
-                      <a href={phoneHref(phoneDisplay) || str(phone.href)} className="font-medium text-primary hover:text-primary/80">{phoneDisplay}</a>
+                      <a href={phoneHref(phoneDisplay)} className="font-medium text-primary hover:text-primary/80">{phoneDisplay}</a>
                     ) : null}
                     {phoneDisplay && emailDisplay ? " | " : null}
                     {emailDisplay ? (
-                      <a href={emailHref(emailDisplay) || str(email.href)} className="font-medium text-primary hover:text-primary/80">{emailDisplay}</a>
+                      <a href={emailHref(emailDisplay)} className="font-medium text-primary hover:text-primary/80">{emailDisplay}</a>
                     ) : null}
                   </p>
                 ) : null}

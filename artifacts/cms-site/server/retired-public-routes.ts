@@ -1,12 +1,4 @@
 const RETIRED_PUBLIC_PREFIXES = [
-  "/security-camera-installation-charlotte-nc",
-  "/access-control-systems-charlotte-nc",
-  "/gate-access-control-charlotte-nc",
-  "/burglar-alarm-installation-charlotte-nc",
-  "/fire-alarm-installation-charlotte-nc",
-  "/structured-cabling-charlotte-nc",
-  "/control4-installer-charlotte-nc",
-  "/metal-fabrication-charlotte-nc",
   "/services",
   "/reviews",
   "/privacy-policy",

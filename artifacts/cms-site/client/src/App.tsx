@@ -11,11 +11,10 @@ import { ProtectedRoute } from "@/components/shared/protected-route";
 import { PublicAdminEditButton } from "@/components/shared/public-admin-edit-button";
 import { loadGa4IfConsented } from "@/lib/analytics-runtime";
 import { subscribeToCookieConsent } from "@/lib/cookie-consent";
-import NotFound from "@/pages/not-found";
 
-const CmsHybridPage = lazy(() =>
-  import("@/features/public/cms-hybrid-page").then((module) => ({
-    default: module.CmsHybridPage,
+const CmsPublicPage = lazy(() =>
+  import("@/features/public/cms-public-page").then((module) => ({
+    default: module.CmsPublicPage,
   })),
 );
 const CmsPreviewPage = lazy(() => import("@/features/public/cms-preview-page"));
@@ -58,19 +57,19 @@ function PageLoader() {
 }
 
 function ContactCmsRoute() {
-  return <CmsHybridPage slug="contact" fallback={<NotFound />} />;
+  return <CmsPublicPage slug="contact" />;
 }
 
 function CmsNotFoundRoute() {
-  return <CmsHybridPage slug="404" fallback={<NotFound />} />;
+  return <CmsPublicPage slug="404" />;
 }
 
 function CmsSlugRoute({ params }: { params: { slug?: string } }) {
-  return <CmsHybridPage slug={params.slug ?? ""} fallback={<CmsNotFoundRoute />} />;
+  return <CmsPublicPage slug={params.slug ?? ""} />;
 }
 
 function LandscapeCmsRoute({ slug }: { slug: string }) {
-  return <CmsHybridPage slug={slug} fallback={<CmsNotFoundRoute />} />;
+  return <CmsPublicPage slug={slug} />;
 }
 
 function LandscapeLocationCmsRoute({ params }: { params: { slug?: string } }) {

@@ -109,6 +109,10 @@ export const DEFAULT_BRANDING_SETTINGS: BrandingSettings = {
   tertiaryTextColor: DEFAULT_BRANDING_VALUES.text_tertiary_foreground_color,
 };
 
+export const EMPTY_BRANDING_SETTINGS = Object.fromEntries(
+  Object.keys(DEFAULT_BRANDING_SETTINGS).map((key) => [key, null]),
+) as unknown as BrandingSettings;
+
 export function fontFamilyForBrandingOption(value: string | null | undefined): string | null {
   if (!value) return null;
   return BRANDING_FONT_OPTIONS.find((option) => option.value === value)?.family ?? null;

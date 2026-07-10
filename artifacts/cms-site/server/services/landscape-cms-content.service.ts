@@ -65,24 +65,6 @@ const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 const CONTACT_PAGE_SLUG = "contact";
 const NOT_FOUND_PAGE_SLUG = "404";
 
-const SECURITY_LOW_VOLTAGE_PATTERNS = [
-  "low voltage",
-  "security camera",
-  "security cameras",
-  "security systems",
-  "access control",
-  "gate access",
-  "burglar alarm",
-  "fire alarm",
-  "structured cabling",
-  "control4",
-  "metal fabrication",
-  "fort mill",
-  "(803) 995-1522",
-  "van@",
-  "cca-",
-];
-
 function readJson<T>(relativePath: string): T {
   return JSON.parse(fs.readFileSync(path.resolve(process.cwd(), relativePath), "utf8")) as T;
 }
@@ -764,11 +746,6 @@ function isLandscapePageContent(content: unknown): boolean {
   return source === LANDSCAPE_CONTENT_VERSION && Boolean(landscape && typeof landscape === "object");
 }
 
-function containsSecurityLowVoltageCopy(value: unknown): boolean {
-  const haystack = JSON.stringify(value ?? "").toLowerCase();
-  return SECURITY_LOW_VOLTAGE_PATTERNS.some((pattern) => haystack.includes(pattern));
-}
-
 const RETIRED_PUBLIC_LINKS = [
   "/privacy-policy",
   "/service-areas/tega-cay-sc",
@@ -787,6 +764,12 @@ function hasBuilderBlocks(content: unknown): boolean {
   if (!content || typeof content !== "object") return false;
   const blocks = (content as { blocks?: unknown }).blocks;
   return Array.isArray(blocks) && blocks.length > 0;
+}
+
+function landscapeCmsWiringVersion(content: unknown): number {
+  if (!content || typeof content !== "object") return 0;
+  const version = (content as { landscapeCmsWiringVersion?: unknown }).landscapeCmsWiringVersion;
+  return typeof version === "number" ? version : 0;
 }
 
 function faqBlocksFromPages(pages: Record<string, LandscapePage>, slugs: string[]): LandscapeBlock[] {
@@ -1246,21 +1229,6 @@ export function getLandscapeCmsSlugs() {
 
 export async function ensureLandscapeCmsContent() {
   const landscapePages = buildLandscapePages();
-  const activeSlugs = new Set(landscapePages.map((page) => page.slug));
-  activeSlugs.add(CONTACT_PAGE_SLUG);
-  activeSlugs.add(NOT_FOUND_PAGE_SLUG);
-  const existingPages = await storage.cmsPages.getAllPages();
-
-  for (const page of existingPages) {
-    if (activeSlugs.has(page.slug)) continue;
-    if (isLandscapePageContent(page.content)) continue;
-    if (containsSecurityLowVoltageCopy(page) || page.status === "published") {
-      await storage.cmsPages.updatePage(page.id, {
-        status: "archived",
-        noindex: true,
-      });
-    }
-  }
 
   for (const page of landscapePages) {
     const existing = await storage.cmsPages.getPageBySlug(page.slug);
@@ -1269,20 +1237,7 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
 
-    if (!hasBuilderBlocks(existing.content) || containsSecurityLowVoltageCopy(existing)) {
-      await storage.cmsPages.updatePage(existing.id, {
-        ...page,
-        publishedAt: existing.publishedAt ?? page.publishedAt,
-        content: cloneSeedContent(page.content),
-      });
-      continue;
-    }
-
-    const existingContent = existing.content && typeof existing.content === "object"
-      ? existing.content as Record<string, unknown>
-      : {};
-    const wiringVersion = Number(existingContent.landscapeCmsWiringVersion ?? 0);
-    if (wiringVersion < LANDSCAPE_CMS_WIRING_VERSION) {
+    if (!isLandscapePageContent(existing.content) || landscapeCmsWiringVersion(existing.content) < LANDSCAPE_CMS_WIRING_VERSION) {
       await storage.cmsPages.updatePage(existing.id, {
         ...page,
         publishedAt: existing.publishedAt ?? page.publishedAt,
@@ -1294,7 +1249,7 @@ export async function ensureLandscapeCmsContent() {
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
   if (!existingContactPage) {
     await storage.cmsPages.createPage(contactCmsPageRecord());
-  } else if (!hasBuilderBlocks(existingContactPage.content) || containsSecurityLowVoltageCopy(existingContactPage)) {
+  } else if (!hasBuilderBlocks(existingContactPage.content)) {
     const contactSeed = contactCmsPageRecord();
     await storage.cmsPages.updatePage(existingContactPage.id, {
       ...contactSeed,
@@ -1307,7 +1262,7 @@ export async function ensureLandscapeCmsContent() {
   const existingNotFoundPage = await storage.cmsPages.getPageBySlug(NOT_FOUND_PAGE_SLUG);
   if (!existingNotFoundPage) {
     await storage.cmsPages.createPage(notFoundCmsPageRecord());
-  } else if (!hasBuilderBlocks(existingNotFoundPage.content) || containsSecurityLowVoltageCopy(existingNotFoundPage)) {
+  } else if (!hasBuilderBlocks(existingNotFoundPage.content)) {
     const notFoundSeed = notFoundCmsPageRecord();
     await storage.cmsPages.updatePage(existingNotFoundPage.id, {
       ...notFoundSeed,
@@ -1326,7 +1281,7 @@ export async function ensureLandscapeCmsContent() {
     const serializedItems = JSON.stringify(existing.items ?? []);
     const needsMainNavigationMigration = menu.location === "main_navigation"
       && (serializedItems.includes("Commercial Hub") || !serializedItems.includes('"Contact"'));
-    if (containsSecurityLowVoltageCopy(existing) || containsRetiredPublicLink(existing) || needsMainNavigationMigration) {
+    if (containsRetiredPublicLink(existing) || needsMainNavigationMigration) {
       await storage.cmsMenus.update(existing.id, menu);
     }
   }

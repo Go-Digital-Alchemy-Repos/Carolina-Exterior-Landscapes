@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   DEFAULT_BRANDING_SETTINGS,
+  EMPTY_BRANDING_SETTINGS,
   fontFamilyForBrandingOption,
   hexToHslToken,
   type BrandingSettings,
@@ -17,7 +18,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     queryFn: async () => {
       const response = await fetch("/api/branding");
       if (!response.ok) {
-        return DEFAULT_BRANDING_SETTINGS;
+        throw new Error("Unable to load CMS branding");
       }
       const payload = await response.json();
       return {
@@ -38,7 +39,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         primaryColor: payload?.primaryColor ?? null,
         secondaryColor: payload?.secondaryColor ?? null,
         tertiaryColor: payload?.tertiaryColor ?? null,
-        quaternaryColor: payload?.quaternaryColor ?? "#406A87",
+        quaternaryColor: payload?.quaternaryColor ?? null,
         eyebrowBackgroundColor: payload?.eyebrowBackgroundColor ?? null,
         eyebrowTextColor: payload?.eyebrowTextColor ?? null,
         h1Color: payload?.h1Color ?? null,
@@ -60,10 +61,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     staleTime: 60_000,
   });
 
-  const branding = useMemo(
-    () => data ?? DEFAULT_BRANDING_SETTINGS,
-    [data]
-  );
+  const branding = data ?? EMPTY_BRANDING_SETTINGS;
   const pathname = location.split(/[?#]/)[0] || "/";
   const isAdminRoute = pathname.startsWith("/admin");
 
@@ -304,7 +302,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   useEffect(() => {
-    const faviconHref = branding.faviconUrl || "/images/symbol.svg";
+    const faviconHref = branding.faviconUrl;
+    if (!faviconHref) return;
     const faviconPath = faviconHref.split("?")[0] ?? faviconHref;
     let faviconEl = document.head.querySelector<HTMLLinkElement>('link[rel="icon"]');
 
@@ -324,7 +323,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     }
   }, [branding.faviconUrl]);
 
-  return <BrandingContext.Provider value={branding}>{children}</BrandingContext.Provider>;
+  if (!data) return null;
+  return <BrandingContext.Provider value={data}>{children}</BrandingContext.Provider>;
 }
 
 export function useBranding() {

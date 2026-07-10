@@ -3,7 +3,6 @@ import { build as viteBuild } from "vite";
 import { rm, cp, readFile, readdir, stat } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
-import { writePublicHtmlSnapshots } from "../server/services/public-prerender.service";
 
 const landscapeAssetsDir = path.resolve("client/src/features/landscape-site/assets");
 
@@ -53,9 +52,6 @@ async function buildAll() {
 
   console.log("publishing landscape images...");
   await publishLandscapeImages();
-
-  console.log("prerendering public CMS pages...");
-  await writePublicHtmlSnapshots();
 
   console.log("building server...");
   await esbuild({

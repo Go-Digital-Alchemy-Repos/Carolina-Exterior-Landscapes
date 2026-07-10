@@ -302,7 +302,7 @@ describe("PublicBlockRenderer hero", () => {
     expect(actions?.className).toContain("justify-center");
   });
 
-  it.each(["services-hero", "access-control-systems-1-hero", "burglar-alarm-installation-1-hero"])(
+  it.each(["services-hero"])(
     "forces service hero content and container left on desktop for %s even when CMS alignment is centered",
     async (blockId) => {
       await act(async () => {

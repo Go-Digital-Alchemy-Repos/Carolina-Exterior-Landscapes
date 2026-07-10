@@ -21,9 +21,8 @@ import {
   extractServiceLd,
 } from "@/lib/structured-data";
 
-interface CmsHybridPageProps {
+interface CmsPublicPageProps {
   slug: string;
-  fallback: React.ReactNode;
 }
 
 interface CmsPageViewProps {
@@ -349,7 +348,7 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
   );
 }
 
-export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
+export function CmsPublicPage({ slug }: CmsPublicPageProps) {
   const { data: page, isLoading, error } = useQuery<CmsPage>({
     queryKey: ["/api/cms/pages/by-slug", slug],
     queryFn: async () => {
@@ -363,7 +362,7 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
       const data: unknown = await res.json();
       if (!isValidCmsPage(data)) {
         if (import.meta.env.DEV) {
-          console.error(`[CmsHybridPage] Invalid response shape for slug "${slug}"`, data);
+          console.error(`[CmsPublicPage] Invalid response shape for slug "${slug}"`, data);
         }
         throw new Error("Invalid CMS page response shape");
       }
@@ -389,13 +388,13 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
 
   if (error) {
     if (import.meta.env.DEV && !(error instanceof CmsNotFoundError)) {
-      console.warn(`[CmsHybridPage] Transient error for slug "${slug}", showing fallback:`, error.message);
+      console.warn(`[CmsPublicPage] CMS fetch failed for slug "${slug}":`, error.message);
     }
-    return <>{fallback}</>;
+    return slug === "404" ? <CmsLoadingPage landscapeShell /> : <CmsPublicPage slug="404" />;
   }
 
   if (!page || page.status !== "published") {
-    return <>{fallback}</>;
+    return slug === "404" ? <CmsLoadingPage landscapeShell /> : <CmsPublicPage slug="404" />;
   }
 
   return <CmsPageView page={page} globalSeo={globalSeo} />;

@@ -3,7 +3,7 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import type { CmsPage, SeoSettings } from "@shared/schema";
 import { Loader2 } from "lucide-react";
-import { CmsPageView } from "@/features/public/cms-hybrid-page";
+import { CmsPageView } from "@/features/public/cms-public-page";
 
 function CmsPreviewLoading() {
   return (

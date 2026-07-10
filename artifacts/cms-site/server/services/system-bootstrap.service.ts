@@ -6,10 +6,12 @@ import { ensureSystemForms } from "./system-forms.service";
 import { ensureLandscapeCmsContent } from "./landscape-cms-content.service";
 import { ensureSystemBranding } from "./system-branding.service";
 import { populateCmsSeoMetadata } from "./cms-seo-metadata-populator.service";
+import { removeLegacySiteContent } from "./legacy-site-cleanup.service";
 
 export async function runSystemBootstrap() {
   logger.app.info("Running system bootstrap");
 
+  await removeLegacySiteContent();
   await ensureLandscapeCmsContent();
   await ensureSystemBranding();
   await populateCmsSeoMetadata();

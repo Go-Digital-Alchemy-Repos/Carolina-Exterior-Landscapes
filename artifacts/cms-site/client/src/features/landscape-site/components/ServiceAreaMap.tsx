@@ -1,8 +1,26 @@
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { SERVICE_AREAS } from "@/features/landscape-site/content/site";
+
+type ServiceArea = { slug: string; city: string; state: string; lat: number; lng: number };
+type CmsLandscapePage = {
+  slug: string;
+  content?: { landscape?: { kind?: string; data?: Partial<ServiceArea> } };
+};
+
+async function fetchServiceAreas(): Promise<ServiceArea[]> {
+  const response = await fetch("/api/cms/landscape/pages", { credentials: "include" });
+  if (!response.ok) throw new Error("Unable to load CMS service areas");
+  const pages = await response.json() as CmsLandscapePage[];
+  return pages.flatMap((page) => {
+    const landscape = page.content?.landscape;
+    const area = landscape?.data;
+    if (landscape?.kind !== "location" || !area?.city || !area.state || typeof area.lat !== "number" || typeof area.lng !== "number") return [];
+    return [{ slug: page.slug, city: area.city, state: area.state, lat: area.lat, lng: area.lng }];
+  });
+}
 
 const pinIcon = L.divIcon({
   className: "",
@@ -15,20 +33,21 @@ const pinIcon = L.divIcon({
   tooltipAnchor: [0, -38],
 });
 
-// Bounds covering the full service territory (Charlotte down to Lancaster, SC).
-const BOUNDS: [[number, number], [number, number]] = [
-  [34.68, -80.92],
-  [35.28, -80.5],
-];
-
 export function ServiceAreaMap({ height = 500 }: { height?: number }) {
   const [, navigate] = useLocation();
+  const { data: serviceAreas = [] } = useQuery({
+    queryKey: ["/api/cms/landscape/pages", "service-area-map"],
+    queryFn: fetchServiceAreas,
+    staleTime: 60_000,
+  });
   const mapHeight = Math.max(320, Math.min(720, Math.round(height)));
+  if (serviceAreas.length === 0) return null;
+  const bounds = L.latLngBounds(serviceAreas.map((area) => [area.lat, area.lng] as [number, number]));
 
   return (
     <div className="rounded-2xl overflow-hidden border border-border/60 shadow-sm">
       <MapContainer
-        bounds={BOUNDS}
+        bounds={bounds}
         scrollWheelZoom={false}
         className="w-full z-0"
         style={{ height: mapHeight }}
@@ -37,7 +56,7 @@ export function ServiceAreaMap({ height = 500 }: { height?: number }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {SERVICE_AREAS.map((area) => (
+        {serviceAreas.map((area) => (
           <Marker
             key={area.slug}
             position={[area.lat, area.lng]}
