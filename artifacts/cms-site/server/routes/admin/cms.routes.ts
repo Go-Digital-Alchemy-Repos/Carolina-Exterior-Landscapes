@@ -245,6 +245,30 @@ router.post("/pages/:id/schedule", async (req, res) => {
   }
 });
 
+router.put("/pages/:id/publication-date", async (req, res) => {
+  try {
+    const id = paramString(req.params.id);
+    const existingPage = await resolvePage(id);
+    if (!existingPage) return res.status(404).json({ error: "Page not found" });
+    if (existingPage.status !== "published") {
+      return res.status(400).json({ error: "Only published pages can have a public publication date" });
+    }
+
+    const parsed = z.object({ publishedAt: z.coerce.date() }).safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "A valid publication date is required" });
+    if (parsed.data.publishedAt > new Date()) {
+      return res.status(400).json({ error: "Use scheduling for a future publication date" });
+    }
+
+    const adminId = (req as any).user?.id;
+    const page = await storage.cmsPages.setPublishedAt(existingPage.id, parsed.data.publishedAt, adminId);
+    res.json(page);
+  } catch (error) {
+    logger.cms.error("Failed to update publication date", error, { requestId: req.requestId });
+    res.status(500).json({ error: "Failed to update publication date" });
+  }
+});
+
 router.post("/pages/:id/unpublish", async (req, res) => {
   try {
     const id = paramString(req.params.id);

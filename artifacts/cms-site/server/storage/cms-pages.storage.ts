@@ -60,6 +60,15 @@ export class CmsPagesStorage {
     return page;
   }
 
+  async setPublishedAt(id: string, publishedAt: Date, adminId: string): Promise<CmsPage | undefined> {
+    const [page] = await db
+      .update(cmsPages)
+      .set({ publishedAt, updatedBy: adminId, updatedAt: new Date() })
+      .where(eq(cmsPages.id, id))
+      .returning();
+    return page;
+  }
+
   async schedulePage(id: string, scheduledAt: Date, adminId: string): Promise<CmsPage | undefined> {
     const [page] = await db
       .update(cmsPages)

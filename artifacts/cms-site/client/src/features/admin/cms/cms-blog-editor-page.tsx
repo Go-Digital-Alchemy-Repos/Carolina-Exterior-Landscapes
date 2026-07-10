@@ -37,7 +37,8 @@ type BlogDraft = {
   imagePositionX: number;
   imagePositionY: number;
   staticImage: string;
-  status: "draft" | "published";
+  status: "draft" | "published" | "scheduled";
+  scheduledAt: string;
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string;
@@ -68,7 +69,7 @@ function emptyDraft(): BlogDraft {
     authorName: DEFAULT_AUTHOR,
     category: "residential",
     tags: "",
-    date: todayIso(),
+    date: "",
     readMinutes: 3,
     excerpt: "",
     body: "",
@@ -77,6 +78,7 @@ function emptyDraft(): BlogDraft {
     imagePositionY: 50,
     staticImage: "",
     status: "draft",
+    scheduledAt: "",
     seoTitle: "",
     seoDescription: "",
     seoKeywords: "",
@@ -90,6 +92,11 @@ function getObject(value: unknown): Record<string, unknown> {
 
 function positionValue(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 50;
+}
+
+function dateTimeLocalValue(value: Date | string | null | undefined) {
+  if (!value) return "";
+  return format(new Date(value), "yyyy-MM-dd'T'HH:mm");
 }
 
 function blocksToBody(blocks: unknown): string {
@@ -145,7 +152,8 @@ function draftFromPage(page: CmsPage): BlogDraft {
     imagePositionX: positionValue(data.imagePositionX),
     imagePositionY: positionValue(data.imagePositionY),
     staticImage: typeof data.image === "string" ? data.image : "",
-    status: page.status === "published" ? "published" : "draft",
+    status: page.status === "published" ? "published" : page.status === "scheduled" ? "scheduled" : "draft",
+    scheduledAt: dateTimeLocalValue(page.scheduledAt),
     seoTitle: page.seoTitle || (typeof data.titleTag === "string" ? data.titleTag : ""),
     seoDescription: page.seoDescription || (typeof data.metaDescription === "string" ? data.metaDescription : ""),
     seoKeywords: page.seoKeywords || "",
@@ -233,6 +241,7 @@ export default function CmsBlogEditorPage() {
   const [draft, setDraft] = useState<BlogDraft>(() => emptyDraft());
   const [slugEdited, setSlugEdited] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
+  const [publishDateEdited, setPublishDateEdited] = useState(false);
 
   const { data: page, isLoading } = useQuery<CmsPage>({
     queryKey: [`/api/admin/cms/pages/${params.id}`],
@@ -254,7 +263,10 @@ export default function CmsBlogEditorPage() {
   });
   const isReadOnly = editorLock.hasLocking && editorLock.isReadOnly;
 
-  const payload = useMemo(() => buildPagePayload(draft, page?.content), [draft, page?.content]);
+  const payload = useMemo(() => ({
+    ...buildPagePayload(draft, page?.content),
+    status: draft.status === "scheduled" ? "draft" : draft.status,
+  }), [draft, page?.content]);
   const canSave = payload.title.trim().length > 0 && payload.slug.trim().length > 0 && !isReadOnly;
 
   const saveMutation = useMutation({
@@ -262,13 +274,37 @@ export default function CmsBlogEditorPage() {
       const response = isNew
         ? await apiRequest("POST", "/api/admin/cms/pages", payload)
         : await apiRequest("PUT", `/api/admin/cms/pages/${params.id}`, payload);
-      return response.json() as Promise<CmsPage>;
+      let savedPage = await response.json() as CmsPage;
+
+      if (draft.status === "scheduled") {
+        const scheduledAt = new Date(draft.scheduledAt);
+        if (!draft.scheduledAt || Number.isNaN(scheduledAt.getTime()) || scheduledAt <= new Date()) {
+          throw new Error("Choose a valid future publication date and time.");
+        }
+        const scheduledResponse = await apiRequest("POST", `/api/admin/cms/pages/${savedPage.id}/schedule`, {
+          scheduledAt: scheduledAt.toISOString(),
+        });
+        savedPage = await scheduledResponse.json() as CmsPage;
+      } else if (draft.status === "published" && publishDateEdited && draft.date) {
+        const publicationResponse = await apiRequest("PUT", `/api/admin/cms/pages/${savedPage.id}/publication-date`, {
+          publishedAt: `${draft.date}T12:00:00.000Z`,
+        });
+        savedPage = await publicationResponse.json() as CmsPage;
+      }
+
+      return savedPage;
     },
     onSuccess: (savedPage) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
       if (!isNew) queryClient.setQueryData([`/api/admin/cms/pages/${params.id}`], savedPage);
-      toast({ title: draft.status === "published" ? "Blog post published" : "Blog post saved" });
+      setPublishDateEdited(false);
+      setDraft((current) => ({
+        ...current,
+        date: savedPage.publishedAt ? format(new Date(savedPage.publishedAt), "yyyy-MM-dd") : current.date,
+        scheduledAt: dateTimeLocalValue(savedPage.scheduledAt),
+      }));
+      toast({ title: draft.status === "published" ? "Blog post published" : draft.status === "scheduled" ? "Blog post scheduled" : "Blog post saved" });
       if (isNew) navigate(`/admin/cms/blog/${savedPage.id}`);
     },
     onError: (error: Error) => {
@@ -320,7 +356,7 @@ export default function CmsBlogEditorPage() {
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-heading font-semibold">{draft.title || "New Blog Post"}</h1>
               <Badge variant={draft.status === "published" ? "default" : "outline"}>
-                {draft.status === "published" ? "Published" : "Draft"}
+                {draft.status === "published" ? "Published" : draft.status === "scheduled" ? "Scheduled" : "Draft"}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">Simple article editor. Saved content is the same structured CMS data the website renders.</p>
@@ -375,9 +411,19 @@ export default function CmsBlogEditorPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="blog-date">Published Date</Label>
-                    <Input id="blog-date" type="date" value={page?.publishedAt ? format(new Date(page.publishedAt), "yyyy-MM-dd") : ""} disabled />
+                    <Input
+                      id="blog-date"
+                      type="date"
+                      value={draft.date}
+                      max={todayIso()}
+                      onChange={(event) => {
+                        updateDraft("date", event.target.value);
+                        setPublishDateEdited(true);
+                      }}
+                      disabled={isReadOnly}
+                    />
                     <p className="text-xs text-muted-foreground">
-                      {page?.publishedAt ? "The date this post most recently became public." : "Set automatically when this post is published."}
+                      {page?.publishedAt ? "Defaults to the actual go-live date. Change it here when the public date needs correction." : "Set automatically when first published unless you enter a date."}
                     </p>
                   </div>
                   <div className="grid gap-2">
@@ -421,12 +467,29 @@ export default function CmsBlogEditorPage() {
             </Card>
 
             <Card>
-              <CardContent className="flex items-center justify-between gap-4 pt-6">
-                <div>
-                  <Label htmlFor="blog-publish">Publish this post</Label>
-                  <p className="mt-1 text-sm text-muted-foreground">Published posts are visible on the public blog.</p>
+              <CardHeader>
+                <CardTitle>Publication</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-5 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>Post Status</Label>
+                  <Select value={draft.status} onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])} disabled={isReadOnly}>
+                    <SelectTrigger data-testid="select-blog-status"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Choose Draft to unpublish a live post.</p>
                 </div>
-                <Switch id="blog-publish" checked={draft.status === "published"} onCheckedChange={(checked) => updateDraft("status", checked ? "published" : "draft")} disabled={isReadOnly} />
+                {draft.status === "scheduled" ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="blog-scheduled-at">Publish On</Label>
+                    <Input id="blog-scheduled-at" type="datetime-local" value={draft.scheduledAt} min={dateTimeLocalValue(new Date())} onChange={(event) => updateDraft("scheduledAt", event.target.value)} disabled={isReadOnly} data-testid="input-blog-scheduled-at" />
+                    <p className="text-xs text-muted-foreground">The post remains unavailable until this date and time.</p>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           </TabsContent>
