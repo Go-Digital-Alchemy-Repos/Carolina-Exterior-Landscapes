@@ -127,6 +127,35 @@ function LandscapeQuoteBlocks({ blocks }: { blocks: BlockInstance[] }) {
   );
 }
 
+function ContactCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
+  const hero = blocks.find((block) => block.type === "hero");
+  const form = blocks.find((block) => block.type === "form-embed");
+  const sidebarBlocks = blocks.filter((block) => block.type !== "hero" && block.type !== "form-embed");
+
+  return (
+    <div className="w-full bg-background pb-24" data-testid="contact-page-layout">
+      {hero ? <PublicBlockRenderer block={hero} /> : null}
+      <div className="relative z-10 mx-auto -mt-16 max-w-6xl px-4 sm:px-6 lg:-mt-24">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
+          <div className="overflow-hidden rounded-xl border border-border bg-card bg-paper shadow-natural-lg [&_[data-testid=block-form-embed]]:max-w-none [&_[data-testid=block-form-embed]]:px-0 [&_[data-testid=block-form-embed]]:py-0 [&_[data-testid=block-form-embed]>div]:rounded-none [&_[data-testid=block-form-embed]>div]:border-0 [&_[data-testid=block-form-embed]>div]:shadow-none">
+            {form ? <PublicBlockRenderer block={form} /> : null}
+          </div>
+          <aside className="space-y-5" aria-label="Contact information">
+            {sidebarBlocks.map((block) => (
+              <div
+                key={block.id}
+                className="overflow-hidden rounded-xl border border-border bg-card bg-paper shadow-natural [&_[data-testid=block-rich-text]>div]:px-6 [&_[data-testid=block-rich-text]>div]:py-6 [&_[data-testid=block-contact-nap]>div]:px-0 [&_[data-testid=block-contact-nap]>div]:py-0 [&_[data-testid=block-contact-nap]>div>div]:rounded-none [&_[data-testid=block-contact-nap]>div>div]:border-0 [&_[data-testid=block-contact-nap]>div>div]:bg-transparent"
+              >
+                <PublicBlockRenderer block={block} />
+              </div>
+            ))}
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function setMeta(name: string, content: string, property = false) {
   const attr = property ? "property" : "name";
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${name}"]`);
@@ -321,6 +350,8 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
           </div>
         </div>
       </>
+    ) : page.slug === "contact" ? (
+      <ContactCmsBlocks blocks={blocks} />
     ) : isQuoteLandingPage ? (
       <LandscapeQuoteBlocks blocks={blocks} />
     ) : useLandscapeShell ? (

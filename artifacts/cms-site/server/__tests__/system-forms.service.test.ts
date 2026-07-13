@@ -88,16 +88,26 @@ describe("ensureSystemForms", () => {
     const mod = await import("../services/system-forms.service");
     await mod.ensureSystemForms();
 
-    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate).toHaveBeenCalledTimes(3);
     const createdSlugs = mockCreate.mock.calls.map(([form]) => form.slug);
     expect(createdSlugs).toEqual(
       expect.arrayContaining([
+        "contact-form",
         "residential-quote",
         "commercial-quote",
       ])
     );
+    const generalContactForm = mockCreate.mock.calls.find(([form]) => form.slug === "contact-form")?.[0];
     const contactForm = mockCreate.mock.calls.find(([form]) => form.slug === "residential-quote")?.[0];
     const commercialForm = mockCreate.mock.calls.find(([form]) => form.slug === "commercial-quote")?.[0];
+    expect(generalContactForm.fields.map((field: { key: string }) => field.key)).toEqual([
+      "name",
+      "phone",
+      "email",
+      "subject",
+      "message",
+    ]);
+    expect(generalContactForm.settings.submitButtonText).toBe("Send Message");
     expect(contactForm.settings.createCrmLead).toBe(true);
     expect(commercialForm.settings.createCrmLead).toBe(true);
     const serviceField = contactForm.fields.find((field: { key: string }) => field.key === "servicesInterested");

@@ -777,6 +777,19 @@ function hasBuilderBlocks(content: unknown): boolean {
   return Array.isArray(blocks) && blocks.length > 0;
 }
 
+function contactPageUsesQuoteForm(content: unknown): boolean {
+  if (!content || typeof content !== "object") return false;
+  const blocks = (content as { blocks?: unknown }).blocks;
+  if (!Array.isArray(blocks)) return false;
+
+  return blocks.some((block) => {
+    if (!block || typeof block !== "object") return false;
+    const candidate = block as { type?: unknown; props?: unknown };
+    if (candidate.type !== "form-embed" || !candidate.props || typeof candidate.props !== "object") return false;
+    return (candidate.props as { formSlug?: unknown }).formSlug === "residential-quote";
+  });
+}
+
 function landscapeCmsWiringVersion(content: unknown): number {
   if (!content || typeof content !== "object") return 0;
   const version = (content as { landscapeCmsWiringVersion?: unknown }).landscapeCmsWiringVersion;
@@ -1187,7 +1200,8 @@ function contactCmsPageRecord(): InsertCmsPage {
           id: "contact-form",
           type: "form-embed",
           props: {
-            formSlug: "residential-quote",
+            formSlug: "contact-form",
+            submitButtonText: "Send Message",
           },
         },
       ],
@@ -1317,7 +1331,7 @@ export async function ensureLandscapeCmsContent() {
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
   if (!existingContactPage) {
     await storage.cmsPages.createPage(contactCmsPageRecord());
-  } else if (!hasBuilderBlocks(existingContactPage.content)) {
+  } else if (!hasBuilderBlocks(existingContactPage.content) || contactPageUsesQuoteForm(existingContactPage.content)) {
     const contactSeed = contactCmsPageRecord();
     await storage.cmsPages.updatePage(existingContactPage.id, {
       ...contactSeed,

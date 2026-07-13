@@ -106,7 +106,34 @@ const COMMERCIAL_QUOTE_FIELDS = [
   }),
 ];
 
+const CONTACT_FIELDS = [
+  field("name", "name", "Name", "text", { placeholder: "Your full name", required: true, width: "half" }),
+  field("phone", "phone", "Phone Number", "tel", { placeholder: "(704) 975-5867", required: true, width: "half" }),
+  field("email", "email", "Email Address", "email", { placeholder: "you@example.com", required: true }),
+  field("subject", "subject", "Subject", "text", { placeholder: "How can we help?", required: true }),
+  field("message", "message", "Message", "textarea", {
+    placeholder: "Tell us what you would like to discuss.",
+    required: true,
+  }),
+];
+
 const SYSTEM_FORMS: InsertCmsForm[] = [
+  {
+    name: "Contact Form",
+    slug: "contact-form",
+    description: "Send a general message to Carolina Exterior Landscapes.",
+    kind: "contact",
+    isSystem: true,
+    isActive: true,
+    fields: CONTACT_FIELDS,
+    settings: settings({
+      submitButtonText: "Send Message",
+      successMessage: "Thank you! Your message has been sent. We will be in touch within one business day.",
+      notifyAdmins: true,
+      storeAsContactMessage: true,
+      createCrmLead: true,
+    }),
+  },
   {
     name: "Residential Quote Form",
     slug: "residential-quote",
