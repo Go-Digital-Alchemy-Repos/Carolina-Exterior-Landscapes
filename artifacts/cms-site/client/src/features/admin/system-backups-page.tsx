@@ -51,7 +51,7 @@ interface BackupManifest {
   railwayEnvironment: string | null;
   railwayProjectId: string | null;
   railwayServiceId: string | null;
-  storageSource: "env" | "settings";
+  storageSource: "local";
   bucketName: string;
   bucketPrefix: string;
   tableCount: number;
@@ -69,7 +69,7 @@ interface BackupStatusResponse {
   storage: {
     bucketName: string;
     prefix: string;
-    source: "env" | "settings";
+    source: "local";
   } | null;
   latest: BackupManifest | null;
   recent: BackupManifest[];
@@ -107,7 +107,7 @@ export default function SystemBackupsPage() {
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/system/backups/status"] });
       toast({
         title: "Backup started successfully",
-        description: "A fresh system snapshot was created and stored in R2.",
+        description: "A fresh system snapshot was created in local upload storage.",
       });
     },
     onError: (error: Error) => {
@@ -188,8 +188,7 @@ export default function SystemBackupsPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Backup storage is not configured yet</AlertTitle>
             <AlertDescription>
-              Add the backup R2 environment variables in Railway, or keep the existing Cloudflare R2
-              integration configured so the backup service has a place to write snapshots.
+              Make sure the application can write to the local /uploads/system-backups directory.
             </AlertDescription>
           </Alert>
         )}
@@ -199,8 +198,7 @@ export default function SystemBackupsPage() {
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>Backups are ready</AlertTitle>
             <AlertDescription>
-              Snapshots are stored in <strong>{data.storage?.bucketName}</strong> at prefix{" "}
-              <strong>{data.storage?.prefix}</strong>. The system keeps the newest{" "}
+              Snapshots are stored locally at <strong>{data.storage?.prefix}</strong>. The system keeps the newest{" "}
               <strong>{data.maxSnapshots}</strong> backups and also prunes anything older than{" "}
               <strong>{data.retentionDays}</strong> days.
             </AlertDescription>
@@ -367,11 +365,11 @@ export default function SystemBackupsPage() {
               ) : (
                 <>
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bucket</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Storage</p>
                     <p className="mt-1 text-sm">{data?.storage?.bucketName || "Not configured"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Prefix</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Directory</p>
                     <p className="mt-1 break-all rounded-lg bg-muted/40 px-3 py-2 font-mono text-xs">
                       {data?.storage?.prefix || "Not configured"}
                     </p>

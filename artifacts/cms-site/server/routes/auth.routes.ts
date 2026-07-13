@@ -17,7 +17,6 @@ import {
   resetPasswordLimiter,
 } from "../middleware/security";
 import { logger } from "../utils/logger";
-import * as r2Service from "../services/r2.service";
 
 const router = Router();
 
@@ -29,7 +28,7 @@ const loginSchema = z.object({
 async function normalizeUserImage<T extends { profileImageUrl?: string | null }>(user: T): Promise<T> {
   return {
     ...user,
-    profileImageUrl: (await r2Service.normalizePublicUrl(user.profileImageUrl)) ?? null,
+    profileImageUrl: user.profileImageUrl ?? null,
   };
 }
 

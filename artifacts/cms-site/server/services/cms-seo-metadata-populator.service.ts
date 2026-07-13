@@ -179,7 +179,7 @@ function extractText(value: unknown, output: string[] = []): string[] {
   }
   if (typeof value === "object") {
     Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
-      if (/^(id|url|href|src|imageUrl|backgroundImageUrl|r2Key)$/i.test(key)) return;
+      if (/^(id|url|href|src|imageUrl|backgroundImageUrl)$/i.test(key)) return;
       extractText(entry, output);
     });
   }

@@ -5,7 +5,6 @@ import multer from "multer";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/error-handler";
 import { storage } from "../../storage";
-import * as r2Service from "../../services/r2.service";
 import { paramString } from "../../utils/params";
 import { optimizeImage, CMS_OPTIONS, isImageMime } from "../../services/image-optimizer";
 import { buildCmsMediaLibraryAssets } from "../../services/cms-media-usage.service";
@@ -119,12 +118,7 @@ function buildUniqueDisplayName(
   return candidate;
 }
 
-async function deleteMediaAssetFiles(asset: { r2Key: string | null; url: string }) {
-  if (asset.r2Key) {
-    await r2Service.deleteFile(asset.r2Key);
-    return;
-  }
-
+async function deleteMediaAssetFiles(asset: { url: string }) {
   if (asset.url.startsWith("/uploads/cms/")) {
     const localPath = path.resolve(process.cwd(), asset.url.slice(1));
     if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
@@ -159,21 +153,10 @@ router.post(
       existingAssets.map((asset) => asset.originalName)
     );
     const filename = `${Date.now()}-${stripExtension(originalName)}${fileExtension}`;
-    const r2Key = `cms/media/${filename}`;
-
-    const r2Configured = await r2Service.isConfigured();
-    let publicUrl: string | null = null;
-
-    if (r2Configured) {
-      publicUrl = await r2Service.uploadFile(r2Key, fileBuffer, fileMimeType);
-    }
-
-    if (!publicUrl) {
-      ensureCmsDir();
-      const localPath = path.join(LOCAL_CMS_DIR, filename);
-      fs.writeFileSync(localPath, fileBuffer);
-      publicUrl = `/uploads/cms/${filename}`;
-    }
+    ensureCmsDir();
+    const localPath = path.join(LOCAL_CMS_DIR, filename);
+    fs.writeFileSync(localPath, fileBuffer);
+    const publicUrl = `/uploads/cms/${filename}`;
 
     const asset = await storage.cmsMedia.createMedia({
       filename,
@@ -182,7 +165,6 @@ router.post(
       url: publicUrl,
       mimeType: fileMimeType,
       fileSize,
-      r2Key: r2Configured ? r2Key : null,
       alt: "",
       uploadedBy: adminId,
     });
@@ -195,13 +177,7 @@ router.get(
   "/media",
   asyncHandler(async (_req, res) => {
     const assets = await storage.cmsMedia.getAllMedia();
-    const normalizedAssets = await Promise.all(
-      assets.map(async (asset) => ({
-        ...asset,
-        url: (await r2Service.normalizePublicUrl(asset.url)) ?? asset.url,
-      }))
-    );
-    res.json(await buildCmsMediaLibraryAssets(normalizedAssets));
+    res.json(await buildCmsMediaLibraryAssets(assets));
   })
 );
 
@@ -241,16 +217,9 @@ router.get(
     if (!asset) return res.status(404).json({ error: "Media not found" });
 
     let fileBuffer: Buffer | null = null;
-    let contentType = asset.mimeType;
+    const contentType = asset.mimeType;
 
-    if (asset.r2Key) {
-      const downloaded = await r2Service.downloadFile(asset.r2Key);
-      if (!downloaded) {
-        return res.status(404).json({ error: "Unable to load media source" });
-      }
-      fileBuffer = downloaded.buffer;
-      contentType = downloaded.contentType ?? asset.mimeType;
-    } else if (asset.url.startsWith("/uploads/cms/")) {
+    if (asset.url.startsWith("/uploads/cms/")) {
       const localPath = path.resolve(process.cwd(), asset.url.slice(1));
       if (!fs.existsSync(localPath)) {
         return res.status(404).json({ error: "Media file not found" });
@@ -305,10 +274,7 @@ router.patch(
     });
 
     if (!updated) return res.status(404).json({ error: "Media not found" });
-    res.json({
-      ...updated,
-      url: (await r2Service.normalizePublicUrl(updated.url)) ?? updated.url,
-    });
+    res.json(updated);
   })
 );
 
@@ -329,13 +295,7 @@ router.post(
     const optimized = await optimizeImage(req.file.buffer, req.file.mimetype, CMS_OPTIONS);
     let publicUrl = asset.url;
 
-    if (asset.r2Key) {
-      const uploadedUrl = await r2Service.uploadFile(asset.r2Key, optimized.buffer, optimized.mimeType);
-      if (!uploadedUrl) {
-        return res.status(500).json({ error: "Failed to replace image in Cloudflare R2" });
-      }
-      publicUrl = uploadedUrl;
-    } else if (asset.url.startsWith("/uploads/cms/")) {
+    if (asset.url.startsWith("/uploads/cms/")) {
       const localPath = path.resolve(process.cwd(), asset.url.slice(1));
       ensureParentDir(localPath);
       fs.writeFileSync(localPath, optimized.buffer);
@@ -348,14 +308,10 @@ router.post(
       mimeType: optimized.mimeType,
       fileSize: optimized.optimizedSize,
       url: publicUrl,
-      r2Key: asset.r2Key,
     });
 
     if (!updated) return res.status(404).json({ error: "Media not found" });
-    res.json({
-      ...updated,
-      url: (await r2Service.normalizePublicUrl(updated.url)) ?? updated.url,
-    });
+    res.json(updated);
   })
 );
 
@@ -369,10 +325,7 @@ router.patch(
     }
     const asset = await storage.cmsMedia.updateAlt(id, alt);
     if (!asset) return res.status(404).json({ error: "Media not found" });
-    res.json({
-      ...asset,
-      url: (await r2Service.normalizePublicUrl(asset.url)) ?? asset.url,
-    });
+    res.json(asset);
   })
 );
 

@@ -14,7 +14,6 @@ import {
   renderTemplate,
   resetEmailBrandingCache,
 } from "../services/email.service";
-import * as r2Service from "../services/r2.service";
 import { ensureSystemEmailTemplates } from "../services/system-email-templates.service";
 import { BRANDING_OPTIONS, isImageMime, optimizeImage } from "../services/image-optimizer";
 import { getGoogleReviews, resetGoogleReviewsCache } from "../services/google-reviews.service";
@@ -123,10 +122,6 @@ router.put(
       data.isSecret
     );
 
-    if (data.category === "cloudflare_r2") {
-      r2Service.resetClient();
-    }
-
     if (data.category === "mailgun") {
       const { resetMailgunConfig } = await import("../services/email.service");
       resetMailgunConfig();
@@ -173,27 +168,14 @@ router.post(
         }
       : await optimizeImage(req.file.buffer, req.file.mimetype, BRANDING_OPTIONS);
     const filename = `${Date.now()}-${baseName}${optimized.extension}`;
-    const r2Key = `branding/${filename}`;
-
-    const r2Configured = await r2Service.isConfigured();
-    let publicUrl: string | null = null;
-
-    if (r2Configured) {
-      publicUrl = await r2Service.uploadFile(r2Key, optimized.buffer, optimized.mimeType);
-    }
-
-    if (!publicUrl) {
-      ensureBrandingDir();
-      const localPath = path.join(LOCAL_BRANDING_DIR, filename);
-      fs.writeFileSync(localPath, optimized.buffer);
-      publicUrl = `/uploads/branding/${filename}`;
-    }
+    ensureBrandingDir();
+    const localPath = path.join(LOCAL_BRANDING_DIR, filename);
+    fs.writeFileSync(localPath, optimized.buffer);
+    const publicUrl = `/uploads/branding/${filename}`;
 
     await storage.settings.upsertSetting(parsed.data.settingKey, publicUrl, "branding", false);
     storage.settings.invalidateCategory("branding");
     resetEmailBrandingCache();
-    r2Service.resetClient();
-
     res.status(201).json({
       key: parsed.data.settingKey,
       url: publicUrl,
@@ -210,7 +192,7 @@ router.delete(
 );
 
 const testConnectionSchema = z.object({
-  integration: z.enum(["mailgun", "cloudflare_r2", "google_reviews"]),
+  integration: z.enum(["mailgun", "google_reviews"]),
 });
 
 router.post(
@@ -220,12 +202,6 @@ router.post(
 
     if (integration === "mailgun") {
       const result = await testMailgunConnection();
-      res.json(result);
-      return;
-    }
-
-    if (integration === "cloudflare_r2") {
-      const result = await r2Service.testConnection();
       res.json(result);
       return;
     }

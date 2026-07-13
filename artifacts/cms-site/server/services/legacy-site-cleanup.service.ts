@@ -1,5 +1,4 @@
 import { storage } from "../storage";
-import * as r2Service from "./r2.service";
 import { logger } from "../utils/logger";
 import { containsLegacySiteContent } from "./legacy-site-content";
 import fs from "node:fs/promises";
@@ -36,8 +35,7 @@ export async function removeLegacySiteContent() {
 
   for (const asset of media) {
     if (!containsLegacySiteContent(asset)) continue;
-    if (asset.r2Key) await r2Service.deleteFile(asset.r2Key);
-    else await deleteLocalUpload(asset.url);
+    await deleteLocalUpload(asset.url);
     if (await storage.cmsMedia.deleteMedia(asset.id)) deleted += 1;
   }
 

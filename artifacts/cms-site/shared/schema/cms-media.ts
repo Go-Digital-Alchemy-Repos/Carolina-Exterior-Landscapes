@@ -12,7 +12,6 @@ export const cmsMedia = pgTable("cms_media", {
   url: text("url").notNull(),
   mimeType: text("mime_type").notNull(),
   fileSize: integer("file_size").notNull(),
-  r2Key: text("r2_key"),
   alt: text("alt"),
   caption: text("caption"),
   description: text("description"),
