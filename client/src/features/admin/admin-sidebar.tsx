@@ -246,8 +246,11 @@ export function AdminSidebar({ children }: { children?: React.ReactNode }) {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="min-h-screen overflow-x-hidden bg-muted/20 md:flex">
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:hidden">
+      <div className="admin-responsive-shell min-h-screen overflow-x-hidden bg-muted/20 md:flex">
+        <header
+          className="admin-mobile-shell sticky top-0 z-40 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur md:hidden"
+          data-admin-layout="mobile"
+        >
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <Button
               variant="outline"
@@ -292,10 +295,11 @@ export function AdminSidebar({ children }: { children?: React.ReactNode }) {
         </header>
         <aside
           className={cn(
-            "sticky top-0 hidden h-screen shrink-0 border-r bg-background transition-all md:flex md:flex-col",
+            "admin-desktop-shell sticky top-0 hidden h-screen shrink-0 flex-col border-r bg-background transition-all md:flex",
             collapsed ? "w-16" : "w-72",
           )}
           data-testid="admin-sidebar"
+          data-admin-layout="desktop"
         >
           <div
             className={cn(

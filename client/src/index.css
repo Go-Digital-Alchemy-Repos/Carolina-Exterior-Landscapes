@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Keep the full admin shell on desktop-class pointer devices even when the
+ * browser is narrowed or zoomed. Width breakpoints still provide the normal
+ * responsive fallback for touch-only devices and larger screens.
+ */
+.admin-responsive-shell {
+  display: block;
+}
+
+@media (min-width: 768px), (any-hover: hover) and (any-pointer: fine) {
+  .admin-responsive-shell {
+    display: flex;
+  }
+
+  .admin-mobile-shell {
+    display: none !important;
+  }
+
+  .admin-desktop-shell {
+    display: flex !important;
+  }
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   color: hsl(var(--muted-foreground));
   content: attr(data-placeholder);
