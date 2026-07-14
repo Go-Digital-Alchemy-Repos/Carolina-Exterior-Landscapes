@@ -1,0 +1,120 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockGetBySlug = vi.fn();
+const mockCreate = vi.fn();
+const mockUpdate = vi.fn();
+
+vi.mock("../storage", () => ({
+  storage: {
+    forms: {
+      getBySlug: mockGetBySlug,
+      create: mockCreate,
+      update: mockUpdate,
+    },
+  },
+}));
+
+vi.mock("../utils/logger", () => ({
+  logger: {
+    app: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  },
+}));
+
+describe("ensureSystemForms", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("refreshes existing system forms from canonical seed fields", async () => {
+    mockGetBySlug.mockImplementation(async (slug: string) => {
+      if (slug === "residential-quote") {
+        return {
+          id: "residential-quote-id",
+          name: "Custom Residential Quote Form",
+          slug: "residential-quote",
+          description: "Custom quote description",
+          kind: "contact",
+          isSystem: true,
+          isActive: true,
+          fields: [
+            {
+              id: "message",
+              key: "message",
+              label: "How can we help?",
+              type: "textarea",
+              placeholder: "Tell us what you need",
+              helpText: "",
+              required: true,
+              width: "full",
+              options: [],
+              config: {},
+            },
+          ],
+          settings: {
+            submitButtonText: "Send",
+            successMessage: "Custom contact success",
+            createCrmLead: true,
+            notifyAdmins: true,
+            storeAsContactMessage: true,
+          },
+        };
+      }
+
+      return undefined;
+    });
+
+    const mod = await import("../services/system-forms.service");
+    await mod.ensureSystemForms();
+
+    const contactUpdate = mockUpdate.mock.calls.find(
+      ([id]: [string]) => id === "residential-quote-id"
+    );
+
+    expect(contactUpdate).toBeTruthy();
+    expect(contactUpdate[1].name).toBe("Residential Quote Form");
+    expect(contactUpdate[1].fields.length).toBeGreaterThan(1);
+    expect(contactUpdate[1].fields.find((field: { key: string }) => field.key === "city")?.placeholder).toBe("Waxhaw");
+    expect(contactUpdate[1].settings.successMessage).toBe("Thank you! We have received your request and will be in touch shortly to schedule your consultation.");
+    expect(contactUpdate[1].settings.createCrmLead).toBe(true);
+  });
+
+  it("creates missing system forms on a clean install", async () => {
+    mockGetBySlug.mockResolvedValue(undefined);
+
+    const mod = await import("../services/system-forms.service");
+    await mod.ensureSystemForms();
+
+    expect(mockCreate).toHaveBeenCalledTimes(3);
+    const createdSlugs = mockCreate.mock.calls.map(([form]) => form.slug);
+    expect(createdSlugs).toEqual(
+      expect.arrayContaining([
+        "contact-form",
+        "residential-quote",
+        "commercial-quote",
+      ])
+    );
+    const generalContactForm = mockCreate.mock.calls.find(([form]) => form.slug === "contact-form")?.[0];
+    const contactForm = mockCreate.mock.calls.find(([form]) => form.slug === "residential-quote")?.[0];
+    const commercialForm = mockCreate.mock.calls.find(([form]) => form.slug === "commercial-quote")?.[0];
+    expect(generalContactForm.fields.map((field: { key: string }) => field.key)).toEqual([
+      "name",
+      "phone",
+      "email",
+      "subject",
+      "message",
+    ]);
+    expect(generalContactForm.settings.submitButtonText).toBe("Send Message");
+    expect(contactForm.settings.createCrmLead).toBe(true);
+    expect(commercialForm.settings.createCrmLead).toBe(true);
+    const serviceField = contactForm.fields.find((field: { key: string }) => field.key === "servicesInterested");
+    expect(serviceField.options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Drainage Solutions" }),
+      ]),
+    );
+  });
+});
