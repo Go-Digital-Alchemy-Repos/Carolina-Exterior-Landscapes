@@ -16,6 +16,9 @@ import { useBranding } from "@/components/shared/branding-provider";
 import { GalleryRenderer } from "@/components/shared/gallery-renderer";
 import { LazyPublicFormRenderer } from "@/components/forms/lazy-public-form-renderer";
 import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
+import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
+import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
+import { ServiceAreaMap } from "@/features/landscape-site/components/ServiceAreaMap";
 import type { BlockInstance } from "@/features/admin/cms/builder/block-registry";
 import {
   Accessibility,
@@ -94,7 +97,14 @@ function str(value: unknown, fallback = "") {
 
 function plainText(value: unknown, fallback = "") {
   const text = str(value, fallback);
-  return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(?:39|x27);/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function plainTextLines(value: unknown) {
@@ -273,7 +283,7 @@ const MOBILE_LOCATION_HERO_HEADINGS = new Set([
 
 function heroHeadingClass(heading: string) {
   const mobileOffsetClass = MOBILE_LOCATION_HERO_HEADINGS.has(heading.trim()) ? "max-[640px]:ml-[2vw]" : "max-[640px]:ml-[1vw]";
-  return `text-[clamp(2.75rem,5vw,4.75rem)] font-bold leading-[1.05] tracking-normal ${mobileOffsetClass} max-[640px]:max-w-[92%] max-[640px]:text-[clamp(2.375rem,9.5vw,3.25rem)] max-[640px]:leading-[0.95]`;
+  return `font-heading text-[clamp(2.75rem,5vw,4.75rem)] font-bold leading-[1.05] tracking-normal ${mobileOffsetClass} max-[640px]:max-w-[92%] max-[640px]:text-[clamp(2.375rem,9.5vw,3.25rem)] max-[640px]:leading-[0.95]`;
 }
 
 function mobileHeadingLines(value: unknown) {
@@ -317,8 +327,8 @@ function columnsClass(value: unknown) {
 
 function sectionBackgroundClass(value: unknown) {
   const background = str(value);
-  if (background === "off-white") return "bg-[#F8F6F2]";
-  if (background === "dark") return "bg-[#2C2C2C] text-white";
+  if (background === "off-white") return "bg-[hsl(var(--surface-stone))]";
+  if (background === "dark") return "bg-[hsl(var(--foreground))] text-white";
   return "bg-background";
 }
 
@@ -429,8 +439,8 @@ function ActionButton({ action, variant }: { action: Record<string, unknown>; va
   const buttonVariant = style === "secondary-white" ? "outline" : variant;
   const className =
     style === "secondary-white"
-      ? "border-white/70 bg-transparent text-white hover:bg-white hover:text-[#2C2C2C]"
-      : undefined;
+      ? "min-h-14 rounded-full border-white/65 bg-transparent px-8 font-extrabold uppercase tracking-wide text-white hover:bg-white hover:text-foreground"
+      : "min-h-14 rounded-full px-8 font-extrabold uppercase tracking-wide shadow-md";
   const button = (
     <Button variant={buttonVariant} className={className} asChild>
       {target.startsWith("tel:") || target.startsWith("mailto:") || target.startsWith("http") ? (
@@ -690,7 +700,7 @@ function BlogListingBlock({ props }: { props: Record<string, unknown> }) {
     <section className={sectionBackgroundClass(props.background)} data-testid="block-blog-listing">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <div className="mx-auto mb-10 max-w-3xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{str(props.title, "Latest Articles")}</h2>
+          <h2 className="font-heading text-3xl font-bold tracking-normal text-foreground sm:text-4xl">{str(props.title, "Latest Articles")}</h2>
           {str(props.subtitle) ? <RichCardBody html={str(props.subtitle)} className="mt-4 text-base" /> : null}
         </div>
         {isLoading ? (
@@ -706,11 +716,11 @@ function BlogListingBlock({ props }: { props: Record<string, unknown> }) {
                 ? new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(new Date(dateValue))
                 : "";
               return (
-                <article key={post.id} className="overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md">
+                <article key={post.id} className="overflow-hidden rounded-lg border border-border/80 bg-white shadow-natural transition-all hover:-translate-y-0.5 hover:shadow-natural-lg">
                   {imageUrl ? <img src={imageUrl} alt="" loading="lazy" className="aspect-[16/10] w-full object-cover" /> : null}
                   <div className="p-6">
                     {formattedDate ? <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{formattedDate}</p> : null}
-                    <h3 className="text-xl font-semibold leading-snug text-foreground">
+                    <h3 className="font-heading text-xl font-bold leading-snug text-foreground">
                       <Link href={`/blog/${post.slug}`} className="hover:text-primary">{post.title}</Link>
                     </h3>
                     {excerpt ? <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{excerpt}</p> : null}
@@ -740,17 +750,23 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const mobileHeading = props.mobileHeading;
     const eyebrow = str(props.eyebrow) || str(props.sectionEyebrow) || str((props.label as Record<string, unknown> | undefined)?.text);
     const subheading = plainText(props.subheading);
-    const backgroundImageUrl = str(props.backgroundImageUrl);
+    const backgroundImageUrl = str(props.backgroundImageUrl) || str(props.imageUrl);
     const backgroundPositionX = percent(props.backgroundPositionX);
     const backgroundPositionY = percent(props.backgroundPositionY);
     const backgroundImageOpacity = percent(props.backgroundImageOpacity, 100);
     const ctaText = str(props.ctaText);
     const ctaLink = str(props.ctaLink);
     const buttons = items(props.buttons);
-    const isInterior = str(props.variant) === "interior";
+    const heroVariant = str(props.variant);
+    const isInterior = heroVariant === "interior";
+    const isQuote = heroVariant === "quote";
 
-    const heroHeightClass = isInterior ? "min-h-[620px] sm:min-h-[620px] lg:min-h-[680px]" : "min-h-[560px] sm:min-h-[620px] lg:min-h-[680px]";
-    const heroPaddingClass = isInterior ? "py-24 sm:py-28" : "py-28 sm:py-32";
+    const heroHeightClass = isQuote
+      ? "min-h-[440px] sm:min-h-[460px] lg:min-h-[480px]"
+      : isInterior
+        ? "min-h-[620px] sm:min-h-[620px] lg:min-h-[680px]"
+        : "min-h-[560px] sm:min-h-[620px] lg:min-h-[680px]";
+    const heroPaddingClass = isQuote ? "pb-28 pt-20 sm:pb-32 sm:pt-24" : isInterior ? "py-24 sm:py-28" : "py-28 sm:py-32";
     const isServiceHeroImage = backgroundImageUrl.includes("/images/hero-");
     const defaultOverlayOpacity = isServiceHeroImage ? 20 : 30;
     const overlayColor = str(props.overlayColor, "#000000") || "#000000";
@@ -761,11 +777,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     const gradientHeight = percent(props.gradientHeight, 40);
     const customHeroHeight = positivePixelValue(props.heroHeightPx);
     const textAlignment = props.alignment;
-    const forceServiceHeroDesktopLeft = SERVICE_HERO_BLOCK_IDS.has(block.id);
+    const forceServiceHeroDesktopLeft = SERVICE_HERO_BLOCK_IDS.has(block.id)
+      || /^(residential|commercial|service-areas)-/.test(block.id);
 
     return (
       <section
-        className={`relative overflow-hidden bg-[#2C2C2C] text-white ${heroHeightClass}`}
+        className={`relative overflow-hidden bg-[hsl(var(--foreground))] text-white ${heroHeightClass}`}
         style={customHeroHeight ? { minHeight: `${customHeroHeight}px` } : undefined}
         data-testid="block-hero"
       >
@@ -780,6 +797,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             data-testid="hero-background-image"
           />
         ) : null}
+        <div className="absolute inset-0 bg-[hsl(var(--brand-forest)/0.58)]" aria-hidden="true" />
         <div
           className="absolute inset-0"
           style={{ backgroundColor: overlayColor, opacity: overlayOpacity / 100 }}
@@ -798,7 +816,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             data-testid="hero-gradient"
           />
         ) : null}
-        <div className={`relative mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 sm:px-6 ${heroPaddingClass} ${heroContainerClass(forceServiceHeroDesktopLeft)}`}>
+        <div className={`relative mx-auto flex min-h-[inherit] max-w-7xl flex-col justify-center px-4 sm:px-6 ${heroPaddingClass} ${heroContainerClass(forceServiceHeroDesktopLeft)}`} data-testid="hero-container">
           <div className={`max-w-5xl ${heroContentClass(textAlignment, forceServiceHeroDesktopLeft)}`} data-testid="hero-content">
             {eyebrow ? (
               <EyebrowBadge className="mb-4" testId="hero-eyebrow">
@@ -808,13 +826,13 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             <h1 className={heroHeadingClass(heading)}>
               <HeroHeadingText heading={heading} mobileHeading={mobileHeading} />
             </h1>
-            {subheading ? <p className={`mt-5 max-w-3xl text-lg text-white/80 ${heroSubheadingClass(textAlignment, forceServiceHeroDesktopLeft)}`}>{subheading}</p> : null}
+            {subheading ? <p className={`mt-6 max-w-3xl text-lg font-medium leading-relaxed text-white/85 md:text-xl ${heroSubheadingClass(textAlignment, forceServiceHeroDesktopLeft)}`}>{subheading}</p> : null}
             {buttons.length > 0 || (ctaText && ctaLink) ? (
               <div className={`mt-8 flex flex-wrap gap-3 ${heroActionsClass(textAlignment, forceServiceHeroDesktopLeft)}`}>
                 {buttons.length > 0 ? (
                   buttons.map((button, index) => <ActionButton key={index} action={button} variant={index === 0 ? "default" : "secondary"} />)
                 ) : (
-                  <Button asChild>
+                  <Button className="min-h-14 rounded-full px-8 font-extrabold uppercase tracking-wide shadow-md" asChild>
                     <Link href={ctaLink}>{ctaText}</Link>
                   </Button>
                 )}
@@ -822,6 +840,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
             ) : null}
           </div>
         </div>
+        {!isQuote ? <SectionDivider variant="hills" overlay fillColor="hsl(var(--surface-stone))" /> : null}
       </section>
     );
   }
@@ -833,7 +852,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
       <section className={sectionBackgroundClass(props.background)} data-testid="block-section-header">
         <div className={`mx-auto max-w-4xl px-4 pb-4 pt-12 sm:px-6 ${alignmentClass(props.alignment)}`}>
           {eyebrow ? <EyebrowBadge className="mb-3">{eyebrow}</EyebrowBadge> : null}
-          <h2 className="text-3xl font-semibold tracking-normal">{title}</h2>
+          <h2 className="font-heading text-3xl font-bold tracking-normal md:text-4xl">{title}</h2>
           {plainText(props.subtitle) ? <p className="mt-4 text-muted-foreground">{plainText(props.subtitle)}</p> : null}
         </div>
       </section>
@@ -1105,39 +1124,62 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-cards-grid">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          {str(props.title) ? <h2 className="text-center text-3xl font-semibold tracking-normal">{str(props.title)}</h2> : null}
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 md:py-20">
+          {str(props.title) ? <h2 className="text-center font-heading text-3xl font-bold tracking-normal md:text-4xl">{str(props.title)}</h2> : null}
           {plainText(props.subtitle) ? <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">{plainText(props.subtitle)}</p> : null}
-          <div className={`mt-8 grid gap-5 ${gridClass}`}>
+          <div className={`mt-10 grid gap-6 ${gridClass}`}>
             {cards.map((card, index) => {
               const cardTitle = str(card.title) || str(card.label);
               const cardBody = str(card.body) || str(card.description) || str(card.text);
+              const cardImageUrl = str(card.imageUrl);
+              const cardHasImage = Boolean(cardImageUrl);
               return (
-                <Card key={index} className="transition-shadow hover:shadow-md">
-                  {str(card.imageUrl) ? (
-                    <img
-                      src={str(card.imageUrl)}
-                      alt={str(card.alt)}
-                      width={1365}
-                      height={768}
-                      className="aspect-video w-full rounded-t-md object-cover"
-                      style={{ objectPosition: `${percent(card.imagePositionX)}% ${percent(card.imagePositionY)}%` }}
-                      data-testid="card-grid-image"
-                    />
+                <Card key={index} className={`overflow-hidden rounded-lg border-border/80 bg-white shadow-natural transition-all hover:-translate-y-0.5 hover:shadow-natural-lg ${isGallery ? "group relative min-h-72" : ""}`}>
+                  {cardHasImage ? (
+                    isGallery ? (
+                      <img
+                        src={cardImageUrl}
+                        alt={str(card.imageAlt) || str(card.alt)}
+                        width={1365}
+                        height={768}
+                        className="absolute inset-0 h-full min-h-72 w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                        style={{ objectPosition: `${percent(card.imagePositionX)}% ${percent(card.imagePositionY)}%` }}
+                        data-testid="card-grid-image"
+                      />
+                    ) : (
+                      <div className="group relative overflow-hidden">
+                        <img
+                          src={cardImageUrl}
+                          alt={str(card.imageAlt) || str(card.alt)}
+                          width={1365}
+                          height={768}
+                          className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                          style={{ objectPosition: `${percent(card.imagePositionX)}% ${percent(card.imagePositionY)}%` }}
+                          data-testid="card-grid-image"
+                        />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--brand-forest)/0.88)] via-transparent to-transparent" aria-hidden="true" />
+                        {cardTitle ? (
+                          <h3 className="absolute inset-x-0 bottom-0 z-10 p-6 font-heading text-2xl font-bold text-white">
+                            {linkTarget(card) ? <Link href={linkTarget(card)}>{cardTitle}</Link> : cardTitle}
+                          </h3>
+                        ) : null}
+                      </div>
+                    )
                   ) : null}
                   {isGallery && !str(card.imageUrl) ? (
                     <div className="flex aspect-[4/3] items-center justify-center rounded-t-md bg-muted px-6 text-center text-sm font-medium text-muted-foreground">
                       {str(card.comment, "Real project photo placeholder")}
                     </div>
                   ) : null}
-                  <CardContent className="p-5">
+                  {isGallery ? <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--brand-forest)/0.92)] via-[hsl(var(--brand-forest)/0.15)] to-transparent" aria-hidden="true" /> : null}
+                  <CardContent className={isGallery ? "absolute inset-x-0 bottom-0 z-10 p-6 text-white" : "p-6 sm:p-7"}>
                     {str(card.icon) && !isGallery ? (
                       <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-md ${isIconBodyGrid ? "bg-[#E8520A]/10 text-[#E8520A]" : "bg-primary/10 text-primary"}`}>
                         <Icon name={card.icon} className="h-5 w-5" />
                       </div>
                     ) : null}
-                    {!isGallery && cardTitle ? (
-                      <h3 className="font-semibold">
+                    {(isGallery || !cardHasImage) && cardTitle ? (
+                      <h3 className={`font-heading text-xl font-bold ${isGallery ? "text-white" : "text-foreground"}`}>
                         {linkTarget(card) ? (
                           <Link href={linkTarget(card)} className="hover:text-primary">
                             {cardTitle}
@@ -1147,7 +1189,7 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
                         )}
                       </h3>
                     ) : null}
-                    <RichCardBody html={cardBody} className={cardTitle ? "mt-2" : ""} />
+                    <RichCardBody html={cardBody} className={`${cardTitle ? "mt-2" : ""} ${isGallery ? "text-white/80 [&_*]:text-white/80" : "leading-relaxed"}`} />
                     {str(card.linkText) && linkTarget(card) ? (
                       <Link href={linkTarget(card)} className="mt-4 inline-flex text-sm font-semibold text-primary hover:text-primary/80">
                         {str(card.linkText)}
@@ -1453,9 +1495,28 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
     );
   }
 
+  if (block.type === "service-area-map") {
+    return (
+      <section className={sectionBackgroundClass(props.background)} data-testid="block-service-area-map">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-20">
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <h2 className="font-heading text-3xl font-bold tracking-normal md:text-4xl">{str(props.heading, "Communities We Serve")}</h2>
+            {str(props.intro) ? <p className="mt-4 text-muted-foreground">{str(props.intro)}</p> : null}
+          </div>
+          <div className="overflow-hidden rounded-lg border border-border/80 bg-white shadow-natural-lg [&>div]:rounded-none [&>div]:border-0 [&>div]:shadow-none">
+            <ServiceAreaMap />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (block.type === "cta") {
+    const eyebrow = str(props.eyebrow, "Start Your Project");
     const primaryText = str(props.primaryText);
     const primaryLink = str(props.primaryLink);
+    const secondaryText = str(props.secondaryText);
+    const secondaryLink = str(props.secondaryLink);
     const buttons = items(props.buttons);
     if (str(props.variant) === "inline") {
       return (
@@ -1478,24 +1539,62 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
         </section>
       );
     }
+    const actions = buttons.length > 0
+      ? buttons
+      : [
+          { label: primaryText, path: primaryLink },
+          { label: secondaryText, path: secondaryLink },
+        ].filter((action) => action.label && action.path);
+
     return (
-      <section className="bg-[#2C2C2C] text-white" data-testid="block-cta">
-        <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6">
-          <h2 className="text-3xl font-semibold tracking-normal">{str(props.heading, "Ready to get started?")}</h2>
-          {plainText(props.subheading) ? <p className="mx-auto mt-4 max-w-2xl text-white/75">{plainText(props.subheading)}</p> : null}
-          {buttons.length > 0 || (primaryText && primaryLink) ? (
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
-              {buttons.length > 0 ? (
-                buttons.map((button, index) => <ActionButton key={index} action={button} variant={index === 0 ? "default" : "secondary"} />)
-              ) : (
-                <Button asChild>
-                  <Link href={primaryLink}>{primaryText}</Link>
-                </Button>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </section>
+      <div data-testid="block-cta">
+        <SectionDivider
+          variant="hills"
+          bgColor="hsl(var(--surface-stone))"
+          fillColor="hsl(var(--brand-sand))"
+          heightClassName="h-14 md:h-20 lg:h-24"
+        />
+        <section className="relative isolate flex min-h-[560px] items-center overflow-hidden bg-[hsl(var(--brand-sand))] text-[hsl(var(--brand-forest))] md:min-h-[640px]">
+          <div className="absolute inset-0 bg-contours opacity-60" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-primary/10" aria-hidden="true" />
+          <BotanicalAccent
+            variant="fern"
+            className="absolute -left-2 bottom-16 hidden h-80 w-auto text-[hsl(var(--brand-forest)/0.15)] md:block lg:left-16"
+          />
+          <div className="relative z-10 mx-auto w-full max-w-6xl px-5 py-24 text-center sm:px-8 md:py-28">
+            {eyebrow ? (
+              <span className="inline-flex rounded-full border border-white/75 bg-white/35 px-5 py-2 text-xs font-extrabold uppercase tracking-[0.14em] shadow-sm">
+                {eyebrow}
+              </span>
+            ) : null}
+            <h2 className="mx-auto mt-8 max-w-5xl font-heading text-[clamp(2.6rem,5vw,4.75rem)] font-bold leading-[1.05] tracking-normal">
+              {str(props.heading, "Ready to transform your property?")}
+            </h2>
+            {plainText(props.subheading) ? (
+              <p className="mx-auto mt-8 max-w-3xl text-lg font-medium leading-relaxed text-[hsl(var(--brand-forest)/0.88)] md:text-2xl">
+                {plainText(props.subheading)}
+              </p>
+            ) : null}
+            {actions.length > 0 ? (
+              <div className="mx-auto mt-12 flex max-w-4xl flex-col justify-center gap-4 sm:flex-row sm:gap-5">
+                {actions.map((action, index) => {
+                  const label = str(action.label);
+                  const target = linkTarget(action);
+                  if (!label || !target) return null;
+                  const linkClassName = index === 0
+                    ? "inline-flex min-h-16 min-w-0 items-center justify-center rounded-full bg-primary px-8 py-4 text-center text-base font-extrabold uppercase text-primary-foreground shadow-md transition-colors hover:bg-primary/90 sm:min-w-[22rem]"
+                    : "inline-flex min-h-16 min-w-0 items-center justify-center rounded-full border border-[hsl(var(--brand-forest)/0.25)] bg-transparent px-8 py-4 text-center text-base font-extrabold uppercase text-[hsl(var(--brand-forest))] transition-colors hover:bg-[hsl(var(--brand-forest))] hover:text-white sm:min-w-[18rem]";
+                  return target.startsWith("http") || target.startsWith("tel:") || target.startsWith("mailto:") ? (
+                    <a key={index} href={target} className={linkClassName}>{label}</a>
+                  ) : (
+                    <Link key={index} href={target} className={linkClassName}>{label}</Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
     );
   }
 
@@ -1505,30 +1604,32 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 
     return (
       <section className={sectionBackgroundClass(props.background)} data-testid="block-faq">
-        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6 md:py-20">
           {title || subtext ? (
             <div className="mb-8 text-center">
-              {title ? <h2 className="text-3xl font-semibold tracking-normal text-[#2C2C2C] md:text-4xl">{title}</h2> : null}
+              {title ? <h2 className="font-heading text-3xl font-bold tracking-normal text-foreground md:text-4xl">{title}</h2> : null}
               {subtext ? (
                 <div
-                  className="cms-rich-text mx-auto mt-3 max-w-2xl text-base leading-[1.7] text-[#2C2C2C]/75"
+                  className="cms-rich-text mx-auto mt-3 max-w-2xl text-base leading-[1.7] text-foreground/75"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(subtext) }}
                 />
               ) : null}
             </div>
           ) : null}
-          {items(props.items).map((item, index) => (
-            <details key={index} className="group border-b py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[17px] font-medium text-[#2C2C2C]">
+          <div className="overflow-hidden rounded-lg border border-border/80 bg-white px-6 shadow-natural sm:px-8">
+            {items(props.items).map((item, index) => (
+            <details key={index} className="group border-b border-border/70 py-5 last:border-b-0">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-heading text-[18px] font-bold text-foreground">
                 <span>{str(item.question, "Question?")}</span>
                 <ChevronDown className="h-5 w-5 shrink-0 text-primary transition-transform group-open:rotate-180" aria-hidden="true" />
               </summary>
               <div
-                className="cms-rich-text mt-3 text-base leading-[1.6] text-[#2C2C2C]/80"
+                className="cms-rich-text mt-3 text-base leading-[1.7] text-foreground/75"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(str(item.answer, "Answer.")) }}
               />
             </details>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -1536,11 +1637,12 @@ export function PublicBlockRenderer({ block }: { block: BlockInstance }) {
 
   if (block.type === "form-embed") {
     return (
-      <section className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6" data-testid="block-form-embed">
-        <div className="rounded-xl border border-border bg-card bg-paper p-6 shadow-natural-lg sm:p-10">
+      <section className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6" data-testid="block-form-embed">
+        <div className="rounded-lg border border-border/90 bg-white p-6 shadow-natural-lg sm:p-10 md:p-12">
           <LazyPublicFormRenderer
             slug={str(props.formSlug) || str(props.formKey, "contact-form")}
             buttonTextOverride={str(props.submitButtonText) || undefined}
+            showHeader={false}
             appearance="quote"
           />
         </div>
