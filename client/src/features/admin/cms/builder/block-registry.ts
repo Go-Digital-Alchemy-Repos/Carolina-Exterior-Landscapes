@@ -453,7 +453,7 @@ export const ALL_BLOCKS: BlockDef[] = [
         hours: "Monday – Friday, 8:00 AM – 5:00 PM",
         license: "",
         licensing: "Locally owned, licensed, and insured",
-        credential: "Lawn care, landscaping, hardscape, and drainage",
+        credential: "Lawn care, landscaping, and hardscape",
       },
       background: "white",
     },

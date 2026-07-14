@@ -55,7 +55,6 @@ const RESIDENTIAL_QUOTE_FIELDS = [
       choice("Landscaping Design & Installation"),
       choice("Hardscape (Patios, Walkways, Walls)"),
       choice("Mulching & Planting"),
-      choice("Drainage Solutions"),
       choice("Aeration & Overseeding"),
       choice("Sod Installation"),
       choice("Other / Not Sure"),
@@ -93,7 +92,6 @@ const COMMERCIAL_QUOTE_FIELDS = [
       choice("Grounds Maintenance"),
       choice("Commercial Landscaping"),
       choice("Commercial Hardscape"),
-      choice("Drainage & Site Work"),
       choice("HOA Community Services"),
       choice("Seasonal Color Program"),
       choice("Snow & Ice (Inquire)"),
@@ -137,7 +135,7 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
   {
     name: "Residential Quote Form",
     slug: "residential-quote",
-    description: "Request a residential landscaping, lawn maintenance, hardscape, or drainage estimate.",
+    description: "Request a residential landscaping, lawn maintenance, or hardscape estimate.",
     kind: "contact",
     isSystem: true,
     isActive: true,
@@ -154,7 +152,7 @@ const SYSTEM_FORMS: InsertCmsForm[] = [
   {
     name: "Commercial Quote Form",
     slug: "commercial-quote",
-    description: "Request a commercial landscaping, grounds maintenance, HOA, hardscape, or drainage proposal.",
+    description: "Request a commercial landscaping, grounds maintenance, HOA, or hardscape proposal.",
     kind: "contact",
     isSystem: true,
     isActive: true,

@@ -264,7 +264,6 @@ const MOBILE_HERO_HEADINGS = new Map<string, string[]>([
   ["Landscaping Services in Indian Trail, NC", ["Landscaping Services", "Indian Trail, NC"]],
   ["Annual Lawn Maintenance in Waxhaw, NC", ["Annual Lawn", "Maintenance in Waxhaw"]],
   ["Commercial Grounds Maintenance in Charlotte, NC", ["Commercial Grounds", "Maintenance in Charlotte"]],
-  ["Drainage Solutions in Union County, NC", ["Drainage Solutions", "Union County, NC"]],
 ]);
 
 const MOBILE_LOCATION_HERO_HEADINGS = new Set([

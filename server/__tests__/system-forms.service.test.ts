@@ -111,10 +111,14 @@ describe("ensureSystemForms", () => {
     expect(contactForm.settings.createCrmLead).toBe(true);
     expect(commercialForm.settings.createCrmLead).toBe(true);
     const serviceField = contactForm.fields.find((field: { key: string }) => field.key === "servicesInterested");
-    expect(serviceField.options).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: "Drainage Solutions" }),
-      ]),
-    );
+    expect(serviceField.options.map((option: { label: string }) => option.label)).toEqual([
+      "Lawn Maintenance (Annual Contract)",
+      "Landscaping Design & Installation",
+      "Hardscape (Patios, Walkways, Walls)",
+      "Mulching & Planting",
+      "Aeration & Overseeding",
+      "Sod Installation",
+      "Other / Not Sure",
+    ]);
   });
 });

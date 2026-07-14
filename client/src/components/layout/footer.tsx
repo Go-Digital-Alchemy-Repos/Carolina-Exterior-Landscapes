@@ -60,7 +60,7 @@ export function Footer() {
             )}
           </Link>
           <p className="mt-3 max-w-sm">
-            Lawn care, landscaping, hardscape, mulching, and drainage services for Waxhaw, Union County, and the greater Charlotte region.
+            Lawn care, landscaping, hardscape, and mulching services for Waxhaw, Union County, and the greater Charlotte region.
           </p>
           <div className="mt-4 space-y-1">
             {companyAddress ? (

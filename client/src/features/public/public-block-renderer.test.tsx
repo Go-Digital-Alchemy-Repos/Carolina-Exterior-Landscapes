@@ -439,25 +439,6 @@ describe("PublicBlockRenderer hero", () => {
     expect(mobileText?.querySelector("br")).not.toBeNull();
   });
 
-  it("keeps drainage location context in the mobile H1 only", async () => {
-    await act(async () => {
-      root!.render(
-        React.createElement(PublicBlockRenderer, {
-          block: heroBlock({
-            heading: "Drainage Solutions in Union County, NC",
-          }),
-        }),
-      );
-    });
-
-    const heading = container.querySelector("h1") as HTMLHeadingElement | null;
-    const desktopText = heading?.querySelector("span.max-\\[640px\\]\\:hidden") as HTMLSpanElement | null;
-    const mobileText = heading?.querySelector("span.hidden") as HTMLSpanElement | null;
-
-    expect(desktopText?.textContent).toBe("Drainage Solutions in Union County, NC");
-    expect(mobileText?.textContent).toBe("Drainage SolutionsUnion County, NC");
-  });
-
   it("uses a CMS mobile hero heading only on mobile while preserving the desktop H1", async () => {
     await act(async () => {
       root!.render(

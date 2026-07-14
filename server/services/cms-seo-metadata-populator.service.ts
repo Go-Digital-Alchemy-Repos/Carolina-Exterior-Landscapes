@@ -52,49 +52,49 @@ const virtualPageSeo: Record<string, Pick<PageSeoPlan, "title" | "description" |
   blog: {
     title: `Landscaping & Lawn Care Blog | ${BRAND_SHORT_NAME}`,
     description:
-      "Expert lawn care, landscaping, hardscape, drainage, HOA, and commercial grounds maintenance advice for Waxhaw, Union County, and the greater Charlotte region.",
+      "Expert lawn care, landscaping, hardscape, HOA, and commercial grounds maintenance advice for Waxhaw, Union County, and the greater Charlotte region.",
     keywords:
       "landscaping blog, lawn care tips, Waxhaw NC landscaping, Union County lawn care, Carolina Exterior Landscapes",
   },
   gallery: {
     title: `Landscaping & Hardscape Gallery | ${BRAND_NAME}`,
     description:
-      "Residential and commercial landscaping, lawn care, hardscape, drainage, and HOA project examples from Carolina Exterior Landscapes.",
+      "Residential and commercial landscaping, lawn care, hardscape, and HOA project examples from Carolina Exterior Landscapes.",
     keywords:
       "landscaping gallery, hardscape gallery, Waxhaw NC landscaping, commercial landscaping portfolio, Carolina Exterior Landscapes",
   },
   "commercial-portfolio": {
     title: `Commercial Landscaping Portfolio | ${BRAND_NAME}`,
     description:
-      "Commercial grounds maintenance, HOA landscaping, hardscape, and drainage portfolio examples from Carolina Exterior Landscapes.",
+      "Commercial grounds maintenance, HOA landscaping, and hardscape portfolio examples from Carolina Exterior Landscapes.",
     keywords:
       "commercial landscaping portfolio, HOA landscaping, commercial grounds maintenance, Waxhaw NC commercial landscaping",
   },
   faq: {
     title: `Residential Landscaping FAQ | ${BRAND_NAME}`,
     description:
-      "Frequently asked questions about residential lawn maintenance, landscaping, hardscape, mulching, planting, and drainage services.",
+      "Frequently asked questions about residential lawn maintenance, landscaping, hardscape, mulching, and planting services.",
     keywords:
-      "residential landscaping FAQ, lawn care questions, Waxhaw NC lawn maintenance, drainage FAQ",
+      "residential landscaping FAQ, lawn care questions, Waxhaw NC lawn maintenance",
   },
   "commercial-faq": {
     title: `Commercial Landscaping FAQ | ${BRAND_NAME}`,
     description:
-      "Frequently asked questions about commercial landscaping, grounds maintenance, HOA services, hardscape, and drainage work.",
+      "Frequently asked questions about commercial landscaping, grounds maintenance, HOA services, and hardscape work.",
     keywords:
-      "commercial landscaping FAQ, HOA grounds maintenance questions, commercial drainage services, Waxhaw NC",
+      "commercial landscaping FAQ, HOA grounds maintenance questions, commercial hardscape services, Waxhaw NC",
   },
   contact: {
     title: `Contact ${BRAND_NAME} | Waxhaw NC`,
     description:
-      "Contact Carolina Exterior Landscapes for residential lawn maintenance, landscaping, hardscape, drainage, HOA, and commercial grounds maintenance in Waxhaw and Union County.",
+      "Contact Carolina Exterior Landscapes for residential lawn maintenance, landscaping, hardscape, HOA, and commercial grounds maintenance in Waxhaw and Union County.",
     keywords:
       "contact Carolina Exterior Landscapes, Waxhaw NC landscaper, Union County lawn care estimate",
   },
   "404": {
     title: `Page Not Found | ${BRAND_NAME}`,
     description:
-      "The page you requested could not be found. Visit Carolina Exterior Landscapes for lawn care, landscaping, hardscape, drainage, and commercial grounds services.",
+      "The page you requested could not be found. Visit Carolina Exterior Landscapes for lawn care, landscaping, hardscape, and commercial grounds services.",
     keywords: "Carolina Exterior Landscapes, Waxhaw NC landscaping",
   },
 };
@@ -107,9 +107,6 @@ const filenameConceptOverrides: Record<string, string> = {
   "logo-icon": "Carolina Exterior Landscapes icon logo",
   symbol: "Carolina Exterior Landscapes brand symbol",
   favicon: "Carolina Exterior Landscapes favicon",
-  "cca-favicon": "Carolina Exterior Landscapes favicon",
-  "cca-logo-color": "Carolina Exterior Landscapes logo",
-  "cca-logo-og": "Carolina Exterior Landscapes social sharing logo",
   "city-waxhaw-hero": "Waxhaw NC landscaping and lawn care service area",
   "city-weddington-hero": "Weddington NC landscaping and lawn care service area",
   "city-matthews-hero": "Matthews NC landscaping and lawn care service area",
@@ -119,18 +116,6 @@ const filenameConceptOverrides: Record<string, string> = {
   "city-fort-mill-hero": "Greater Charlotte landscaping service area",
   "city-pineville-hero": "Greater Charlotte landscaping service area",
 };
-
-const unrelatedLegacyTerms = [
-  "access control",
-  "burglar alarm",
-  "camera",
-  "control4",
-  "fire alarm",
-  "gated access",
-  "metal fabrication",
-  "security",
-  "structured cabling",
-];
 
 function limit(value: string, maxLength: number) {
   const normalized = value.replace(/\s+/g, " ").trim();
@@ -280,7 +265,7 @@ function buildSeoPlan(page: CmsPage): PageSeoPlan {
   const fallbackText = firstMeaningfulText(page);
   const fallbackDescription =
     fallbackText ||
-    `${BRAND_NAME} provides residential lawn maintenance, landscaping, hardscape, drainage, HOA, and commercial grounds services in Waxhaw, Union County, and the greater Charlotte region.`;
+    `${BRAND_NAME} provides residential lawn maintenance, landscaping, hardscape, HOA, and commercial grounds services in Waxhaw, Union County, and the greater Charlotte region.`;
 
   return {
     title: limit(seeded?.titleTag ?? virtual?.title ?? `${page.title} | ${BRAND_NAME}`, 255),
@@ -318,9 +303,6 @@ function conceptFromFilename(asset: CmsMediaAsset) {
   const normalized = stem.toLowerCase().replace(/[-_+/]+/g, " ").replace(/\s+/g, " ").trim();
   const override = filenameConceptOverrides[normalized] ?? filenameConceptOverrides[stem.toLowerCase()];
   if (override) return override;
-  if (unrelatedLegacyTerms.some((term) => normalized.includes(term))) {
-    return `${BRAND_NAME} media library image`;
-  }
   return `${BRAND_NAME} ${titleCase(stem).trim()}`.replace(/\s+/g, " ");
 }
 
@@ -353,9 +335,10 @@ function buildMediaMetadata(asset: CmsMediaAsset, contexts: MediaUsageContext[])
 }
 
 export async function populateCmsSeoMetadata() {
-  const [pagesToUpdate, mediaAssets] = await Promise.all([
+  const [pagesToUpdate, mediaAssets, globalSeo] = await Promise.all([
     storage.cmsPages.getAllPages(),
     storage.cmsMedia.getAllMedia(),
+    storage.seoSettings.get(),
   ]);
 
   let updatedPages = 0;
@@ -363,40 +346,56 @@ export async function populateCmsSeoMetadata() {
 
   for (const page of pagesToUpdate) {
     const plan = buildSeoPlan(page);
-    await storage.cmsPages.updatePage(page.id, {
-      seoTitle: plan.title,
-      seoDescription: plan.description,
-      seoKeywords: plan.keywords,
-      canonicalUrl: plan.canonicalUrl,
-      ogImageUrl: plan.ogImageUrl,
-      noindex: false,
-    });
+    const missingMetadata = {
+      ...(!page.seoTitle ? { seoTitle: plan.title } : {}),
+      ...(!page.seoDescription ? { seoDescription: plan.description } : {}),
+      ...(!page.seoKeywords ? { seoKeywords: plan.keywords } : {}),
+      ...(!page.canonicalUrl ? { canonicalUrl: plan.canonicalUrl } : {}),
+      ...(!page.ogImageUrl ? { ogImageUrl: plan.ogImageUrl } : {}),
+    };
+    if (Object.keys(missingMetadata).length === 0) continue;
+    await storage.cmsPages.updatePage(page.id, missingMetadata);
     updatedPages += 1;
   }
 
   for (const asset of mediaAssets) {
     if (!asset.mimeType.startsWith("image/")) continue;
+    if (asset.title && asset.alt && asset.seoTitle && asset.seoDescription) continue;
     const contexts = mediaContexts(asset, pagesToUpdate);
     const metadata = buildMediaMetadata(asset, contexts);
-    await storage.cmsMedia.updateMetadata(asset.id, metadata);
+    await storage.cmsMedia.updateMetadata(asset.id, {
+      ...(!asset.title ? { title: metadata.title } : {}),
+      ...(!asset.alt ? { alt: metadata.alt } : {}),
+      ...(!asset.caption ? { caption: metadata.caption } : {}),
+      ...(!asset.description ? { description: metadata.description } : {}),
+      ...(!asset.seoTitle ? { seoTitle: metadata.seoTitle } : {}),
+      ...(!asset.seoDescription ? { seoDescription: metadata.seoDescription } : {}),
+      ...(!asset.ogTitle ? { ogTitle: metadata.ogTitle } : {}),
+      ...(!asset.ogDescription ? { ogDescription: metadata.ogDescription } : {}),
+    });
     updatedMedia += 1;
   }
 
-  await storage.seoSettings.upsert({
-    siteName: BRAND_NAME,
-    titleSuffix: ` | ${BRAND_SHORT_NAME}`,
-    defaultMetaDescription:
-      "Carolina Exterior Landscapes provides residential lawn maintenance, landscaping, hardscape, drainage, HOA, and commercial grounds services across Waxhaw, Union County, and the greater Charlotte region.",
-    siteUrl: SITE_URL,
-    defaultOgImageUrl: DEFAULT_OG_IMAGE_URL,
-    organizationName: BRAND_NAME,
-    organizationLogoUrl: ORGANIZATION_LOGO_URL,
-    defaultRobotsNoindex: false,
-  });
+  const defaultMetaDescription =
+    "Carolina Exterior Landscapes provides residential lawn maintenance, landscaping, hardscape, HOA, and commercial grounds services across Waxhaw, Union County, and the greater Charlotte region.";
+  if (!globalSeo) {
+    await storage.seoSettings.upsert({
+      siteName: BRAND_NAME,
+      titleSuffix: ` | ${BRAND_SHORT_NAME}`,
+      defaultMetaDescription,
+      siteUrl: SITE_URL,
+      defaultOgImageUrl: DEFAULT_OG_IMAGE_URL,
+      organizationName: BRAND_NAME,
+      organizationLogoUrl: ORGANIZATION_LOGO_URL,
+      defaultRobotsNoindex: false,
+    });
+  } else if (/\bdrain(?:age|s|ing)?\b|\bsite\s+work\b/i.test(globalSeo.defaultMetaDescription ?? "")) {
+    await storage.seoSettings.upsert({ defaultMetaDescription });
+  }
 
   return {
     updatedPages,
     updatedMedia,
-    updatedGlobalSeo: true,
+    updatedGlobalSeo: !globalSeo || /\bdrain(?:age|s|ing)?\b|\bsite\s+work\b/i.test(globalSeo.defaultMetaDescription ?? ""),
   };
 }
