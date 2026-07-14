@@ -9,7 +9,7 @@ export const DEFAULT_BRANDING_VALUES = {
   company_hours: "Monday - Friday, 8:00 AM - 5:00 PM",
   company_license: "",
   company_licensing: "Locally owned, licensed, and insured",
-  company_credentials: "Lawn care, landscaping, hardscape, and drainage",
+  company_credentials: "Lawn care, landscaping, and hardscape",
   company_google_business_url: "",
   brand_primary_color: "#53823C",
   brand_secondary_color: "#103F27",

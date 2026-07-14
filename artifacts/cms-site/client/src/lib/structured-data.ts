@@ -23,11 +23,9 @@ const LANDSCAPE_SERVICES = [
   { name: "Residential Landscaping", path: "/residential-landscaping/" },
   { name: "Residential Hardscape", path: "/residential-hardscape/" },
   { name: "Mulching and Planting", path: "/mulching-and-planting/" },
-  { name: "Drainage Solutions", path: "/drainage-solutions/" },
   { name: "Commercial Grounds Maintenance", path: "/commercial-grounds-maintenance/" },
   { name: "Commercial Landscaping", path: "/commercial-landscaping/" },
   { name: "Commercial Hardscape", path: "/commercial-hardscape/" },
-  { name: "Commercial Drainage", path: "/commercial-drainage/" },
   { name: "HOA Services", path: "/hoa-services/" },
 ];
 
@@ -189,7 +187,7 @@ export function buildLocationServiceLd({
     "@id": `${pageUrl}#service`,
     serviceType: "Landscaping and lawn care",
     name: `Landscaping and lawn care in ${state ? `${city}, ${state}` : city}`,
-    description: description || `Lawn maintenance, landscaping, hardscape, planting, and drainage services in ${state ? `${city}, ${state}` : city}.`,
+    description: description || `Lawn maintenance, landscaping, hardscape, and planting services in ${state ? `${city}, ${state}` : city}.`,
     provider: {
       "@type": "LocalBusiness",
       "@id": localBusinessId(baseUrl),

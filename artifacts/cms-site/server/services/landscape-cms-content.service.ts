@@ -60,12 +60,65 @@ type CmsBuilderBlock = {
 };
 
 const LANDSCAPE_CONTENT_VERSION = "carolina-landscape-v1";
-const LANDSCAPE_CMS_WIRING_VERSION = 3;
+const LANDSCAPE_CMS_WIRING_VERSION = 4;
 const LANDSCAPE_QUOTE_LAYOUT_VERSION = 1;
 const LANDSCAPE_CTA_LAYOUT_VERSION = 1;
 const LANDSCAPE_IMAGE_BASE = "/images/landscape";
 const CONTACT_PAGE_SLUG = "contact";
 const NOT_FOUND_PAGE_SLUG = "404";
+const DRAFT_SERVICE_SLUGS = new Set(["drainage-solutions", "commercial-drainage"]);
+const DRAFT_BLOG_SLUGS = new Set([
+  "how-to-fix-drainage-problems-in-your-waxhaw-or-weddington-yard",
+  "how-to-solve-parking-lot-and-common-area-drainage-problems-in-nc",
+]);
+
+function isDraftHiddenPage(slug: string) {
+  return DRAFT_SERVICE_SLUGS.has(slug) || DRAFT_BLOG_SLUGS.has(slug);
+}
+
+function mentionsHiddenService(value: string) {
+  return /\bdrain(?:age|s|ing)?\b|\bsite\s+work\b/i.test(value);
+}
+
+function stripHiddenServicePhrase(value: string) {
+  return value
+    .replace(/\s*(?:,|&|\band\b)?\s*(?:commercial\s+)?drainage(?:\s*&\s*site\s*work)?(?:\s+(?:services|solutions|work|engineering|installations?))?/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.])/g, "$1")
+    .trim();
+}
+
+function withoutHiddenServiceBlocks(blocks: LandscapeBlock[]) {
+  const result: LandscapeBlock[] = [];
+  let skippedHeading: LandscapeBlock["type"] | null = null;
+
+  for (const block of blocks) {
+    const isHeading = block.type === "h2" || block.type === "h3";
+    if (skippedHeading) {
+      const endsSkippedSection = isHeading && (skippedHeading === "h3" || block.type === "h2");
+      if (!endsSkippedSection) continue;
+      skippedHeading = null;
+    }
+    if (mentionsHiddenService(block.text)) {
+      if (isHeading) skippedHeading = block.type;
+      continue;
+    }
+    result.push(block);
+  }
+
+  return result;
+}
+
+function withoutHiddenServiceReferences<T extends LandscapePage>(page: T): T {
+  if (isDraftHiddenPage(page.slug)) return page;
+  return {
+    ...page,
+    metaDescription: stripHiddenServicePhrase(page.metaDescription),
+    primaryKeyword: mentionsHiddenService(page.primaryKeyword) ? "" : page.primaryKeyword,
+    secondaryKeywords: page.secondaryKeywords.filter((keyword) => !mentionsHiddenService(keyword)),
+    blocks: withoutHiddenServiceBlocks(page.blocks),
+  };
+}
 
 function readJson<T>(relativePath: string): T {
   return JSON.parse(fs.readFileSync(path.resolve(process.cwd(), relativePath), "utf8")) as T;
@@ -241,14 +294,6 @@ const GALLERY_PROJECTS: NonNullable<LandscapeMedia["projects"]> = [
     location: "York, SC",
     category: "residential",
     tag: "Mulch & Planting",
-  },
-  {
-    src: imageUrl("hero-drainage.png"),
-    alt: "French drain and drainage solution installation in a residential yard",
-    title: "Drainage Correction",
-    location: "Clover, SC",
-    category: "residential",
-    tag: "Drainage",
   },
   {
     src: imageUrl("gallery-com-1.png"),
@@ -563,8 +608,8 @@ function buildBuilderBlocks(
         cards: media.featureCards.map((card) => ({
           title: card.title,
           description: card.title === "Residential"
-            ? "Lawn maintenance, landscape installation, hardscape, mulching, planting, drainage, and pressure washing for homes."
-            : "Grounds maintenance, commercial landscaping, hardscape, drainage, HOA services, and pressure washing for managed properties.",
+            ? "Lawn maintenance, landscape installation, hardscape, mulching, planting, and pressure washing for homes."
+            : "Grounds maintenance, commercial landscaping, hardscape, HOA services, and pressure washing for managed properties.",
           imageUrl: card.imageUrl,
           imageAlt: card.imageAlt,
           linkText: `Explore ${card.title} Services`,
@@ -717,10 +762,11 @@ function pageRecord(
   const landscapeData = withMedia(data, options.slug);
   const builderBlocks = buildBuilderBlocks(data, options);
   const hasStandardCta = builderBlocks.some((block) => block.type === "cta");
+  const isDraft = isDraftHiddenPage(options.slug);
   return {
     title: options.title,
     slug: options.slug,
-    status: "published",
+    status: isDraft ? "draft" : "published",
     pageType: options.pageType ?? options.kind,
     template: "full-width",
     sidebarId: null,
@@ -741,8 +787,8 @@ function pageRecord(
     seoKeywords: options.seoKeywords ?? "",
     ogImageUrl: options.ogImageUrl ?? mediaForPage(data, options.slug)?.heroImageUrl ?? imageUrl("logo-full.png"),
     canonicalUrl: canonicalFor(options.path),
-    noindex: false,
-    publishedAt: new Date(),
+    noindex: isDraft,
+    publishedAt: isDraft ? null : new Date(),
   };
 }
 
@@ -769,6 +815,16 @@ const RETIRED_PUBLIC_LINKS = [
 function containsRetiredPublicLink(value: unknown): boolean {
   const serialized = JSON.stringify(value ?? "").toLowerCase();
   return RETIRED_PUBLIC_LINKS.some((pathname) => serialized.includes(pathname));
+}
+
+function removeDraftServiceMenuItems(items: unknown): MenuItem[] {
+  if (!Array.isArray(items)) return [];
+  return (items as MenuItem[])
+    .filter((item) => {
+      const normalizedUrl = item.url.replace(/^\//, "").replace(/\/$/, "");
+      return !DRAFT_SERVICE_SLUGS.has(item.id) && !DRAFT_SERVICE_SLUGS.has(normalizedUrl);
+    })
+    .map((item) => ({ ...item, children: removeDraftServiceMenuItems(item.children) }));
 }
 
 function hasBuilderBlocks(content: unknown): boolean {
@@ -921,10 +977,14 @@ function buildLandscapePages(): InsertCmsPage[] {
   const locations = readJson<LandscapeLocation[]>("client/src/features/landscape-site/content/locations.json");
   const blogPosts = readJson<LandscapeBlogPost[]>("client/src/features/landscape-site/content/blog.json");
 
-  const contentPages = [...Object.values(pages), ...pressureWashingPages()];
+  const contentPages = [...Object.values(pages), ...pressureWashingPages()]
+    .map((page) => withoutHiddenServiceReferences(page));
+  const publicLocations = locations.map((location) => withoutHiddenServiceReferences(location));
+  const sanitizedBlogPosts = blogPosts.map((post) => withoutHiddenServiceReferences(post));
+  const publicBlogPosts = sanitizedBlogPosts.filter((post) => !DRAFT_BLOG_SLUGS.has(post.slug));
   const allPagesBySlug = Object.fromEntries(contentPages.map((page) => [page.slug, page]));
   const records: InsertCmsPage[] = contentPages.map((page) => {
-    const data = page.slug === "service-areas" ? { ...page, areas: locations } : page;
+    const data = page.slug === "service-areas" ? { ...page, areas: publicLocations } : page;
     return pageRecord(data, {
       slug: page.slug,
       title: page.h1,
@@ -938,7 +998,7 @@ function buildLandscapePages(): InsertCmsPage[] {
   });
 
   records.push(
-    ...locations.map((location) =>
+    ...publicLocations.map((location) =>
       pageRecord(location, {
         slug: location.slug,
         title: location.h1,
@@ -959,7 +1019,7 @@ function buildLandscapePages(): InsertCmsPage[] {
         h1: "The Landscape Journal",
         titleTag: "Landscaping & Lawn Care Blog | Carolina Exterior Landscapes",
         metaDescription: "Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region.",
-        posts: blogPosts,
+        posts: publicBlogPosts,
       },
       {
         slug: "blog",
@@ -971,7 +1031,7 @@ function buildLandscapePages(): InsertCmsPage[] {
         seoDescription: "Expert advice, tips, and news about landscaping, lawn maintenance, and hardscaping in the Carolina Piedmont region.",
       },
     ),
-    ...blogPosts.map((post) =>
+    ...sanitizedBlogPosts.map((post) =>
       pageRecord(post, {
         slug: post.slug,
         title: post.h1,
@@ -990,25 +1050,25 @@ function buildLandscapePages(): InsertCmsPage[] {
       slug: "gallery",
       path: "/gallery",
       title: "Residential & Commercial Landscaping Gallery",
-      description: "Explore residential and commercial landscaping, lawn care, hardscape, drainage, and HOA project examples from Carolina Exterior Landscapes.",
+      description: "Explore residential and commercial landscaping, lawn care, hardscape, and HOA project examples from Carolina Exterior Landscapes.",
     },
     {
       slug: "commercial-portfolio",
       path: "/commercial-portfolio",
       title: "Commercial Landscaping Portfolio",
-      description: "Commercial grounds maintenance, HOA, hardscape, and drainage portfolio examples from Carolina Exterior Landscapes.",
+      description: "Commercial grounds maintenance, HOA, and hardscape portfolio examples from Carolina Exterior Landscapes.",
     },
     {
       slug: "faq",
       path: "/faq",
       title: "Residential Landscaping FAQ",
-      description: "Frequently asked questions about residential lawn care, landscaping, hardscape, mulching, planting, and drainage services.",
+      description: "Frequently asked questions about residential lawn care, landscaping, hardscape, mulching, and planting services.",
     },
     {
       slug: "commercial-faq",
       path: "/commercial-faq",
       title: "Commercial Landscaping FAQ",
-      description: "Frequently asked questions about commercial landscaping, grounds maintenance, HOA services, hardscape, and drainage work.",
+      description: "Frequently asked questions about commercial landscaping, grounds maintenance, HOA services, and hardscape work.",
     },
     {
       slug: "thank-you",
@@ -1027,9 +1087,9 @@ function buildLandscapePages(): InsertCmsPage[] {
           titleTag: `${page.title} | Carolina Exterior Landscapes`,
           metaDescription: page.description,
           blocks: page.slug === "faq"
-            ? faqBlocksFromPages(allPagesBySlug, ["residential-lawn-maintenance", "residential-landscaping", "residential-hardscape", "residential-pressure-washing", "mulching-and-planting", "drainage-solutions"])
+            ? faqBlocksFromPages(allPagesBySlug, ["residential-lawn-maintenance", "residential-landscaping", "residential-hardscape", "residential-pressure-washing", "mulching-and-planting"])
             : page.slug === "commercial-faq"
-              ? faqBlocksFromPages(allPagesBySlug, ["commercial", "commercial-grounds-maintenance", "commercial-landscaping", "commercial-hardscape", "commercial-drainage", "commercial-pressure-washing", "hoa-services"])
+              ? faqBlocksFromPages(allPagesBySlug, ["commercial", "commercial-grounds-maintenance", "commercial-landscaping", "commercial-hardscape", "commercial-pressure-washing", "hoa-services"])
               : [],
         },
         {
@@ -1063,14 +1123,12 @@ function buildMenus(): InsertCmsMenu[] {
     "residential-hardscape",
     "residential-pressure-washing",
     "mulching-and-planting",
-    "drainage-solutions",
   ].map((slug) => menuItem(slug, serviceLabel(slug, /^Residential\s+/i), `/${slug}`));
 
   const commercialServices = [
     "commercial-grounds-maintenance",
     "commercial-landscaping",
     "commercial-hardscape",
-    "commercial-drainage",
     "commercial-pressure-washing",
     "hoa-services",
   ].map((slug) => menuItem(slug, serviceLabel(slug, /^Commercial\s+/i), `/${slug}`));
@@ -1166,7 +1224,7 @@ function contactCmsPageRecord(): InsertCmsPage {
           props: {
             eyebrow: "Contact",
             heading: "Contact Carolina Exterior Landscapes",
-            subheading: "Tell us about your lawn care, landscaping, hardscape, mulching, or drainage needs. We respond to inquiries within one business day.",
+            subheading: "Tell us about your lawn care, landscaping, hardscape, or mulching needs. We respond to inquiries within one business day.",
             ctaText: "Call (704) 975-5867",
             ctaLink: "tel:+17049755867",
             imageUrl: imageUrl("hero-home.png"),
@@ -1207,7 +1265,7 @@ function contactCmsPageRecord(): InsertCmsPage {
       ],
     },
     seoTitle: "Contact Carolina Exterior Landscapes | Waxhaw NC",
-    seoDescription: "Contact Carolina Exterior Landscapes for lawn care, landscaping, hardscape, mulching, planting, and drainage services in Waxhaw, Union County, and the greater Charlotte area.",
+    seoDescription: "Contact Carolina Exterior Landscapes for lawn care, landscaping, hardscape, mulching, and planting services in Waxhaw, Union County, and the greater Charlotte area.",
     seoKeywords: "contact Carolina Exterior Landscapes, landscaping quote Waxhaw NC, lawn care estimate Waxhaw NC",
     ogImageUrl: imageUrl("hero-home.png"),
     canonicalUrl: canonicalFor("/contact"),
@@ -1262,7 +1320,6 @@ function notFoundCmsPageRecord(): InsertCmsPage {
               { title: "Residential Landscaping", path: "/residential-landscaping" },
               { title: "Lawn Maintenance", path: "/residential-lawn-maintenance" },
               { title: "Hardscape", path: "/residential-hardscape" },
-              { title: "Drainage Solutions", path: "/drainage-solutions" },
               { title: "Service Areas", path: "/service-areas" },
               { title: "Get a Quote", path: "/get-a-quote" },
             ],
@@ -1315,7 +1372,7 @@ export async function ensureLandscapeCmsContent() {
     ) {
       await storage.cmsPages.updatePage(existing.id, {
         ...page,
-        publishedAt: existing.publishedAt ?? page.publishedAt,
+        publishedAt: page.status === "draft" ? null : existing.publishedAt ?? page.publishedAt,
         content: cloneSeedContent(page.content),
       });
       continue;
@@ -1331,7 +1388,11 @@ export async function ensureLandscapeCmsContent() {
   const existingContactPage = await storage.cmsPages.getPageBySlug(CONTACT_PAGE_SLUG);
   if (!existingContactPage) {
     await storage.cmsPages.createPage(contactCmsPageRecord());
-  } else if (!hasBuilderBlocks(existingContactPage.content) || contactPageUsesQuoteForm(existingContactPage.content)) {
+  } else if (
+    !hasBuilderBlocks(existingContactPage.content)
+    || contactPageUsesQuoteForm(existingContactPage.content)
+    || mentionsHiddenService(JSON.stringify(existingContactPage.content))
+  ) {
     const contactSeed = contactCmsPageRecord();
     await storage.cmsPages.updatePage(existingContactPage.id, {
       ...contactSeed,
@@ -1344,7 +1405,7 @@ export async function ensureLandscapeCmsContent() {
   const existingNotFoundPage = await storage.cmsPages.getPageBySlug(NOT_FOUND_PAGE_SLUG);
   if (!existingNotFoundPage) {
     await storage.cmsPages.createPage(notFoundCmsPageRecord());
-  } else if (!hasBuilderBlocks(existingNotFoundPage.content)) {
+  } else if (!hasBuilderBlocks(existingNotFoundPage.content) || mentionsHiddenService(JSON.stringify(existingNotFoundPage.content))) {
     const notFoundSeed = notFoundCmsPageRecord();
     await storage.cmsPages.updatePage(existingNotFoundPage.id, {
       ...notFoundSeed,
@@ -1361,10 +1422,14 @@ export async function ensureLandscapeCmsContent() {
       continue;
     }
     const serializedItems = JSON.stringify(existing.items ?? []);
+    const cleanedItems = removeDraftServiceMenuItems(existing.items);
+    const removedDraftServiceLinks = JSON.stringify(cleanedItems) !== serializedItems;
     const needsMainNavigationMigration = menu.location === "main_navigation"
       && (serializedItems.includes("Commercial Hub") || !serializedItems.includes('"Contact"'));
     if (containsRetiredPublicLink(existing) || needsMainNavigationMigration) {
       await storage.cmsMenus.update(existing.id, menu);
+    } else if (removedDraftServiceLinks) {
+      await storage.cmsMenus.update(existing.id, { items: cleanedItems });
     }
   }
 }
