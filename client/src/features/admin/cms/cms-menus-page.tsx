@@ -1,4 +1,22 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
@@ -55,6 +73,14 @@ function generateId() {
   return Math.random().toString(36).substring(2, 10);
 }
 
+function useAdminSortableSensors() {
+  return useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+}
+
 const STANDARD_LOCATION_OPTIONS = STANDARD_MENU_LOCATIONS.map((location) => ({
   value: location,
   label: MENU_LOCATION_LABELS[location],
@@ -86,6 +112,10 @@ function MenuItemEditor({
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.children && item.children.length > 0;
   const canNest = depth < 3;
+  const childSensors = useAdminSortableSensors();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
 
   const updateChild = useCallback(
     (childId: string, updates: Partial<MenuItem>) => {
@@ -140,9 +170,27 @@ function MenuItemEditor({
   }, [item, onUpdate]);
 
   return (
-    <div className="border rounded-lg bg-card" data-testid={`menu-item-${item.id}`}>
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(
+        "border rounded-lg bg-card",
+        isDragging && "relative z-20 opacity-70 shadow-lg ring-2 ring-primary/30",
+      )}
+      data-testid={`menu-item-${item.id}`}
+    >
       <div className="flex items-center gap-2 p-3">
-        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 cursor-grab" />
+        <button
+          type="button"
+          className="flex h-9 w-9 shrink-0 touch-none items-center justify-center rounded-md text-muted-foreground cursor-grab hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+          aria-label={`Drag ${item.label || "menu item"} to reorder`}
+          title="Drag to reorder"
+          data-testid={`drag-menu-item-${item.id}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
 
         {hasChildren ? (
           <button
@@ -235,31 +283,48 @@ function MenuItemEditor({
       </div>
 
       {hasChildren && expanded && (
-        <div className="pl-6 pr-3 pb-3 space-y-2">
-          {item.children.map((child, cIdx) => (
-            <MenuItemEditor
-              key={child.id}
-              item={child}
-              depth={depth + 1}
-              index={cIdx}
-              totalSiblings={item.children.length}
-              onUpdate={updateChild}
-              onDelete={deleteChild}
-              onMoveUp={moveChildUp}
-              onMoveDown={moveChildDown}
-              onIndent={(childId) => {
-                if (cIdx === 0) return;
-                const arr = [...item.children];
-                const prevSibling = arr[cIdx - 1];
-                const child = arr[cIdx];
-                arr.splice(cIdx, 1);
-                prevSibling.children = [...prevSibling.children, child];
-                onUpdate(item.id, { children: arr });
-              }}
-              onOutdent={onOutdent}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={childSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={({ active, over }: DragEndEvent) => {
+            if (!over || active.id === over.id) return;
+            const oldIndex = item.children.findIndex((child) => child.id === active.id);
+            const newIndex = item.children.findIndex((child) => child.id === over.id);
+            if (oldIndex < 0 || newIndex < 0) return;
+            onUpdate(item.id, { children: arrayMove(item.children, oldIndex, newIndex) });
+          }}
+        >
+          <SortableContext
+            items={item.children.map((child) => child.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="pl-6 pr-3 pb-3 space-y-2">
+              {item.children.map((child, cIdx) => (
+                <MenuItemEditor
+                  key={child.id}
+                  item={child}
+                  depth={depth + 1}
+                  index={cIdx}
+                  totalSiblings={item.children.length}
+                  onUpdate={updateChild}
+                  onDelete={deleteChild}
+                  onMoveUp={moveChildUp}
+                  onMoveDown={moveChildDown}
+                  onIndent={(childId) => {
+                    if (cIdx === 0) return;
+                    const arr = [...item.children];
+                    const prevSibling = arr[cIdx - 1];
+                    const child = arr[cIdx];
+                    arr.splice(cIdx, 1);
+                    prevSibling.children = [...prevSibling.children, child];
+                    onUpdate(item.id, { children: arr });
+                  }}
+                  onOutdent={onOutdent}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );
@@ -281,6 +346,7 @@ function MenuEditor({
     (menu?.location as MenuLocation) || (draft?.location as MenuLocation) || "unassigned",
   );
   const [items, setItems] = useState<MenuItem[]>((menu?.items as MenuItem[]) || []);
+  const sensors = useAdminSortableSensors();
   const editorLock = useEditorLock({
     resourceType: "cms_menu",
     resourceId: isNew ? null : (menu?.id ?? null),
@@ -339,6 +405,16 @@ function MenuEditor({
       const arr = [...prev];
       [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
       return arr;
+    });
+  }, []);
+
+  const reorderItems = useCallback(({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    setItems((current) => {
+      const oldIndex = current.findIndex((item) => item.id === active.id);
+      const newIndex = current.findIndex((item) => item.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return current;
+      return arrayMove(current, oldIndex, newIndex);
     });
   }, []);
 
@@ -512,23 +588,30 @@ function MenuEditor({
             <p className="text-sm">No menu items yet. Click "Add Item" to get started.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {items.map((item, idx) => (
-              <MenuItemEditor
-                key={item.id}
-                item={item}
-                depth={1}
-                index={idx}
-                totalSiblings={items.length}
-                onUpdate={updateItem}
-                onDelete={deleteItem}
-                onMoveUp={moveItemUp}
-                onMoveDown={moveItemDown}
-                onIndent={indentItem}
-                onOutdent={outdentItem}
-              />
-            ))}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderItems}>
+            <SortableContext
+              items={items.map((item) => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {items.map((item, idx) => (
+                  <MenuItemEditor
+                    key={item.id}
+                    item={item}
+                    depth={1}
+                    index={idx}
+                    totalSiblings={items.length}
+                    onUpdate={updateItem}
+                    onDelete={deleteItem}
+                    onMoveUp={moveItemUp}
+                    onMoveDown={moveItemDown}
+                    onIndent={indentItem}
+                    onOutdent={outdentItem}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>

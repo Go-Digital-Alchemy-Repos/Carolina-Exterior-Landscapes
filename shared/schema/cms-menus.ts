@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export const STANDARD_MENU_LOCATIONS = [
   "main_navigation",
+  "mobile_navigation",
   "footer_platform",
   "footer_secondary",
   "footer_resources",
@@ -26,6 +27,7 @@ export type MenuLocation = (typeof MENU_LOCATIONS)[number];
 
 export const MENU_LOCATION_LABELS: Record<MenuLocation, string> = {
   main_navigation: "Main Navigation",
+  mobile_navigation: "Mobile Navigation",
   footer_platform: "Footer Platform Column",
   footer_secondary: "Footer Secondary Column",
   footer_resources: "Footer Resources Column",
@@ -58,11 +60,13 @@ export const menuItemSchema: z.ZodType<MenuItem> = z.lazy(() =>
     url: z.string().min(1),
     openInNewTab: z.preprocess((v) => v ?? false, z.boolean()),
     children: z.preprocess((v) => v ?? [], z.array(menuItemSchema)),
-  })
+  }),
 ) as z.ZodType<MenuItem>;
 
 export const cmsMenus = pgTable("cms_menus", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   location: text("location").notNull().default("unassigned"),
   items: jsonb("items").default([]),

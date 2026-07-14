@@ -1,5 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ElementType } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
@@ -249,6 +267,89 @@ function WidgetSettings({
   );
 }
 
+function SortableWidgetCard({
+  widget,
+  index,
+  total,
+  onChange,
+  onMove,
+  onDelete,
+}: {
+  widget: SidebarWidget;
+  index: number;
+  total: number;
+  onChange: (updates: Partial<SidebarWidget>) => void;
+  onMove: (direction: -1 | 1) => void;
+  onDelete: () => void;
+}) {
+  const Icon = WIDGET_ICONS[widget.type];
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: widget.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(
+        "rounded-lg border bg-card p-4",
+        isDragging && "relative z-20 opacity-70 shadow-lg ring-2 ring-primary/30",
+      )}
+      data-testid={`sidebar-widget-${widget.id}`}
+    >
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          className="flex h-9 w-9 shrink-0 touch-none items-center justify-center rounded-md text-muted-foreground cursor-grab hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+          aria-label={`Drag ${widget.title || WIDGET_LABELS[widget.type]} widget to reorder`}
+          title="Drag to reorder"
+          data-testid={`drag-sidebar-widget-${widget.id}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <Icon className="mt-2 h-4 w-4 shrink-0 text-primary" />
+        <div className="min-w-0 flex-1">
+          <WidgetSettings widget={widget} onChange={onChange} />
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            aria-label={`Move ${widget.title || "widget"} up`}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+            aria-label={`Move ${widget.title || "widget"} down`}
+          >
+            <ArrowDown className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            onClick={onDelete}
+            aria-label={`Delete ${widget.title || "widget"}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SidebarEditor({ sidebar, onClose }: { sidebar: CmsSidebar | null; onClose: () => void }) {
   const { toast } = useToast();
   const isNew = !sidebar;
@@ -257,6 +358,11 @@ function SidebarEditor({ sidebar, onClose }: { sidebar: CmsSidebar | null; onClo
   const [isDefault, setIsDefault] = useState(Boolean(sidebar?.isDefault));
   const [widgets, setWidgets] = useState<SidebarWidget[]>(
     Array.isArray(sidebar?.widgets) ? (sidebar!.widgets as SidebarWidget[]) : [],
+  );
+  const sortableSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const editorLock = useEditorLock({
     resourceType: "cms_sidebar",
@@ -307,6 +413,16 @@ function SidebarEditor({ sidebar, onClose }: { sidebar: CmsSidebar | null; onClo
       const next = [...current];
       [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
       return next;
+    });
+  };
+
+  const reorderWidgets = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    setWidgets((current) => {
+      const oldIndex = current.findIndex((widget) => widget.id === active.id);
+      const newIndex = current.findIndex((widget) => widget.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return current;
+      return arrayMove(current, oldIndex, newIndex);
     });
   };
 
@@ -437,57 +553,32 @@ function SidebarEditor({ sidebar, onClose }: { sidebar: CmsSidebar | null; onClo
               <p className="text-sm">Use the Add widget dropdown to start building this sidebar.</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {widgets.map((widget, index) => {
-                const Icon = WIDGET_ICONS[widget.type];
-                return (
-                  <div
-                    key={widget.id}
-                    className="rounded-lg border bg-card p-4"
-                    data-testid={`sidebar-widget-${widget.id}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <GripVertical className="mt-2 h-4 w-4 text-muted-foreground" />
-                      <Icon className="mt-2 h-4 w-4 text-primary" />
-                      <div className="flex-1">
-                        <WidgetSettings
-                          widget={widget}
-                          onChange={(updates) => updateWidget(widget.id, updates)}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => moveWidget(widget.id, -1)}
-                          disabled={index === 0}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => moveWidget(widget.id, 1)}
-                          disabled={index === widgets.length - 1}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() =>
-                            setWidgets((current) => current.filter((item) => item.id !== widget.id))
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <DndContext
+              sensors={sortableSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={reorderWidgets}
+            >
+              <SortableContext
+                items={widgets.map((widget) => widget.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {widgets.map((widget, index) => (
+                    <SortableWidgetCard
+                      key={widget.id}
+                      widget={widget}
+                      index={index}
+                      total={widgets.length}
+                      onChange={(updates) => updateWidget(widget.id, updates)}
+                      onMove={(direction) => moveWidget(widget.id, direction)}
+                      onDelete={() =>
+                        setWidgets((current) => current.filter((item) => item.id !== widget.id))
+                      }
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>

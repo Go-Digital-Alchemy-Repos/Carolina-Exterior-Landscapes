@@ -9,13 +9,29 @@ import type { CmsMenu, MenuItem } from "@shared/schema";
 type MenuMap = Partial<Record<string, CmsMenu>>;
 
 function menuItems(menu: CmsMenu | undefined): MenuItem[] {
-  return Array.isArray(menu?.items) ? (menu.items as MenuItem[]).map((item) => ({ ...item, children: item.children ?? [] })) : [];
+  return Array.isArray(menu?.items)
+    ? (menu.items as MenuItem[]).map((item) => ({ ...item, children: item.children ?? [] }))
+    : [];
 }
 
-function NavLink({ item, onClick, className }: { item: MenuItem; onClick?: () => void; className?: string }) {
+function NavLink({
+  item,
+  onClick,
+  className,
+}: {
+  item: MenuItem;
+  onClick?: () => void;
+  className?: string;
+}) {
   if (item.url.startsWith("http") || item.openInNewTab) {
     return (
-      <a href={item.url} target={item.openInNewTab ? "_blank" : undefined} rel="noreferrer" onClick={onClick} className={className}>
+      <a
+        href={item.url}
+        target={item.openInNewTab ? "_blank" : undefined}
+        rel="noreferrer"
+        onClick={onClick}
+        className={className}
+      >
         {item.label}
       </a>
     );
@@ -37,24 +53,39 @@ export function Navbar() {
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
-  const items = menuItems(data?.main_navigation);
+  const desktopItems = menuItems(data?.main_navigation);
+  const configuredMobileItems = menuItems(data?.mobile_navigation);
+  const mobileItems = configuredMobileItems.length > 0 ? configuredMobileItems : desktopItems;
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur" data-testid="navbar">
+    <header
+      className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur"
+      data-testid="navbar"
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="inline-flex items-center gap-3" data-testid="link-brand">
           {frontendLogoUrl ? (
-            <img src={frontendLogoUrl} alt={label} width={471} height={126} className="h-[2.86rem] w-auto" />
+            <img
+              src={frontendLogoUrl}
+              alt={label}
+              width={471}
+              height={126}
+              className="h-[2.86rem] w-auto"
+            />
           ) : (
-            <span className="text-base font-semibold tracking-normal text-foreground sm:text-lg">{label}</span>
+            <span className="text-base font-semibold tracking-normal text-foreground sm:text-lg">
+              {label}
+            </span>
           )}
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
-          {items.map((item) => (
+          {desktopItems.map((item) => (
             <div key={item.id} className="group relative">
               <div className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">
                 <NavLink item={item} />
-                {item.children.length > 0 ? <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                {item.children.length > 0 ? (
+                  <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : null}
               </div>
               {item.children.length > 0 ? (
                 <div className="invisible absolute left-0 top-full min-w-64 translate-y-2 rounded-md border bg-background p-2 opacity-0 shadow-lg transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
@@ -91,15 +122,29 @@ export function Navbar() {
       </div>
       {mobileOpen ? (
         <div className="max-h-[calc(100dvh-4.5rem)] overflow-y-auto overflow-x-hidden overscroll-contain border-t bg-background px-4 py-4 lg:hidden">
-          <nav className="mx-auto max-w-7xl space-y-1 overflow-x-hidden" aria-label="Mobile navigation">
-            {items.map((item) => (
+          <nav
+            className="mx-auto max-w-7xl space-y-1 overflow-x-hidden"
+            aria-label="Mobile navigation"
+          >
+            {mobileItems.map((item) => (
               <div key={item.id} className="min-w-0 space-y-1">
                 <div className="min-w-0 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
-                  <NavLink item={item} onClick={() => setMobileOpen(false)} className="block min-w-0 max-w-full break-words" />
+                  <NavLink
+                    item={item}
+                    onClick={() => setMobileOpen(false)}
+                    className="block min-w-0 max-w-full break-words"
+                  />
                 </div>
                 {item.children.map((child) => (
-                  <div key={child.id} className="min-w-0 rounded-md px-6 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-                    <NavLink item={child} onClick={() => setMobileOpen(false)} className="block min-w-0 max-w-full break-words" />
+                  <div
+                    key={child.id}
+                    className="min-w-0 rounded-md px-6 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <NavLink
+                      item={child}
+                      onClick={() => setMobileOpen(false)}
+                      className="block min-w-0 max-w-full break-words"
+                    />
                   </div>
                 ))}
               </div>
