@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ChevronDown, Menu, Phone, X } from "lucide-react";
+import { ChevronDown, Mail, Menu, Phone, X } from "lucide-react";
 import { useBranding } from "@/components/shared/branding-provider";
 import { Button } from "@/components/ui/button";
 import type { CmsMenu, MenuItem } from "@shared/schema";
@@ -44,8 +44,16 @@ function NavLink({
 }
 
 export function Navbar() {
-  const { companyName, frontendLogoUrl } = useBranding();
+  const {
+    companyEmail,
+    companyName,
+    companyPhoneNumbers,
+    frontendLogoUrl,
+  } = useBranding();
   const label = companyName || "Website";
+  const email = companyEmail || "info@carolinaexteriorlandscapes.com";
+  const phoneDisplay = companyPhoneNumbers || "(704) 975-5867";
+  const phoneHref = `tel:${phoneDisplay.replace(/[^\d+]/g, "")}`;
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data } = useQuery<MenuMap>({
     queryKey: ["/api/cms/menus"],
@@ -62,6 +70,27 @@ export function Navbar() {
       className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur"
       data-testid="navbar"
     >
+      <div
+        className="hidden border-b border-primary-foreground/10 bg-primary text-primary-foreground lg:block"
+        data-testid="desktop-utility-bar"
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-end gap-6 px-6 py-2 text-sm font-medium">
+          <a
+            href={`mailto:${email}`}
+            className="flex items-center gap-2 text-primary-foreground/90 transition-colors hover:text-primary-foreground"
+          >
+            <Mail className="h-4 w-4 text-primary-foreground/70" aria-hidden="true" />
+            {email}
+          </a>
+          <a
+            href={phoneHref}
+            className="flex items-center gap-2 text-primary-foreground/90 transition-colors hover:text-primary-foreground"
+          >
+            <Phone className="h-4 w-4 text-primary-foreground/70" aria-hidden="true" />
+            {phoneDisplay}
+          </a>
+        </div>
+      </div>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="inline-flex items-center gap-3" data-testid="link-brand">
           {frontendLogoUrl ? (
@@ -99,13 +128,7 @@ export function Navbar() {
             </div>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 lg:flex">
-          <Button variant="ghost" size="sm" asChild>
-            <a href="tel:+17049755867">
-              <Phone className="mr-2 h-4 w-4" />
-              (704) 975-5867
-            </a>
-          </Button>
+        <div className="hidden items-center gap-3 lg:flex" data-testid="desktop-header-actions">
           <Button size="sm" asChild>
             <Link href="/get-a-quote/">Request an Estimate</Link>
           </Button>
@@ -151,9 +174,9 @@ export function Navbar() {
             ))}
             <div className="grid min-w-0 gap-2 pt-3">
               <Button variant="outline" className="w-full min-w-0" asChild>
-                <a href="tel:+17049755867" onClick={() => setMobileOpen(false)}>
+                <a href={phoneHref} onClick={() => setMobileOpen(false)}>
                   <Phone className="mr-2 h-4 w-4" />
-                  (704) 975-5867
+                  {phoneDisplay}
                 </a>
               </Button>
               <Button className="w-full min-w-0" asChild>

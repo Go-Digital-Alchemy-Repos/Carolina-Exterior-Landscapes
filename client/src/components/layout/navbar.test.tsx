@@ -30,6 +30,29 @@ describe("Navbar", () => {
     document.body.innerHTML = "";
   });
 
+  it("places the desktop phone link after email in the utility bar", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(["/api/cms/menus"], {});
+
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(
+        <QueryClientProvider client={client}>
+          <Navbar />
+        </QueryClientProvider>,
+      );
+    });
+
+    const utilityLinks = Array.from(
+      container.querySelectorAll('[data-testid="desktop-utility-bar"] a'),
+    );
+    expect(utilityLinks[0]?.getAttribute("href")).toMatch(/^mailto:/);
+    expect(utilityLinks[1]?.getAttribute("href")).toMatch(/^tel:/);
+    expect(
+      container.querySelector('[data-testid="desktop-header-actions"] a[href^="tel:"]'),
+    ).toBeNull();
+  });
+
   it("constrains the mobile menu to vertical scrolling without horizontal drift", async () => {
     const client = new QueryClient({
       defaultOptions: {
