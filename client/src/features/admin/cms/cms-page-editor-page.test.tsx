@@ -3,7 +3,9 @@
 import React, { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
-import CmsPageEditorPage from "@/features/admin/cms/cms-page-editor-page";
+import CmsPageEditorPage, {
+  publicPathForPage,
+} from "@/features/admin/cms/cms-page-editor-page";
 
 const navigateMock = vi.fn();
 const lockGuardMock = vi.fn();
@@ -273,6 +275,34 @@ describe("CmsPageEditorPage", () => {
     root = null;
     container.remove();
     document.body.innerHTML = "";
+  });
+
+  it("builds the correct frontend path for each page type", () => {
+    expect(publicPathForPage("home", "home")).toBe("/");
+    expect(publicPathForPage("landing", "/about/")).toBe("/about");
+    expect(publicPathForPage("location", "waxhaw-nc")).toBe("/service-areas/waxhaw-nc");
+    expect(publicPathForPage("blog-post", "summer-mulching-guide")).toBe(
+      "/blog/summer-mulching-guide",
+    );
+  });
+
+  it("shows the return-to-page action immediately before Save Page", async () => {
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(React.createElement(CmsPageEditorPage));
+    });
+
+    const returnButton = container.querySelector(
+      '[data-testid="button-return-to-page"]',
+    ) as HTMLButtonElement | null;
+    const saveButton = container.querySelector(
+      '[data-testid="button-save"]',
+    ) as HTMLButtonElement | null;
+
+    expect(returnButton).not.toBeNull();
+    expect(returnButton?.textContent).toContain("Return to Page");
+    expect(returnButton?.nextElementSibling).toBe(saveButton);
   });
 
   it("wires lock conflicts back to the CMS pages list and disables saving in read-only mode", async () => {

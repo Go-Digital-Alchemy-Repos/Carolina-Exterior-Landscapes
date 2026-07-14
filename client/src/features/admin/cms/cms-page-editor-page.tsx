@@ -263,6 +263,14 @@ function mergeBuilderContentForSave(
   };
 }
 
+export function publicPathForPage(pageType: EditorForm["pageType"], slug: string) {
+  const normalizedSlug = slug.replace(/^\/+|\/+$/g, "");
+  if (pageType === "home" || normalizedSlug === "home") return "/";
+  if (pageType === "location") return `/service-areas/${normalizedSlug}`;
+  if (pageType === "blog-post") return `/blog/${normalizedSlug}`;
+  return `/${normalizedSlug}`;
+}
+
 export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -929,6 +937,23 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
                 </Popover>
               </>
             )}
+            {!isNew ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  unsavedChangesGuard.confirmDiscardChanges(() => {
+                    window.location.assign(
+                      publicPathForPage(form.getValues("pageType"), form.getValues("slug")),
+                    );
+                  })
+                }
+                data-testid="button-return-to-page"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Return to Page
+              </Button>
+            ) : null}
             <Button
               onClick={onSave}
               disabled={isPending || editorLock.isReadOnly}
@@ -1798,6 +1823,17 @@ export default function CmsPageEditorPage({ mode = "page" }: { mode?: EditorMode
               <DropdownMenuLabel>{contentLabel} actions</DropdownMenuLabel>
               {!isNew ? (
                 <>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      unsavedChangesGuard.confirmDiscardChanges(() => {
+                        window.location.assign(
+                          publicPathForPage(form.getValues("pageType"), form.getValues("slug")),
+                        );
+                      })
+                    }
+                  >
+                    <ArrowLeft /> Return to Page
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => copyDraftPreview()}
                     disabled={previewLinkMutation.isPending}
