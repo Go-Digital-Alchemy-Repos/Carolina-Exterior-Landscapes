@@ -8,7 +8,6 @@ import docsRoutes from "./docs.routes";
 import uploadRoutes from "./upload.routes";
 import notificationsRoutes from "./notifications.routes";
 import cmsPublicRoutes from "./cms-public.routes";
-import r2PublicRoutes from "./r2-public.routes";
 import setupRoutes from "./setup.routes";
 import formsRoutes from "./forms.routes";
 import crmRoutes from "./crm.routes";
@@ -21,7 +20,6 @@ import { getGoogleReviews } from "../services/google-reviews.service";
 import { buildPublicSitemapXml } from "../services/public-sitemap.service";
 
 export function registerApiRoutes(app: Express) {
-  app.use("/r2", r2PublicRoutes);
   app.use("/api/auth", authRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/admin", settingsRoutes);

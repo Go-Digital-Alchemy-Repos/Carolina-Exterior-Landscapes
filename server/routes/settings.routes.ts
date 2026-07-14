@@ -14,7 +14,6 @@ import {
   renderTemplate,
   resetEmailBrandingCache,
 } from "../services/email.service";
-import * as r2Service from "../services/r2.service";
 import { ensureSystemEmailTemplates } from "../services/system-email-templates.service";
 import { BRANDING_OPTIONS, isImageMime, optimizeImage } from "../services/image-optimizer";
 import { getGoogleReviews, resetGoogleReviewsCache } from "../services/google-reviews.service";
@@ -83,11 +82,29 @@ router.get(
   })
 );
 
+const FORM_RECIPIENT_SETTING_KEYS = new Set([
+  "contact_form_recipient_email",
+  "quote_form_recipient_email",
+]);
+
 const upsertSettingSchema = z.object({
   key: z.string().min(1),
   value: z.string(),
   category: z.string().min(1),
   isSecret: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+  if (
+    data.category === "email_notifications" &&
+    FORM_RECIPIENT_SETTING_KEYS.has(data.key) &&
+    data.value.trim() &&
+    !z.string().email().safeParse(data.value.trim()).success
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["value"],
+      message: "Enter a valid recipient email address",
+    });
+  }
 });
 
 const brandingUploadSchema = z.object({
@@ -104,10 +121,6 @@ router.put(
       data.category,
       data.isSecret
     );
-
-    if (data.category === "cloudflare_r2") {
-      r2Service.resetClient();
-    }
 
     if (data.category === "mailgun") {
       const { resetMailgunConfig } = await import("../services/email.service");
@@ -155,27 +168,14 @@ router.post(
         }
       : await optimizeImage(req.file.buffer, req.file.mimetype, BRANDING_OPTIONS);
     const filename = `${Date.now()}-${baseName}${optimized.extension}`;
-    const r2Key = `branding/${filename}`;
-
-    const r2Configured = await r2Service.isConfigured();
-    let publicUrl: string | null = null;
-
-    if (r2Configured) {
-      publicUrl = await r2Service.uploadFile(r2Key, optimized.buffer, optimized.mimeType);
-    }
-
-    if (!publicUrl) {
-      ensureBrandingDir();
-      const localPath = path.join(LOCAL_BRANDING_DIR, filename);
-      fs.writeFileSync(localPath, optimized.buffer);
-      publicUrl = `/uploads/branding/${filename}`;
-    }
+    ensureBrandingDir();
+    const localPath = path.join(LOCAL_BRANDING_DIR, filename);
+    fs.writeFileSync(localPath, optimized.buffer);
+    const publicUrl = `/uploads/branding/${filename}`;
 
     await storage.settings.upsertSetting(parsed.data.settingKey, publicUrl, "branding", false);
     storage.settings.invalidateCategory("branding");
     resetEmailBrandingCache();
-    r2Service.resetClient();
-
     res.status(201).json({
       key: parsed.data.settingKey,
       url: publicUrl,
@@ -192,7 +192,7 @@ router.delete(
 );
 
 const testConnectionSchema = z.object({
-  integration: z.enum(["mailgun", "cloudflare_r2", "google_reviews"]),
+  integration: z.enum(["mailgun", "google_reviews"]),
 });
 
 router.post(
@@ -202,12 +202,6 @@ router.post(
 
     if (integration === "mailgun") {
       const result = await testMailgunConnection();
-      res.json(result);
-      return;
-    }
-
-    if (integration === "cloudflare_r2") {
-      const result = await r2Service.testConnection();
       res.json(result);
       return;
     }

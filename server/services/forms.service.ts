@@ -6,12 +6,28 @@ import { AppError } from "../middleware/error-handler";
 import { createCrmLeadFromFormSubmission } from "./crm.service";
 
 const CONTACT_FORM_OWNER_EMAIL = "van@carolinaexteriorlandscapes.com";
+const QUOTE_FORM_SLUGS = new Set(["residential-quote", "commercial-quote"]);
 const CRM_PIPELINE_FORM_SLUGS = new Set(["contact-form", "residential-quote", "commercial-quote"]);
 
+function validRecipientEmail(value: unknown): string {
+  const email = typeof value === "string" ? value.trim() : "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+
+async function configuredFormRecipient(formSlug: string): Promise<string | null> {
+  const settings = await storage.settings.getDecryptedCategory("email_notifications");
+  const settingValue = formSlug === "contact-form"
+    ? settings.contact_form_recipient_email
+    : QUOTE_FORM_SLUGS.has(formSlug)
+      ? settings.quote_form_recipient_email
+      : "";
+  return validRecipientEmail(settingValue) || null;
+}
+
 function normalizeFormSettings(form: CmsForm) {
-  const settings = (typeof form.settings === "object" && form.settings
-    ? form.settings
-    : {}) as Record<string, unknown>;
+  const settings = (
+    typeof form.settings === "object" && form.settings ? form.settings : {}
+  ) as Record<string, unknown>;
   return {
     submitButtonText:
       typeof settings.submitButtonText === "string" && settings.submitButtonText.trim()
@@ -50,7 +66,12 @@ function objectValue(value: unknown) {
 function firstStringValue(data: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const raw = data[key];
-    const value = Array.isArray(raw) ? raw.map((item) => stringValue(item)).filter(Boolean).join(", ") : stringValue(raw);
+    const value = Array.isArray(raw)
+      ? raw
+          .map((item) => stringValue(item))
+          .filter(Boolean)
+          .join(", ")
+      : stringValue(raw);
     if (value) return value;
   }
   return "";
@@ -71,7 +92,8 @@ function validateField(field: CmsFormField, raw: unknown) {
   }
 
   if (field.type === "hidden") {
-    const value = stringValue(raw) || (typeof config.defaultValue === "string" ? config.defaultValue : "");
+    const value =
+      stringValue(raw) || (typeof config.defaultValue === "string" ? config.defaultValue : "");
     if (field.required && !value) return { error: `${field.label} is required` };
     return { value };
   }
@@ -82,7 +104,11 @@ function validateField(field: CmsFormField, raw: unknown) {
     return { value: checked };
   }
 
-  if (field.type === "checkbox" || field.type === "multiselect" || (field.type === "image-choice" && selectionMode === "multiple")) {
+  if (
+    field.type === "checkbox" ||
+    field.type === "multiselect" ||
+    (field.type === "image-choice" && selectionMode === "multiple")
+  ) {
     const values = stringArrayValue(raw);
     if (field.required && values.length === 0) return { error: `${field.label} is required` };
     if (Array.isArray(field.options) && field.options.length > 0) {
@@ -113,7 +139,9 @@ function validateField(field: CmsFormField, raw: unknown) {
       if (field.required && !firstName && !lastName) return { error: `${field.label} is required` };
       return { value: { firstName, lastName } };
     }
-    const fullName = stringValue(typeof raw === "object" && raw !== null ? objectValue(raw).fullName : raw);
+    const fullName = stringValue(
+      typeof raw === "object" && raw !== null ? objectValue(raw).fullName : raw,
+    );
     if (field.required && !fullName) return { error: `${field.label} is required` };
     return { value: { fullName } };
   }
@@ -139,7 +167,9 @@ function validateField(field: CmsFormField, raw: unknown) {
       ? raw
           .map((row) => {
             const record = objectValue(row);
-            return Object.fromEntries(Object.entries(record).map(([key, value]) => [key, stringValue(value)]));
+            return Object.fromEntries(
+              Object.entries(record).map(([key, value]) => [key, stringValue(value)]),
+            );
           })
           .filter((row) => Object.values(row).some(Boolean))
       : [];
@@ -192,7 +222,11 @@ function validateSubmissionData(form: CmsForm, data: unknown) {
   return validated;
 }
 
-async function handleContactFormEffects(form: CmsForm, data: Record<string, unknown>, baseUrl?: string) {
+async function handleContactFormEffects(
+  form: CmsForm,
+  data: Record<string, unknown>,
+  baseUrl?: string,
+) {
   const settings = normalizeFormSettings(form);
   if (!settings.storeAsContactMessage) return;
 
@@ -202,33 +236,47 @@ async function handleContactFormEffects(form: CmsForm, data: Record<string, unkn
   const service = firstStringValue(data, ["service", "servicesInterested", "servicesNeeded"]);
   const city = stringValue(data.city);
   const legacySubject = stringValue(data.subject);
-  const subject = legacySubject || [service, city].filter(Boolean).join(" - ") || "Contact form submission";
+  const subject =
+    legacySubject || [service, city].filter(Boolean).join(" - ") || "Contact form submission";
   const message = legacySubject ? stringValue(data.message) : buildSubmissionSummary(form, data);
   if (!name || !email || !subject || !message) return;
 
   await storage.contacts.createMessage({ name, email, subject, message });
   if (!settings.notifyAdmins) return;
 
-  const assignedEmails = (await storage.users.getFormNotificationUsers(form.id))
-    .map((user) => user.email)
-    .filter(Boolean);
-  const recipientEmails = assignedEmails.length > 0
-    ? assignedEmails
-    : form.slug === "contact-form"
-      ? [CONTACT_FORM_OWNER_EMAIL]
-      : [];
+  const configuredRecipient = await configuredFormRecipient(form.slug);
+  const assignedEmails = configuredRecipient
+    ? []
+    : (await storage.users.getFormNotificationUsers(form.id))
+        .map((user) => user.email)
+        .filter(Boolean);
+  const recipientEmails =
+    configuredRecipient
+      ? [configuredRecipient]
+      : assignedEmails.length > 0
+      ? assignedEmails
+      : form.slug === "contact-form"
+        ? [CONTACT_FORM_OWNER_EMAIL]
+        : [];
   const adminEmails =
     recipientEmails.length > 0
       ? recipientEmails
       : (await storage.users.getUsersByRole("admin")).map((admin) => admin.email).filter(Boolean);
   if (adminEmails.length === 0) return;
 
-  sendContactFormEmail(adminEmails, name, email, message, `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`, {
-    formName: form.name,
-    phone,
-    subject,
-    sourcePage: stringValue(data.sourcePage) || form.slug,
-  }).catch((err) => {
+  sendContactFormEmail(
+    adminEmails,
+    name,
+    email,
+    message,
+    `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`,
+    {
+      formName: form.name,
+      phone,
+      subject,
+      sourcePage: stringValue(data.sourcePage) || form.slug,
+    },
+  ).catch((err) => {
     logger.email.warn("Failed to send contact form notification", {
       formSlug: form.slug,
       error: err instanceof Error ? err.message : String(err),
@@ -238,9 +286,17 @@ async function handleContactFormEffects(form: CmsForm, data: Record<string, unkn
 
 function formatSubmissionValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "-";
-  if (Array.isArray(value)) return value.map(formatSubmissionValue).filter((item) => item !== "-").join(", ") || "-";
+  if (Array.isArray(value))
+    return (
+      value
+        .map(formatSubmissionValue)
+        .filter((item) => item !== "-")
+        .join(", ") || "-"
+    );
   if (typeof value === "object") {
-    const normalized = Object.values(objectValue(value)).map((item) => stringValue(item)).filter(Boolean);
+    const normalized = Object.values(objectValue(value))
+      .map((item) => stringValue(item))
+      .filter(Boolean);
     return normalized.length > 0 ? normalized.join(", ") : "-";
   }
   return String(value);
@@ -281,12 +337,22 @@ async function notifyAssignedUsers(form: CmsForm, data: Record<string, unknown>,
   });
 }
 
-async function handleCrmLeadEffect(form: CmsForm, data: Record<string, unknown>, formSubmissionId: string) {
+async function handleCrmLeadEffect(
+  form: CmsForm,
+  data: Record<string, unknown>,
+  formSubmissionId: string,
+  clientIp?: string,
+) {
   const settings = normalizeFormSettings(form);
   if (!settings.createCrmLead && !CRM_PIPELINE_FORM_SLUGS.has(form.slug)) return;
 
   try {
-    await createCrmLeadFromFormSubmission({ formName: form.name, formSubmissionId, data });
+    await createCrmLeadFromFormSubmission({
+      formName: form.name,
+      formSubmissionId,
+      data,
+      ...(clientIp ? { clientIp } : {}),
+    });
   } catch (err) {
     logger.app.warn("Failed to create CRM lead from managed form submission", {
       formSlug: form.slug,
@@ -298,7 +364,7 @@ async function handleCrmLeadEffect(form: CmsForm, data: Record<string, unknown>,
 export async function submitManagedFormBySlug(
   slug: string,
   data: unknown,
-  options: { baseUrl?: string; source?: string } = {},
+  options: { baseUrl?: string; source?: string; clientIp?: string } = {},
 ) {
   const form = await storage.forms.getPublicBySlug(slug);
   if (!form) throw new AppError("Form not found", 404);
@@ -313,7 +379,7 @@ export async function submitManagedFormBySlug(
   const submission = await storage.forms.createSubmission(submissionPayload);
   await handleContactFormEffects(form, validated, options.baseUrl);
   await notifyAssignedUsers(form, validated, options.baseUrl);
-  await handleCrmLeadEffect(form, validated, submission.id);
+  await handleCrmLeadEffect(form, validated, submission.id, options.clientIp);
 
   return {
     form,

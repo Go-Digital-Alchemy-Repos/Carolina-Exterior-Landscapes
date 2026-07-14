@@ -11,7 +11,6 @@ import { sendPasswordResetEmail, sendWelcomeEmail } from "../../services/email.s
 import { paramString } from "../../utils/params";
 import { getBaseUrl, notFound, conflict } from "../../utils/route-helpers";
 import { logger } from "../../utils/logger";
-import * as r2Service from "../../services/r2.service";
 
 const router = Router();
 const permissionSchema = z.enum([
@@ -111,7 +110,7 @@ async function toSafeUser<T extends {
     ...safeUser,
     adminPermissions: normalizePermissions(safeUser.adminPermissions),
     formNotificationFormIds: normalizePermissions(safeUser.formNotificationFormIds),
-    profileImageUrl: (await r2Service.normalizePublicUrl(safeUser.profileImageUrl)) ?? null,
+    profileImageUrl: safeUser.profileImageUrl ?? null,
   };
 }
 

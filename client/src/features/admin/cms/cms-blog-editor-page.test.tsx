@@ -5,10 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRoot, type Root } from "react-dom/client";
 import CmsBlogEditorPage from "./cms-blog-editor-page";
 
-const navigateMock = vi.fn();
-
 vi.mock("wouter", () => ({
-  useLocation: () => ["/admin/cms/blog/new", navigateMock],
+  useLocation: () => ["/admin/cms/blog/new", vi.fn()],
   useParams: () => ({ id: "new" }),
 }));
 
@@ -23,21 +21,31 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 vi.mock("@/features/admin/admin-sidebar", () => ({
   AdminSidebar: ({ children }: { children: React.ReactNode }) =>
-    React.createElement("div", { "data-testid": "admin-sidebar" }, children),
+    React.createElement("div", null, children),
 }));
 
 vi.mock("@/features/admin/cms/components/cms-image-upload", () => ({
-  CmsImageUpload: () => React.createElement("div", { "data-testid": "mock-image-upload" }),
+  CmsImageUpload: () => React.createElement("div"),
+}));
+
+vi.mock("@/features/admin/cms/builder/cms-rich-text-editor", () => ({
+  CmsRichTextEditor: ({
+    value,
+    onChange,
+    ...props
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+  }) =>
+    React.createElement("textarea", {
+      value,
+      onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => onChange(event.target.value),
+      ...props,
+    }),
 }));
 
 vi.mock("@/hooks/use-editor-lock", () => ({
-  useEditorLock: () => ({
-    hasLocking: false,
-    isReadOnly: false,
-    summary: null,
-    isLoading: false,
-    refresh: vi.fn(),
-  }),
+  useEditorLock: () => ({ hasLocking: false, isReadOnly: false, summary: null }),
 }));
 
 vi.mock("@/hooks/use-toast", () => ({
@@ -46,15 +54,14 @@ vi.mock("@/hooks/use-toast", () => ({
 
 vi.mock("@/lib/queryClient", () => ({
   apiRequest: vi.fn(),
-  queryClient: { invalidateQueries: vi.fn() },
+  queryClient: { invalidateQueries: vi.fn(), setQueryData: vi.fn() },
 }));
 
-describe("CMS Blog editor", () => {
+describe("CMS blog editor layout", () => {
   let container: HTMLDivElement;
   let root: Root | null;
 
   beforeEach(() => {
-    navigateMock.mockReset();
     root = null;
     (
       globalThis as typeof globalThis & { React?: typeof React; IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -72,60 +79,33 @@ describe("CMS Blog editor", () => {
     document.body.innerHTML = "";
   });
 
-  it("places post status before View Live and removes the bottom publication card", async () => {
+  it("places status before View Live and makes content cards collapsible", async () => {
     root = createRoot(container);
-
-    await act(async () => {
-      root!.render(React.createElement(CmsBlogEditorPage));
-    });
+    await act(async () => root!.render(React.createElement(CmsBlogEditorPage)));
 
     const status = container.querySelector('[data-testid="select-blog-status"]') as HTMLElement;
     const viewLive = Array.from(container.querySelectorAll("button")).find((button) =>
       button.textContent?.includes("View Live"),
     );
-
-    expect(status).toBeTruthy();
-    expect(status.textContent).toContain("Draft");
-    expect(viewLive).toBeTruthy();
-    expect(status.compareDocumentPosition(viewLive!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(container.textContent).not.toContain("Publish this post");
-  });
-
-  it("lets an editor collapse and reopen the Post Details card", async () => {
-    root = createRoot(container);
-
-    await act(async () => {
-      root!.render(React.createElement(CmsBlogEditorPage));
-    });
-
-    const toggle = container.querySelector(
+    const postDetails = container.querySelector(
       '[data-testid="button-toggle-post-details"]',
     ) as HTMLButtonElement;
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(container.querySelector("#blog-title")).toBeTruthy();
 
-    await act(async () => toggle.click());
+    expect(status.compareDocumentPosition(viewLive!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(container.textContent).not.toContain("Publication");
+    expect(container.querySelector('[data-testid="button-toggle-hero-content"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="button-toggle-faq"]')).toBeTruthy();
+    expect(postDetails.getAttribute("aria-expanded")).toBe("true");
 
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await act(async () => postDetails.click());
+
+    expect(postDetails.getAttribute("aria-expanded")).toBe("false");
     expect(container.querySelector("#blog-title")).toBeNull();
-
-    await act(async () => toggle.click());
-
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(container.querySelector("#blog-title")).toBeTruthy();
   });
 
-  it("provides a separate FAQ card with title, description, and repeatable questions", async () => {
+  it("adds and removes FAQ questions", async () => {
     root = createRoot(container);
-
-    await act(async () => {
-      root!.render(React.createElement(CmsBlogEditorPage));
-    });
-
-    expect(container.querySelector('[data-testid="button-toggle-faq"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="input-blog-faq-title"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="textarea-blog-faq-description"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="input-blog-faq-question-0"]')).toBeNull();
+    await act(async () => root!.render(React.createElement(CmsBlogEditorPage)));
 
     const addButton = container.querySelector(
       '[data-testid="button-add-blog-faq"]',
@@ -133,7 +113,7 @@ describe("CMS Blog editor", () => {
     await act(async () => addButton.click());
 
     expect(container.querySelector('[data-testid="input-blog-faq-question-0"]')).toBeTruthy();
-    expect(container.querySelector('[data-testid="textarea-blog-faq-answer-0"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="editor-blog-faq-answer-0"]')).toBeTruthy();
 
     const removeButton = container.querySelector(
       '[data-testid="button-remove-blog-faq-0"]',

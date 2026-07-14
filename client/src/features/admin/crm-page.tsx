@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -38,8 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Database, ListChecks, Plus, StickyNote } from "lucide-react";
-import { CrmSubmissionData } from "./crm-submission-data";
+import { ClipboardList, Database, MessageSquareText, Plus } from "lucide-react";
 import type { CrmLead, CrmLeadDetail, CrmLeadStage } from "@shared/schema";
 
 const stages: Array<{ value: CrmLeadStage; label: string; className: string }> = [
@@ -55,6 +54,115 @@ const fmt = (date?: string | Date | null) =>
   date ? format(new Date(date), "MMM d, yyyy") : "No date";
 const inputDate = (date?: string | Date | null) =>
   date ? format(new Date(date), "yyyy-MM-dd") : "";
+type LeadType = "residential" | "commercial" | "contact" | "other";
+
+function leadType(lead: CrmLead): LeadType {
+  const metadata = lead.metadata && typeof lead.metadata === "object" ? lead.metadata : {};
+  const explicit = metadata.leadType;
+  if (explicit === "residential" || explicit === "commercial" || explicit === "contact") {
+    return explicit;
+  }
+  const formName = typeof metadata.formName === "string" ? metadata.formName.toLowerCase() : "";
+  if (formName.includes("commercial") && formName.includes("quote")) return "commercial";
+  if (formName.includes("residential") && formName.includes("quote")) return "residential";
+  return lead.source === "website_form" ? "contact" : "other";
+}
+
+function LeadTypeBadge({ lead }: { lead: CrmLead }) {
+  const type = leadType(lead);
+  const styles: Record<LeadType, string> = {
+    residential: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    commercial: "border-indigo-200 bg-indigo-50 text-indigo-800",
+    contact: "border-amber-200 bg-amber-50 text-amber-800",
+    other: "border-slate-200 bg-slate-50 text-slate-700",
+  };
+  const label = type === "other" ? "Other" : `${type[0].toUpperCase()}${type.slice(1)}`;
+  return (
+    <Badge variant="outline" className={styles[type]}>
+      {label}
+    </Badge>
+  );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  name: "Full Name",
+  fullName: "Full Name",
+  contactName: "Contact Name",
+  email: "Email Address",
+  phone: "Phone Number",
+  companyName: "Company / HOA Name",
+  servicesInterested: "Services Needed",
+  servicesNeeded: "Services Needed",
+  message: "Project Details / Message",
+  notes: "Additional Notes",
+  sourcePage: "Submitted From",
+};
+
+function formFieldLabel(key: string) {
+  return (
+    FIELD_LABELS[key] ??
+    key
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase())
+  );
+}
+
+function FormDataValue({ fieldKey, value }: { fieldKey: string; value: unknown }) {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">Not provided</span>;
+  }
+  if (Array.isArray(value)) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {value.map((item, index) => (
+          <Badge key={`${String(item)}-${index}`} variant="secondary">
+            {String(item)}
+          </Badge>
+        ))}
+      </div>
+    );
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).filter(
+      ([, item]) => item !== "",
+    );
+    return (
+      <div className="space-y-1">
+        {entries.map(([key, item]) => (
+          <div key={key}>
+            <span className="font-medium">{formFieldLabel(key)}:</span> {String(item)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (typeof value === "boolean") return <span>{value ? "Yes" : "No"}</span>;
+  const display = String(value);
+  if (fieldKey.toLowerCase().includes("email")) {
+    return (
+      <a className="text-primary underline-offset-4 hover:underline" href={`mailto:${display}`}>
+        {display}
+      </a>
+    );
+  }
+  if (fieldKey.toLowerCase().includes("phone")) {
+    return (
+      <a className="text-primary underline-offset-4 hover:underline" href={`tel:${display}`}>
+        {display}
+      </a>
+    );
+  }
+  return <span className="whitespace-pre-wrap">{display}</span>;
+}
+
+function leadMetadata(lead: CrmLead) {
+  return lead.metadata && typeof lead.metadata === "object" ? lead.metadata : {};
+}
+
+function formatDateTime(value?: string | Date | null) {
+  return value ? format(new Date(value), "MMM d, yyyy 'at' h:mm a") : "Not recorded";
+}
 
 function stageMeta(stage: string) {
   return stages.find((item) => item.value === stage) ?? stages[0];
@@ -80,6 +188,7 @@ function LeadCard({ lead, onOpen }: { lead: CrmLead; onOpen: (lead: CrmLead) => 
         {lead.email || lead.phone || "No contact info"}
       </p>
       <div className="mt-2 flex flex-wrap gap-1">
+        <LeadTypeBadge lead={lead} />
         <Badge variant="outline">{lead.source}</Badge>
         {lead.company ? <Badge variant="secondary">{lead.company}</Badge> : null}
       </div>
@@ -127,6 +236,7 @@ export default function CrmPage() {
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", message: "" });
@@ -136,7 +246,9 @@ export default function CrmPage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const qs = new URLSearchParams({ q: query, stage }).toString();
-  const { data: leads = [] } = useQuery<CrmLead[]>({ queryKey: [`/api/admin/crm?${qs}`] });
+  const { data: allLeads = [] } = useQuery<CrmLead[]>({ queryKey: [`/api/admin/crm?${qs}`] });
+  const leads =
+    typeFilter === "all" ? allLeads : allLeads.filter((lead) => leadType(lead) === typeFilter);
   const { data: detail } = useQuery<CrmLeadDetail>({
     queryKey: [`/api/admin/crm/${selectedId}`],
     enabled: Boolean(selectedId),
@@ -205,19 +317,19 @@ export default function CrmPage() {
   return (
     <AdminSidebar>
       <div className="space-y-6 p-4 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold">CRM Pipeline</h1>
             <p className="text-muted-foreground">
               Track inbound leads from forms, social sources, and manual outreach.
             </p>
           </div>
-          <Button className="min-h-11 sm:min-h-0" onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Lead
           </Button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
+        <div className="grid gap-3 sm:grid-cols-3">
           <Input
             placeholder="Search leads..."
             value={query}
@@ -237,10 +349,22 @@ export default function CrmPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full" data-testid="select-lead-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Lead Types</SelectItem>
+              <SelectItem value="residential">Residential</SelectItem>
+              <SelectItem value="commercial">Commercial</SelectItem>
+              <SelectItem value="contact">Contact</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="hidden lg:block">
           <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-            <div className="grid gap-3 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-3 xl:grid-cols-6 md:grid-cols-3">
               {stages.map((item) => (
                 <StageColumn
                   key={item.value}
@@ -261,28 +385,22 @@ export default function CrmPage() {
               {leads.map((lead) => (
                 <button
                   key={lead.id}
-                  className="grid min-h-11 w-full gap-3 p-4 text-left hover:bg-muted/30 sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,0.75fr)_auto] sm:items-center"
+                  className="grid w-full gap-2 p-3 text-left hover:bg-muted/30 sm:grid-cols-4 sm:gap-4"
                   onClick={() => setSelectedId(lead.id)}
                 >
-                  <span className="min-w-0">
+                  <span>
                     <b>{lead.name}</b>
                     <br />
-                    <small className="break-all text-muted-foreground">
-                      {lead.email || lead.phone || "No contact info"}
-                    </small>
+                    <small>{lead.email || lead.phone || "No contact info"}</small>
                   </span>
-                  <span className="flex flex-wrap items-center gap-2">
+                  <span className="flex flex-wrap items-center gap-1">
                     <Badge className={stageMeta(lead.stage).className}>
                       {stageMeta(lead.stage).label}
                     </Badge>
-                    <span className="text-xs text-muted-foreground sm:hidden">{lead.source}</span>
+                    <LeadTypeBadge lead={lead} />
                   </span>
-                  <span className="hidden text-sm text-muted-foreground sm:block">
-                    {lead.source}
-                  </span>
-                  <span className="text-xs text-muted-foreground sm:text-sm">
-                    {fmt(lead.createdAt)}
-                  </span>
+                  <span>{lead.source}</span>
+                  <span>{fmt(lead.createdAt)}</span>
                 </button>
               ))}
             </div>
@@ -371,6 +489,9 @@ export default function CrmPage() {
                         }
                       />
                     </div>
+                    <p className="flex items-center gap-2">
+                      <b>Type:</b> <LeadTypeBadge lead={detail} />
+                    </p>
                     <p>
                       <b>Source:</b> {detail.source}
                     </p>
@@ -382,22 +503,20 @@ export default function CrmPage() {
                     </p>
                   </CardContent>
                 </Card>
-                <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-                  <TabsList className="w-max min-w-full justify-start sm:min-w-0">
-                    <TabsTrigger value="notes">
-                      <StickyNote className="mr-1.5 h-4 w-4 text-emerald-600" />
-                      Notes
-                    </TabsTrigger>
-                    <TabsTrigger value="tasks">
-                      <ListChecks className="mr-1.5 h-4 w-4 text-orange-600" />
-                      Tasks
-                    </TabsTrigger>
-                    <TabsTrigger value="data">
-                      <Database className="mr-1.5 h-4 w-4 text-cyan-600" />
-                      Data
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+                <TabsList className="flex h-auto w-full justify-start overflow-x-auto">
+                  <TabsTrigger value="notes" className="gap-2">
+                    <MessageSquareText className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                    Notes
+                  </TabsTrigger>
+                  <TabsTrigger value="tasks" className="gap-2">
+                    <ClipboardList className="h-4 w-4 text-orange-600" aria-hidden="true" />
+                    Tasks
+                  </TabsTrigger>
+                  <TabsTrigger value="data" className="gap-2">
+                    <Database className="h-4 w-4 text-cyan-600" aria-hidden="true" />
+                    Data
+                  </TabsTrigger>
+                </TabsList>
                 <TabsContent value="notes" className="space-y-3">
                   <Textarea
                     placeholder="Add an internal note..."
@@ -417,7 +536,7 @@ export default function CrmPage() {
                   ))}
                 </TabsContent>
                 <TabsContent value="tasks" className="space-y-3">
-                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+                  <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                     <Input
                       placeholder="Follow-up task"
                       value={task}
@@ -447,11 +566,72 @@ export default function CrmPage() {
                   ))}
                 </TabsContent>
                 <TabsContent value="data" className="space-y-4">
-                  <CrmSubmissionData
-                    formData={detail.formData}
-                    metadata={detail.metadata}
-                    receivedAt={detail.createdAt}
-                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Submission Details</CardTitle>
+                      <CardDescription>
+                        When and where this lead entered the system.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
+                      <div>
+                        <p className="font-medium">Date and Time</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {formatDateTime(detail.createdAt)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">IP Address</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {typeof leadMetadata(detail).clientIp === "string"
+                            ? String(leadMetadata(detail).clientIp)
+                            : "Not recorded"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Form</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {typeof leadMetadata(detail).formName === "string"
+                            ? String(leadMetadata(detail).formName)
+                            : "Not recorded"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Lead Source</p>
+                        <p className="mt-1 text-muted-foreground">{detail.source}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Information Submitted</CardTitle>
+                      <CardDescription>The information provided by this lead.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {Object.entries(detail.formData ?? {}).length > 0 ? (
+                        <dl className="divide-y">
+                          {Object.entries(detail.formData ?? {}).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className="grid gap-1 py-3 sm:grid-cols-[11rem_1fr] sm:gap-4"
+                            >
+                              <dt className="text-sm font-medium text-muted-foreground">
+                                {formFieldLabel(key)}
+                              </dt>
+                              <dd className="min-w-0 text-sm">
+                                <FormDataValue fieldKey={key} value={value} />
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No submitted form data is available.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
             ) : null}

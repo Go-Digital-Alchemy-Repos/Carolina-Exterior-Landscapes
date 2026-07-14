@@ -33,7 +33,7 @@ type MediaUsageContext = {
 };
 
 const BRAND_NAME = "Carolina Exterior Landscapes";
-const BRAND_SHORT_NAME = "Carolina Exterior";
+const BRAND_SHORT_NAME = "Carolina Exterior Landscapes";
 const SITE_URL = "https://carolinaexteriorlandscapes.com";
 const DEFAULT_OG_IMAGE_URL = "/images/logo-full.png";
 const ORGANIZATION_LOGO_URL = "/images/header-logo-horizontal.svg";
@@ -194,7 +194,7 @@ function extractText(value: unknown, output: string[] = []): string[] {
   }
   if (typeof value === "object") {
     Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
-      if (/^(id|url|href|src|imageUrl|backgroundImageUrl|r2Key)$/i.test(key)) return;
+      if (/^(id|url|href|src|imageUrl|backgroundImageUrl)$/i.test(key)) return;
       extractText(entry, output);
     });
   }

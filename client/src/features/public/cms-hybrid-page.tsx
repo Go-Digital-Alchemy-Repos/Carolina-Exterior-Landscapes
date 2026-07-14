@@ -4,7 +4,6 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Layout } from "@/features/landscape-site/components/Layout";
 import { BotanicalAccent } from "@/features/landscape-site/components/nature/BotanicalAccent";
-import { SectionDivider } from "@/features/landscape-site/components/nature/SectionDivider";
 import { PublicBlockRenderer, PublicPageRenderer } from "@/features/public/public-block-renderer";
 import { PublicSidebar } from "@/features/public/public-sidebar";
 import { Loader2 } from "lucide-react";
@@ -21,9 +20,8 @@ import {
   extractServiceLd,
 } from "@/lib/structured-data";
 
-interface CmsHybridPageProps {
+interface CmsPublicPageProps {
   slug: string;
-  fallback: React.ReactNode;
 }
 
 interface CmsPageViewProps {
@@ -66,40 +64,25 @@ function isLandscapeContent(content: unknown) {
   return Boolean(content && typeof content === "object" && (content as { source?: unknown }).source === "carolina-landscape-v1");
 }
 
-type LandscapeTone = "dark" | "stone" | "sand" | "white";
+type LandscapeTone = "cta" | "dark" | "stone";
 
-function landscapeSectionTone(block: BlockInstance, index: number): LandscapeTone {
-  if (block.type === "hero" || block.type === "cta") return "dark";
+function landscapeSectionTone(block: BlockInstance): LandscapeTone {
+  if (block.type === "cta") return "cta";
+  if (block.type === "hero") return "dark";
   const background = typeof block.props?.background === "string" ? block.props.background : "";
   if (background === "dark") return "dark";
   if (background === "muted" || background === "off-white") return "stone";
-  return index % 2 === 0 ? "sand" : "white";
-}
-
-function landscapeToneColor(tone: LandscapeTone) {
-  if (tone === "dark") return "hsl(var(--foreground))";
-  if (tone === "stone") return "hsl(var(--surface-stone))";
-  if (tone === "sand") return "hsl(var(--surface-sand))";
-  return "hsl(var(--background))";
+  return "stone";
 }
 
 function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
   return (
     <div className="landscape-cms-page w-full">
       {blocks.map((block, index) => {
-        const tone = landscapeSectionTone(block, index);
-        const previousTone = index > 0 ? landscapeSectionTone(blocks[index - 1], index - 1) : tone;
+        const tone = landscapeSectionTone(block);
         const showBotanical = block.type === "cards-grid" || block.type === "faq" || block.type === "rich-text";
         return (
           <div key={block.id}>
-            {index > 0 ? (
-              <SectionDivider
-                variant={index % 3 === 0 ? "leaf" : "hills"}
-                bgColor={landscapeToneColor(previousTone)}
-                fillColor={landscapeToneColor(tone)}
-                heightClassName="h-8 md:h-12 lg:h-16"
-              />
-            ) : null}
             <div className={`landscape-cms-section landscape-cms-section--${tone} relative overflow-hidden`}>
               {tone !== "dark" ? <div className="pointer-events-none absolute inset-0 bg-topo opacity-35" aria-hidden="true" /> : null}
               {showBotanical ? (
@@ -113,6 +96,33 @@ function LandscapeCmsBlocks({ blocks }: { blocks: BlockInstance[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function LandscapeQuoteBlocks({ blocks }: { blocks: BlockInstance[] }) {
+  const hero = blocks.find((block) => block.type === "hero");
+  const form = blocks.find((block) => block.type === "form-embed");
+  const quoteHero = hero ? {
+    ...hero,
+    props: {
+      ...hero.props,
+      variant: "quote",
+      ctaText: "",
+      ctaLink: "",
+    },
+  } : null;
+
+  return (
+    <div className="landscape-cms-page w-full">
+      {quoteHero ? <PublicBlockRenderer block={quoteHero} /> : null}
+      {form ? (
+        <div className="relative bg-topo surface-stone pb-16 pt-2 sm:pb-24">
+          <div className="relative z-10 -mt-24">
+            <PublicBlockRenderer block={form} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -323,6 +333,7 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
   const heroBlocks = showSidebar && blocks[0] && /hero/i.test(blocks[0].type) ? [blocks[0]] : [];
   const contentBlocks = heroBlocks.length > 0 ? blocks.slice(1) : blocks;
   const useLandscapeShell = isLandscapeContent(page.content) || page.slug === "contact";
+  const isQuoteLandingPage = page.slug === "get-a-quote" || page.slug === "commercial-quote";
 
   const pageBody = blocks.length > 0 ? (
     showSidebar ? (
@@ -341,6 +352,8 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
       </>
     ) : page.slug === "contact" ? (
       <ContactCmsBlocks blocks={blocks} />
+    ) : isQuoteLandingPage ? (
+      <LandscapeQuoteBlocks blocks={blocks} />
     ) : useLandscapeShell ? (
       <LandscapeCmsBlocks blocks={blocks} />
     ) : (
@@ -380,7 +393,7 @@ export function CmsPageView({ page, globalSeo, previewLabel }: CmsPageViewProps)
   );
 }
 
-export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
+export function CmsPublicPage({ slug }: CmsPublicPageProps) {
   const { data: page, isLoading, error } = useQuery<CmsPage>({
     queryKey: ["/api/cms/pages/by-slug", slug],
     queryFn: async () => {
@@ -394,7 +407,7 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
       const data: unknown = await res.json();
       if (!isValidCmsPage(data)) {
         if (import.meta.env.DEV) {
-          console.error(`[CmsHybridPage] Invalid response shape for slug "${slug}"`, data);
+          console.error(`[CmsPublicPage] Invalid response shape for slug "${slug}"`, data);
         }
         throw new Error("Invalid CMS page response shape");
       }
@@ -420,13 +433,13 @@ export function CmsHybridPage({ slug, fallback }: CmsHybridPageProps) {
 
   if (error) {
     if (import.meta.env.DEV && !(error instanceof CmsNotFoundError)) {
-      console.warn(`[CmsHybridPage] Transient error for slug "${slug}", showing fallback:`, error.message);
+      console.warn(`[CmsPublicPage] CMS fetch failed for slug "${slug}":`, error.message);
     }
-    return <>{fallback}</>;
+    return slug === "404" ? <CmsLoadingPage landscapeShell /> : <CmsPublicPage slug="404" />;
   }
 
   if (!page || page.status !== "published") {
-    return <>{fallback}</>;
+    return slug === "404" ? <CmsLoadingPage landscapeShell /> : <CmsPublicPage slug="404" />;
   }
 
   return <CmsPageView page={page} globalSeo={globalSeo} />;

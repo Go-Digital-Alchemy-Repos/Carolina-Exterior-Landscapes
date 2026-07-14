@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useParams } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
   ArrowLeft,
   ChevronDown,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { CmsImageUpload } from "@/features/admin/cms/components/cms-image-upload";
+import { ImagePositionPicker } from "@/features/admin/cms/components/image-position-picker";
+import { CmsRichTextEditor } from "@/features/admin/cms/builder/cms-rich-text-editor";
 import { EditorLockBanner } from "@/components/shared/editor-lock-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,11 +39,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEditorLock } from "@/hooks/use-editor-lock";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { splitBlogFaqBlocks, type BlogFaqItem } from "@shared/blog-faq";
 import type { CmsPage } from "@shared/schema";
 
 type BlogCategory = "residential" | "commercial";
 type BlogBlock = { type: "h2" | "h3" | "p" | "li"; text: string };
+type BlogFaqItem = { question: string; answer: string };
 type BlogDraft = {
   title: string;
   slug: string;
@@ -54,16 +57,22 @@ type BlogDraft = {
   faqTitle: string;
   faqDescription: string;
   faqItems: BlogFaqItem[];
+  heroEyebrow: string;
+  heroHeading: string;
+  heroSubheading: string;
   imageUrl: string;
+  imagePositionX: number;
+  imagePositionY: number;
   staticImage: string;
-  status: "draft" | "published";
+  status: "draft" | "published" | "scheduled";
+  scheduledAt: string;
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string;
   noindex: boolean;
 };
 
-const DEFAULT_AUTHOR = "Carolina Exterior Team";
+const DEFAULT_AUTHOR = "Carolina Exterior Landscapes Team";
 
 function CollapsibleEditorCard({
   title,
@@ -121,16 +130,22 @@ function emptyDraft(): BlogDraft {
     authorName: DEFAULT_AUTHOR,
     category: "residential",
     tags: "",
-    date: todayIso(),
+    date: "",
     readMinutes: 3,
     excerpt: "",
     body: "",
     faqTitle: "Frequently Asked Questions",
     faqDescription: "",
     faqItems: [],
+    heroEyebrow: "Landscape Journal",
+    heroHeading: "",
+    heroSubheading: "",
     imageUrl: "",
+    imagePositionX: 50,
+    imagePositionY: 50,
     staticImage: "",
     status: "draft",
+    scheduledAt: "",
     seoTitle: "",
     seoDescription: "",
     seoKeywords: "",
@@ -144,20 +159,116 @@ function getObject(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function blocksToBody(blocks: unknown): string {
+function positionValue(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.min(100, value))
+    : 50;
+}
+
+function dateTimeLocalValue(value: Date | string | null | undefined) {
+  if (!value) return "";
+  return format(new Date(value), "yyyy-MM-dd'T'HH:mm");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function blocksToHtml(blocks: unknown): string {
   if (!Array.isArray(blocks)) return "";
   return blocks
     .map((block) => {
       const item = getObject(block);
-      const text = typeof item.text === "string" ? item.text.trim() : "";
+      const text = typeof item.text === "string" ? escapeHtml(item.text.trim()) : "";
       if (!text) return "";
-      if (item.type === "h2") return `## ${text}`;
-      if (item.type === "h3") return `### ${text}`;
-      if (item.type === "li") return `- ${text}`;
-      return text;
+      if (item.type === "h2") return `<h2>${text}</h2>`;
+      if (item.type === "h3") return `<h3>${text}</h3>`;
+      if (item.type === "li") return `<ul><li>${text}</li></ul>`;
+      return `<p>${text}</p>`;
     })
     .filter(Boolean)
-    .join("\n\n");
+    .join("");
+}
+
+function legacyBodyToHtml(bodyText: string, blocks: unknown) {
+  if (bodyText.trim()) return blocksToHtml(bodyToBlocks(bodyText));
+  return blocksToHtml(blocks);
+}
+
+function htmlToPlainText(html: string) {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>|<\/h[1-6]>|<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function faqItemsFrom(value: unknown): BlogFaqItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => {
+    const item = getObject(entry);
+    return {
+      question: typeof item.question === "string" ? item.question : "",
+      answer: typeof item.answer === "string" ? item.answer : "",
+    };
+  });
+}
+
+function extractLegacyFaqFromHtml(bodyHtml: string): {
+  bodyHtml: string;
+  faq: { title: string; description: string; items: BlogFaqItem[] } | null;
+} {
+  const headingPattern = /<h2\b[^>]*>([\s\S]*?)<\/h2>/gi;
+  let faqHeading: RegExpExecArray | null = null;
+  let headingMatch: RegExpExecArray | null;
+
+  while ((headingMatch = headingPattern.exec(bodyHtml))) {
+    if (/\bfaq\b|frequently asked/i.test(htmlToPlainText(headingMatch[1]))) {
+      faqHeading = headingMatch;
+      break;
+    }
+  }
+
+  if (!faqHeading || faqHeading.index === undefined) return { bodyHtml, faq: null };
+
+  const nextHeading = headingPattern.exec(bodyHtml);
+  const sectionEnd = nextHeading?.index ?? bodyHtml.length;
+  const sectionStart = faqHeading.index + faqHeading[0].length;
+  const sectionHtml = bodyHtml.slice(sectionStart, sectionEnd);
+  const questionPattern = /<h3\b[^>]*>([\s\S]*?)<\/h3>/gi;
+  const questions = Array.from(sectionHtml.matchAll(questionPattern));
+  if (questions.length === 0) return { bodyHtml, faq: null };
+
+  const items = questions
+    .map((question, index) => {
+      const answerStart = (question.index ?? 0) + question[0].length;
+      const answerEnd = questions[index + 1]?.index ?? sectionHtml.length;
+      return {
+        question: htmlToPlainText(question[1]),
+        answer: sectionHtml.slice(answerStart, answerEnd).trim(),
+      };
+    })
+    .filter((item) => item.question && htmlToPlainText(item.answer));
+
+  if (items.length !== questions.length) return { bodyHtml, faq: null };
+
+  return {
+    bodyHtml: `${bodyHtml.slice(0, faqHeading.index)}${bodyHtml.slice(sectionEnd)}`.trim(),
+    faq: {
+      title: htmlToPlainText(faqHeading[1]) || "Frequently Asked Questions",
+      description: sectionHtml.slice(0, questions[0].index ?? 0).trim(),
+      items,
+    },
+  };
 }
 
 function bodyToBlocks(body: string): BlogBlock[] {
@@ -178,38 +289,24 @@ function bodyToBlocks(body: string): BlogBlock[] {
     .filter((block) => block.text);
 }
 
-function draftFromPage(page: CmsPage): BlogDraft {
+export function draftFromPage(page: CmsPage): BlogDraft {
   const content = getObject(page.content);
   const landscape = getObject(content.landscape);
   const data = getObject(landscape.data);
   const blog = getObject(content.blog);
+  const builderBlocks = Array.isArray(content.blocks) ? content.blocks : [];
+  const heroBlock = builderBlocks.map(getObject).find((block) => block.type === "hero");
+  const heroProps = getObject(heroBlock?.props);
+  const faqBlock = builderBlocks.map(getObject).find((block) => block.type === "faq");
+  const faqProps = getObject(faqBlock?.props);
   const category = data.category === "commercial" ? "commercial" : "residential";
-  const bodyText = typeof blog.bodyText === "string" ? blog.bodyText : blocksToBody(data.blocks);
-  const splitBody = splitBlogFaqBlocks(bodyToBlocks(bodyText));
-  const hasExplicitFaq = Boolean(
-    data.faq && typeof data.faq === "object" && !Array.isArray(data.faq),
-  );
-  const explicitFaq = getObject(data.faq);
-  const explicitItems = Array.isArray(explicitFaq.items)
-    ? explicitFaq.items.map((value) => {
-        const item = getObject(value);
-        return {
-          question: typeof item.question === "string" ? item.question : "",
-          answer: typeof item.answer === "string" ? item.answer : "",
-        };
-      })
-    : [];
-  const faqTitle = hasExplicitFaq
-    ? typeof explicitFaq.title === "string"
-      ? explicitFaq.title
-      : "Frequently Asked Questions"
-    : splitBody.faq?.title || "Frequently Asked Questions";
-  const faqDescription = hasExplicitFaq
-    ? typeof explicitFaq.description === "string"
-      ? explicitFaq.description
-      : ""
-    : splitBody.faq?.description || "";
-  const faqItems = hasExplicitFaq ? explicitItems : splitBody.faq?.items || [];
+  const bodyText = typeof blog.bodyText === "string" ? blog.bodyText : "";
+  const bodyHtml =
+    typeof blog.bodyHtml === "string" ? blog.bodyHtml : legacyBodyToHtml(bodyText, data.blocks);
+  const legacyFaq = extractLegacyFaqFromHtml(bodyHtml);
+  const savedFaq = getObject(blog.faq);
+  const hasSavedFaq = Boolean(blog.faq && typeof blog.faq === "object" && !Array.isArray(blog.faq));
+  const faqSource = hasSavedFaq ? savedFaq : faqBlock ? faqProps : getObject(legacyFaq.faq);
 
   return {
     title: page.title || (typeof data.h1 === "string" ? data.h1 : ""),
@@ -219,16 +316,41 @@ function draftFromPage(page: CmsPage): BlogDraft {
     tags: Array.isArray(blog.tags)
       ? blog.tags.filter((tag): tag is string => typeof tag === "string").join(", ")
       : "",
-    date: typeof data.date === "string" ? data.date : todayIso(),
+    date: page.publishedAt
+      ? format(new Date(page.publishedAt), "yyyy-MM-dd")
+      : typeof data.date === "string"
+        ? data.date
+        : todayIso(),
     readMinutes: typeof data.readMinutes === "number" ? data.readMinutes : 3,
     excerpt: typeof data.excerpt === "string" ? data.excerpt : "",
-    body: splitBody.faq ? blocksToBody(splitBody.blocks) : bodyText,
-    faqTitle,
-    faqDescription,
-    faqItems,
+    body: legacyFaq.bodyHtml,
+    faqTitle: typeof faqSource.title === "string" ? faqSource.title : "Frequently Asked Questions",
+    faqDescription:
+      typeof faqSource.description === "string"
+        ? faqSource.description
+        : typeof faqSource.subtext === "string"
+          ? faqSource.subtext
+          : "",
+    faqItems: faqItemsFrom(faqSource.items),
+    heroEyebrow: typeof heroProps.eyebrow === "string" ? heroProps.eyebrow : "Landscape Journal",
+    heroHeading: typeof heroProps.heading === "string" ? heroProps.heading : page.title,
+    heroSubheading:
+      typeof heroProps.subheading === "string"
+        ? heroProps.subheading
+        : typeof data.excerpt === "string"
+          ? `<p>${escapeHtml(data.excerpt)}</p>`
+          : "",
     imageUrl: typeof data.imageUrl === "string" ? data.imageUrl : "",
+    imagePositionX: positionValue(data.imagePositionX),
+    imagePositionY: positionValue(data.imagePositionY),
     staticImage: typeof data.image === "string" ? data.image : "",
-    status: page.status === "published" ? "published" : "draft",
+    status:
+      page.status === "published"
+        ? "published"
+        : page.status === "scheduled"
+          ? "scheduled"
+          : "draft",
+    scheduledAt: dateTimeLocalValue(page.scheduledAt),
     seoTitle: page.seoTitle || (typeof data.titleTag === "string" ? data.titleTag : ""),
     seoDescription:
       page.seoDescription || (typeof data.metaDescription === "string" ? data.metaDescription : ""),
@@ -237,25 +359,71 @@ function draftFromPage(page: CmsPage): BlogDraft {
   };
 }
 
-function buildPagePayload(draft: BlogDraft) {
+export function buildPagePayload(draft: BlogDraft, currentContent?: unknown) {
   const slug = normalizeSlug(draft.slug || draft.title);
   const title = draft.title.trim();
   const excerpt = draft.excerpt.trim();
-  const seoTitle = draft.seoTitle.trim() || `${title} | Carolina Exterior`;
+  const seoTitle = draft.seoTitle.trim() || `${title} | Carolina Exterior Landscapes`;
   const seoDescription = draft.seoDescription.trim() || excerpt;
   const tags = draft.tags
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
-  const blocks = bodyToBlocks(draft.body);
-  const faq = {
-    title: draft.faqTitle.trim() || "Frequently Asked Questions",
-    description: draft.faqDescription.trim(),
-    items: draft.faqItems.map((item) => ({
-      question: item.question.trim(),
-      answer: item.answer.trim(),
-    })),
-  };
+  const existingContent = getObject(currentContent);
+  const existingBuilderBlocks = Array.isArray(existingContent.blocks) ? existingContent.blocks : [];
+  const existingHero = existingBuilderBlocks.map(getObject).find((block) => block.type === "hero");
+  const existingFaq = existingBuilderBlocks.map(getObject).find((block) => block.type === "faq");
+  const preservedCtas = existingBuilderBlocks
+    .map(getObject)
+    .filter((block) => block.type === "cta");
+  const faqItems = draft.faqItems.map((item) => ({
+    question: item.question.trim(),
+    answer: item.answer.trim(),
+  }));
+  const completeFaqItems = faqItems.filter((item) => item.question && htmlToPlainText(item.answer));
+  const builderBlocks = [
+    {
+      ...existingHero,
+      id: typeof existingHero?.id === "string" ? existingHero.id : `${slug}-hero`,
+      type: "hero",
+      props: {
+        ...getObject(existingHero?.props),
+        eyebrow: draft.heroEyebrow.trim(),
+        heading: draft.heroHeading.trim() || title,
+        subheading: draft.heroSubheading,
+        backgroundImageUrl: draft.imageUrl,
+        backgroundPositionX: draft.imagePositionX,
+        backgroundPositionY: draft.imagePositionY,
+        ctaText: "",
+        ctaLink: "",
+      },
+    },
+    {
+      id: `${slug}-article-content`,
+      type: "rich-text",
+      props: {
+        content: draft.body,
+        alignment: "left",
+        background: "white",
+      },
+    },
+    ...preservedCtas,
+    ...(completeFaqItems.length > 0
+      ? [
+          {
+            ...existingFaq,
+            id: typeof existingFaq?.id === "string" ? existingFaq.id : `${slug}-faq`,
+            type: "faq",
+            props: {
+              ...getObject(existingFaq?.props),
+              title: draft.faqTitle.trim() || "Frequently Asked Questions",
+              subtext: draft.faqDescription,
+              items: completeFaqItems,
+            },
+          },
+        ]
+      : []),
+  ];
 
   return {
     title,
@@ -278,21 +446,25 @@ function buildPagePayload(draft: BlogDraft) {
           secondaryKeywords: tags,
           schemaType: "BlogPosting",
           wordCountTarget: "",
-          blocks,
-          faq,
+          bodyHtml: draft.body,
           category: draft.category,
           date: draft.date,
           readMinutes: Math.max(1, Number(draft.readMinutes) || 1),
           excerpt,
           image: draft.imageUrl ? "" : draft.staticImage,
           imageUrl: draft.imageUrl,
+          imagePositionX: draft.imagePositionX,
+          imagePositionY: draft.imagePositionY,
         },
       },
       blog: {
         authorName: draft.authorName.trim() || DEFAULT_AUTHOR,
         tags,
-        bodyText: draft.body,
+        bodyHtml: draft.body,
+        bodyText: htmlToPlainText(draft.body),
+        faq: { title: draft.faqTitle, description: draft.faqDescription, items: faqItems },
       },
+      blocks: builderBlocks,
     },
     seoTitle,
     seoDescription,
@@ -311,6 +483,7 @@ export default function CmsBlogEditorPage() {
   const [draft, setDraft] = useState<BlogDraft>(() => emptyDraft());
   const [slugEdited, setSlugEdited] = useState(false);
   const [hasLoadedPage, setHasLoadedPage] = useState(false);
+  const [publishDateEdited, setPublishDateEdited] = useState(false);
 
   const { data: page, isLoading } = useQuery<CmsPage>({
     queryKey: [`/api/admin/cms/pages/${params.id}`],
@@ -332,7 +505,13 @@ export default function CmsBlogEditorPage() {
   });
   const isReadOnly = editorLock.hasLocking && editorLock.isReadOnly;
 
-  const payload = useMemo(() => buildPagePayload(draft), [draft]);
+  const payload = useMemo(
+    () => ({
+      ...buildPagePayload(draft, page?.content),
+      status: draft.status === "scheduled" ? "draft" : draft.status,
+    }),
+    [draft, page?.content],
+  );
   const canSave = payload.title.trim().length > 0 && payload.slug.trim().length > 0 && !isReadOnly;
 
   const saveMutation = useMutation({
@@ -340,12 +519,58 @@ export default function CmsBlogEditorPage() {
       const response = isNew
         ? await apiRequest("POST", "/api/admin/cms/pages", payload)
         : await apiRequest("PUT", `/api/admin/cms/pages/${params.id}`, payload);
-      return response.json() as Promise<CmsPage>;
+      let savedPage = (await response.json()) as CmsPage;
+
+      if (draft.status === "scheduled") {
+        const scheduledAt = new Date(draft.scheduledAt);
+        if (
+          !draft.scheduledAt ||
+          Number.isNaN(scheduledAt.getTime()) ||
+          scheduledAt <= new Date()
+        ) {
+          throw new Error("Choose a valid future publication date and time.");
+        }
+        const scheduledResponse = await apiRequest(
+          "POST",
+          `/api/admin/cms/pages/${savedPage.id}/schedule`,
+          {
+            scheduledAt: scheduledAt.toISOString(),
+          },
+        );
+        savedPage = (await scheduledResponse.json()) as CmsPage;
+      } else if (draft.status === "published" && publishDateEdited && draft.date) {
+        const publicationResponse = await apiRequest(
+          "PUT",
+          `/api/admin/cms/pages/${savedPage.id}/publication-date`,
+          {
+            publishedAt: `${draft.date}T12:00:00.000Z`,
+          },
+        );
+        savedPage = (await publicationResponse.json()) as CmsPage;
+      }
+
+      return savedPage;
     },
     onSuccess: (savedPage) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/cms/pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/cms/blog-posts"] });
-      toast({ title: draft.status === "published" ? "Blog post published" : "Blog post saved" });
+      if (!isNew) queryClient.setQueryData([`/api/admin/cms/pages/${params.id}`], savedPage);
+      setPublishDateEdited(false);
+      setDraft((current) => ({
+        ...current,
+        date: savedPage.publishedAt
+          ? format(new Date(savedPage.publishedAt), "yyyy-MM-dd")
+          : current.date,
+        scheduledAt: dateTimeLocalValue(savedPage.scheduledAt),
+      }));
+      toast({
+        title:
+          draft.status === "published"
+            ? "Blog post published"
+            : draft.status === "scheduled"
+              ? "Blog post scheduled"
+              : "Blog post saved",
+      });
       if (isNew) navigate(`/admin/cms/blog/${savedPage.id}`);
     },
     onError: (error: Error) => {
@@ -361,12 +586,11 @@ export default function CmsBlogEditorPage() {
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
-  const addFaqItem = () => {
+  const addFaqItem = () =>
     setDraft((current) => ({
       ...current,
       faqItems: [...current.faqItems, { question: "", answer: "" }],
     }));
-  };
 
   const updateFaqItem = (index: number, key: keyof BlogFaqItem, value: string) => {
     setDraft((current) => ({
@@ -389,6 +613,8 @@ export default function CmsBlogEditorPage() {
       ...current,
       title,
       slug: slugEdited ? current.slug : normalizeSlug(title),
+      heroHeading:
+        !current.heroHeading || current.heroHeading === current.title ? title : current.heroHeading,
     }));
   };
 
@@ -416,7 +642,7 @@ export default function CmsBlogEditorPage() {
         ) : null}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
+          <div className="hidden space-y-2 sm:block">
             <Button
               variant="ghost"
               size="sm"
@@ -431,7 +657,11 @@ export default function CmsBlogEditorPage() {
                 {draft.title || "New Blog Post"}
               </h1>
               <Badge variant={draft.status === "published" ? "default" : "outline"}>
-                {draft.status === "published" ? "Published" : "Draft"}
+                {draft.status === "published"
+                  ? "Published"
+                  : draft.status === "scheduled"
+                    ? "Scheduled"
+                    : "Draft"}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -439,69 +669,119 @@ export default function CmsBlogEditorPage() {
               renders.
             </p>
           </div>
-          <div className="hidden flex-wrap items-center gap-2 sm:flex">
-            <Label htmlFor="blog-status" className="sr-only">
-              Post Status
-            </Label>
-            <Select
-              value={draft.status}
-              onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])}
-              disabled={isReadOnly}
-            >
-              <SelectTrigger
-                id="blog-status"
-                className="w-[145px]"
-                data-testid="select-blog-status"
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label htmlFor="blog-status" className="sr-only">
+                Post Status
+              </Label>
+              <Select
+                value={draft.status}
+                onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])}
+                disabled={isReadOnly}
               >
-                <SelectValue aria-label="Post Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={() => window.open(`/blog/${payload.slug}`, "_blank")}
-              disabled={!payload.slug}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              View Live
-            </Button>
-            <Button
-              onClick={() => saveMutation.mutate()}
-              disabled={!canSave || saveMutation.isPending}
-              data-testid="button-save-blog-post"
-            >
-              {saveMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Save Post
-            </Button>
+                <SelectTrigger
+                  id="blog-status"
+                  className="w-[145px]"
+                  data-testid="select-blog-status"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => window.open(`/blog/${payload.slug}`, "_blank")}
+                disabled={!payload.slug}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                View Live
+              </Button>
+              <Button
+                onClick={() => saveMutation.mutate()}
+                disabled={!canSave || saveMutation.isPending}
+                data-testid="button-save-blog-post"
+              >
+                {saveMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Post
+              </Button>
+            </div>
+            {draft.status === "scheduled" ? (
+              <div className="ml-auto grid max-w-xs gap-1.5">
+                <Label htmlFor="blog-scheduled-at" className="text-xs">
+                  Publish On
+                </Label>
+                <Input
+                  id="blog-scheduled-at"
+                  type="datetime-local"
+                  value={draft.scheduledAt}
+                  min={dateTimeLocalValue(new Date())}
+                  onChange={(event) => updateDraft("scheduledAt", event.target.value)}
+                  disabled={isReadOnly}
+                  data-testid="input-blog-scheduled-at"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <Tabs defaultValue="content" className="min-w-0">
-          <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-            <TabsList className="w-max min-w-full justify-start sm:min-w-0">
-              <TabsTrigger value="content">
-                <FileText className="mr-2 h-4 w-4" />
-                Content
-              </TabsTrigger>
-              <TabsTrigger value="media">
-                <ImageIcon className="mr-2 h-4 w-4" />
-                Image
-              </TabsTrigger>
-              <TabsTrigger value="seo">
-                <Search className="mr-2 h-4 w-4" />
-                SEO
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs defaultValue="content">
+          <TabsList className="flex h-auto w-full justify-start overflow-x-auto sm:w-auto">
+            <TabsTrigger value="content">
+              <FileText className="mr-2 h-4 w-4" />
+              Content
+            </TabsTrigger>
+            <TabsTrigger value="media">
+              <ImageIcon className="mr-2 h-4 w-4" />
+              Image
+            </TabsTrigger>
+            <TabsTrigger value="seo">
+              <Search className="mr-2 h-4 w-4" />
+              SEO
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="content" className="space-y-6">
+            <CollapsibleEditorCard title="Hero Content" contentClassName="grid gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="blog-hero-eyebrow">Eyebrow</Label>
+                <Input
+                  id="blog-hero-eyebrow"
+                  value={draft.heroEyebrow}
+                  onChange={(event) => updateDraft("heroEyebrow", event.target.value)}
+                  disabled={isReadOnly}
+                  data-testid="input-blog-hero-eyebrow"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="blog-hero-heading">Heading</Label>
+                <Input
+                  id="blog-hero-heading"
+                  value={draft.heroHeading}
+                  onChange={(event) => updateDraft("heroHeading", event.target.value)}
+                  disabled={isReadOnly}
+                  data-testid="input-blog-hero-heading"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Supporting Copy</Label>
+                <CmsRichTextEditor
+                  value={draft.heroSubheading}
+                  onChange={(heroSubheading) => updateDraft("heroSubheading", heroSubheading)}
+                  disabled={isReadOnly}
+                  placeholder="Add supporting copy beneath the hero heading..."
+                  data-testid="editor-blog-hero-subheading"
+                />
+              </div>
+            </CollapsibleEditorCard>
+
             <CollapsibleEditorCard title="Post Details" contentClassName="grid gap-5">
               <div className="grid gap-2">
                 <Label htmlFor="blog-title">Title</Label>
@@ -545,9 +825,18 @@ export default function CmsBlogEditorPage() {
                     id="blog-date"
                     type="date"
                     value={draft.date}
-                    onChange={(event) => updateDraft("date", event.target.value)}
+                    max={todayIso()}
+                    onChange={(event) => {
+                      updateDraft("date", event.target.value);
+                      setPublishDateEdited(true);
+                    }}
                     disabled={isReadOnly}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {page?.publishedAt
+                      ? "Defaults to the actual go-live date. Change it here when the public date needs correction."
+                      : "Set automatically when first published unless you enter a date."}
+                  </p>
                 </div>
                 <div className="grid gap-2">
                   <Label>Category</Label>
@@ -599,18 +888,16 @@ export default function CmsBlogEditorPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="blog-body">Body Content</Label>
-                <Textarea
-                  id="blog-body"
-                  value={draft.body}
-                  onChange={(event) => updateDraft("body", event.target.value)}
-                  className="min-h-[420px] font-mono text-sm leading-6"
-                  disabled={isReadOnly}
-                  data-testid="textarea-blog-body"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Use blank lines between paragraphs. Optional headings: ## Heading or ### Heading.
-                </p>
+                <Label>Body Content</Label>
+                <div className="[&_.ProseMirror]:min-h-[420px]">
+                  <CmsRichTextEditor
+                    value={draft.body}
+                    onChange={(body) => updateDraft("body", body)}
+                    disabled={isReadOnly}
+                    placeholder="Write the article content..."
+                    data-testid="editor-blog-body"
+                  />
+                </div>
               </div>
             </CollapsibleEditorCard>
 
@@ -627,18 +914,15 @@ export default function CmsBlogEditorPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="blog-faq-description">Description</Label>
-                <Textarea
-                  id="blog-faq-description"
+                <Label>Description</Label>
+                <CmsRichTextEditor
                   value={draft.faqDescription}
-                  onChange={(event) => updateDraft("faqDescription", event.target.value)}
-                  placeholder="Optional supporting text shown below the FAQ title."
-                  className="min-h-20"
+                  onChange={(faqDescription) => updateDraft("faqDescription", faqDescription)}
                   disabled={isReadOnly}
-                  data-testid="textarea-blog-faq-description"
+                  placeholder="Optional supporting text shown below the FAQ title..."
+                  data-testid="editor-blog-faq-description"
                 />
               </div>
-
               <div className="grid gap-4">
                 {draft.faqItems.length === 0 ? (
                   <div className="rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">
@@ -646,7 +930,6 @@ export default function CmsBlogEditorPage() {
                     post.
                   </div>
                 ) : null}
-
                 {draft.faqItems.map((item, index) => (
                   <div key={index} className="grid gap-4 rounded-lg border bg-muted/20 p-4">
                     <div className="flex items-center justify-between gap-3">
@@ -675,19 +958,17 @@ export default function CmsBlogEditorPage() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor={`blog-faq-answer-${index}`}>Answer</Label>
-                      <Textarea
-                        id={`blog-faq-answer-${index}`}
+                      <Label>Answer</Label>
+                      <CmsRichTextEditor
                         value={item.answer}
-                        onChange={(event) => updateFaqItem(index, "answer", event.target.value)}
-                        className="min-h-28"
+                        onChange={(answer) => updateFaqItem(index, "answer", answer)}
                         disabled={isReadOnly}
-                        data-testid={`textarea-blog-faq-answer-${index}`}
+                        placeholder="Answer the question..."
+                        data-testid={`editor-blog-faq-answer-${index}`}
                       />
                     </div>
                   </div>
                 ))}
-
                 <Button
                   type="button"
                   variant="outline"
@@ -699,8 +980,8 @@ export default function CmsBlogEditorPage() {
                   Add Question
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Complete question-and-answer pairs are rendered as an accordion and included in
-                  FAQPage structured data.
+                  Complete question-and-answer pairs render as a bottom-of-post accordion and are
+                  included in FAQPage structured data.
                 </p>
               </div>
             </CollapsibleEditorCard>
@@ -710,10 +991,29 @@ export default function CmsBlogEditorPage() {
             <CollapsibleEditorCard title="Cover Image">
               <CmsImageUpload
                 value={draft.imageUrl}
-                onChange={(url) => updateDraft("imageUrl", url)}
+                onChange={(imageUrl) =>
+                  setDraft((current) => ({
+                    ...current,
+                    imageUrl,
+                    imagePositionX: imageUrl === current.imageUrl ? current.imagePositionX : 50,
+                    imagePositionY: imageUrl === current.imageUrl ? current.imagePositionY : 50,
+                  }))
+                }
                 helpText="Displayed at the top of the article and on blog cards."
                 data-testid="upload-blog-cover"
               />
+              {draft.imageUrl ? (
+                <div className="mt-5">
+                  <ImagePositionPicker
+                    imageUrl={draft.imageUrl}
+                    positionX={draft.imagePositionX}
+                    positionY={draft.imagePositionY}
+                    onPositionChange={(imagePositionX, imagePositionY) => {
+                      setDraft((current) => ({ ...current, imagePositionX, imagePositionY }));
+                    }}
+                  />
+                </div>
+              ) : null}
             </CollapsibleEditorCard>
           </TabsContent>
 
@@ -767,53 +1067,55 @@ export default function CmsBlogEditorPage() {
             </CollapsibleEditorCard>
           </TabsContent>
         </Tabs>
-      </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur sm:hidden">
-        <div className="mx-auto flex max-w-lg items-center gap-2">
-          <Label htmlFor="mobile-blog-status" className="sr-only">
-            Post status
-          </Label>
-          <Select
-            value={draft.status}
-            onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])}
-            disabled={isReadOnly}
-          >
-            <SelectTrigger
-              id="mobile-blog-status"
-              className="h-11 w-[112px] shrink-0"
-              data-testid="select-mobile-blog-status"
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg backdrop-blur sm:hidden">
+          {draft.status === "scheduled" ? (
+            <Input
+              aria-label="Publish on"
+              type="datetime-local"
+              value={draft.scheduledAt}
+              min={dateTimeLocalValue(new Date())}
+              onChange={(event) => updateDraft("scheduledAt", event.target.value)}
+              disabled={isReadOnly}
+              className="mb-2"
+            />
+          ) : null}
+          <div className="mx-auto flex max-w-5xl items-center gap-2">
+            <Select
+              value={draft.status}
+              onValueChange={(value) => updateDraft("status", value as BlogDraft["status"])}
+              disabled={isReadOnly}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-11 w-11 shrink-0"
-            onClick={() => window.open(`/blog/${payload.slug}`, "_blank")}
-            disabled={!payload.slug}
-            aria-label="View live blog post"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            className="h-11 min-w-0 flex-1"
-            onClick={() => saveMutation.mutate()}
-            disabled={!canSave || saveMutation.isPending}
-            data-testid="button-mobile-save-blog-post"
-          >
-            {saveMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            {saveMutation.isPending ? "Saving…" : "Save Post"}
-          </Button>
+              <SelectTrigger className="min-w-0 flex-1" aria-label="Post status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => window.open(`/blog/${payload.slug}`, "_blank")}
+              disabled={!payload.slug}
+              aria-label="View live"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={!canSave || saveMutation.isPending}
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save
+            </Button>
+          </div>
         </div>
       </div>
     </AdminSidebar>

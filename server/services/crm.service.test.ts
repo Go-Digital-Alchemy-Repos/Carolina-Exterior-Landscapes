@@ -69,36 +69,46 @@ describe("crm service", () => {
     });
 
     expect(result.duplicate).toBe(false);
-    expect(mockCreateLead).toHaveBeenCalledWith(expect.objectContaining({
-      name: "Jane Homeowner",
-      email: "jane@example.com",
-      phone: null,
-      company: null,
-      message: "Yard cleanup",
-      source: "manual",
-    }));
+    expect(mockCreateLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Jane Homeowner",
+        email: "jane@example.com",
+        phone: null,
+        company: null,
+        message: "Yard cleanup",
+        source: "manual",
+      }),
+    );
   });
 
   it("updates duplicate leads and writes a note", async () => {
-    mockFindDuplicateLead.mockResolvedValue(lead({ metadata: { first: true }, formData: { old: "yes" } }));
+    mockFindDuplicateLead.mockResolvedValue(
+      lead({ metadata: { first: true }, formData: { old: "yes" } }),
+    );
     const { createOrUpdateCrmLead } = await import("./crm.service");
 
-    const result = await createOrUpdateCrmLead({
-      name: "Jane",
-      email: "JANE@example.com",
-      source: "website_form",
-      message: "New message",
-      metadata: { formName: "Quote" },
-      formData: { new: "yes" },
-    }, "user-1");
+    const result = await createOrUpdateCrmLead(
+      {
+        name: "Jane",
+        email: "JANE@example.com",
+        source: "website_form",
+        message: "New message",
+        metadata: { formName: "Quote" },
+        formData: { new: "yes" },
+      },
+      "user-1",
+    );
 
     expect(result.duplicate).toBe(true);
     expect(mockFindDuplicateLead).toHaveBeenCalledWith({ email: "JANE@example.com", phone: null });
-    expect(mockUpdateLead).toHaveBeenCalledWith("lead-1", expect.objectContaining({
-      message: "New message",
-      metadata: { first: true, formName: "Quote" },
-      formData: { old: "yes", new: "yes" },
-    }));
+    expect(mockUpdateLead).toHaveBeenCalledWith(
+      "lead-1",
+      expect.objectContaining({
+        message: "New message",
+        metadata: { first: true, formName: "Quote" },
+        formData: { old: "yes", new: "yes" },
+      }),
+    );
     expect(mockCreateNote).toHaveBeenCalledWith({
       leadId: "lead-1",
       body: "Duplicate lead received from website_form. Existing lead was updated.",
@@ -108,13 +118,15 @@ describe("crm service", () => {
 
   it("infers lead fields from form data", async () => {
     const { inferCrmLeadFromFormData } = await import("./crm.service");
-    expect(inferCrmLeadFromFormData({
-      name: { firstName: "Jane", lastName: "Homeowner" },
-      email: "jane@example.com",
-      tel: "7045551212",
-      organization: "Jane LLC",
-      comments: "Need a quote",
-    })).toEqual({
+    expect(
+      inferCrmLeadFromFormData({
+        name: { firstName: "Jane", lastName: "Homeowner" },
+        email: "jane@example.com",
+        tel: "7045551212",
+        organization: "Jane LLC",
+        comments: "Need a quote",
+      }),
+    ).toEqual({
       name: "Jane Homeowner",
       email: "jane@example.com",
       phone: "7045551212",
@@ -125,13 +137,15 @@ describe("crm service", () => {
 
   it("maps commercial quote fields into the lead summary", async () => {
     const { inferCrmLeadFromFormData } = await import("./crm.service");
-    expect(inferCrmLeadFromFormData({
-      contactName: "Pat Manager",
-      email: "pat@example.com",
-      phone: "7045553434",
-      companyName: "Acme Properties",
-      notes: "Three HOA communities",
-    })).toEqual({
+    expect(
+      inferCrmLeadFromFormData({
+        contactName: "Pat Manager",
+        email: "pat@example.com",
+        phone: "7045553434",
+        companyName: "Acme Properties",
+        notes: "Three HOA communities",
+      }),
+    ).toEqual({
       name: "Pat Manager",
       email: "pat@example.com",
       phone: "7045553434",
@@ -153,16 +167,23 @@ describe("crm service", () => {
       formName: "Residential Quote Form",
       formSubmissionId: "submission-2",
       data,
+      clientIp: "203.0.113.42",
     });
 
     expect(mockFindDuplicateLead).not.toHaveBeenCalled();
-    expect(mockCreateLead).toHaveBeenCalledWith(expect.objectContaining({
-      stage: "new",
-      source: "website_form",
-      formSubmissionId: "submission-2",
-      formData: data,
-      metadata: { formName: "Residential Quote Form" },
-    }));
+    expect(mockCreateLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: "new",
+        source: "website_form",
+        formSubmissionId: "submission-2",
+        formData: data,
+        metadata: {
+          formName: "Residential Quote Form",
+          leadType: "residential",
+          clientIp: "203.0.113.42",
+        },
+      }),
+    );
     expect(result.duplicate).toBe(false);
   });
 
@@ -170,13 +191,23 @@ describe("crm service", () => {
     const { ensureClientForWonLead } = await import("./crm.service");
 
     await ensureClientForWonLead(lead({ company: null }), "user-1");
-    expect(mockCreateClient).toHaveBeenLastCalledWith(expect.objectContaining({ clientType: "individual", preferredContactMethod: "email" }));
+    expect(mockCreateClient).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clientType: "individual", preferredContactMethod: "email" }),
+    );
 
     await ensureClientForWonLead(lead({ id: "lead-2", company: "Acme HOA" }), "user-1");
-    expect(mockCreateClient).toHaveBeenLastCalledWith(expect.objectContaining({ clientType: "business", companyName: "Acme HOA" }));
+    expect(mockCreateClient).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clientType: "business", companyName: "Acme HOA" }),
+    );
 
-    mockGetClientBySourceLeadId.mockResolvedValue({ id: "client-existing", sourceLeadId: "lead-2" });
-    const existing = await ensureClientForWonLead(lead({ id: "lead-2", company: "Acme HOA" }), "user-1");
+    mockGetClientBySourceLeadId.mockResolvedValue({
+      id: "client-existing",
+      sourceLeadId: "lead-2",
+    });
+    const existing = await ensureClientForWonLead(
+      lead({ id: "lead-2", company: "Acme HOA" }),
+      "user-1",
+    );
     expect(existing.id).toBe("client-existing");
     expect(mockCreateClient).toHaveBeenCalledTimes(2);
   });

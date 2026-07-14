@@ -5,7 +5,6 @@ import multer from "multer";
 import { authenticateToken } from "../middleware/auth";
 import { asyncHandler } from "../middleware/error-handler";
 import { storage } from "../storage/index";
-import * as r2Service from "../services/r2.service";
 import { optimizeImage, isImageMime, AVATAR_OPTIONS, ATTACHMENT_OPTIONS } from "../services/image-optimizer";
 
 const router = Router();
@@ -46,21 +45,10 @@ router.post(
     const optimized = await optimizeImage(req.file.buffer, req.file.mimetype, AVATAR_OPTIONS);
     const filename = `${targetUserId}-${Date.now()}${optimized.extension}`;
 
-    const r2Configured = await r2Service.isConfigured();
-
-    let publicUrl: string | null = null;
-
-    if (r2Configured) {
-      const key = `avatars/${filename}`;
-      publicUrl = await r2Service.uploadFile(key, optimized.buffer, optimized.mimeType);
-    }
-
-    if (!publicUrl) {
-      ensureUploadDir();
-      const localPath = path.join(LOCAL_UPLOAD_DIR, filename);
-      fs.writeFileSync(localPath, optimized.buffer);
-      publicUrl = `/uploads/avatars/${filename}`;
-    }
+    ensureUploadDir();
+    const localPath = path.join(LOCAL_UPLOAD_DIR, filename);
+    fs.writeFileSync(localPath, optimized.buffer);
+    const publicUrl = `/uploads/avatars/${filename}`;
 
     await storage.users.updateUser(targetUserId, { profileImageUrl: publicUrl });
 
@@ -134,20 +122,10 @@ router.post(
       filename = `${Date.now()}-${baseName}${optimized.extension}`;
     }
 
-    const r2Configured = await r2Service.isConfigured();
-    let publicUrl: string | null = null;
-
-    if (r2Configured) {
-      const key = `attachments/${filename}`;
-      publicUrl = await r2Service.uploadFile(key, fileBuffer, fileMime);
-    }
-
-    if (!publicUrl) {
-      ensureAttachmentDir();
-      const localPath = path.join(LOCAL_ATTACHMENT_DIR, filename);
-      fs.writeFileSync(localPath, fileBuffer);
-      publicUrl = `/uploads/attachments/${filename}`;
-    }
+    ensureAttachmentDir();
+    const localPath = path.join(LOCAL_ATTACHMENT_DIR, filename);
+    fs.writeFileSync(localPath, fileBuffer);
+    const publicUrl = `/uploads/attachments/${filename}`;
 
     res.json({
       url: publicUrl,

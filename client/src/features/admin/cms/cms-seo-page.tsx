@@ -433,7 +433,7 @@ export default function CmsSeoPage() {
                               <CmsImageUpload
                                 value={field.value ?? ""}
                                 onChange={field.onChange}
-                                helpText="Upload via R2 or pick from media library. Recommended 1200×630 px."
+                                helpText="Upload or pick from the media library. Recommended 1200×630 px."
                                 data-testid="upload-og-image"
                               />
                             </FormControl>
@@ -465,7 +465,7 @@ export default function CmsSeoPage() {
                               <CmsImageUpload
                                 value={field.value ?? ""}
                                 onChange={field.onChange}
-                                helpText="Upload via R2 or pick from media library. Recommended square format."
+                                helpText="Upload or pick from the media library. Recommended square format."
                                 data-testid="upload-org-logo"
                               />
                             </FormControl>

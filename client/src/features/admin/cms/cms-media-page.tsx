@@ -466,7 +466,7 @@ export default function CmsMediaPage() {
               <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-5">
                 {search || usageFilter !== "all" || typeFilter !== "all"
                   ? "Try a different search term or adjust your filters."
-                  : "Upload your first image or document to get started. All uploads are stored in Cloudflare R2."}
+                  : "Upload your first image or document to get started. All uploads are stored in /uploads/cms."}
               </p>
               {!search && usageFilter === "all" && typeFilter === "all" && (
                 <Button
@@ -922,9 +922,9 @@ export default function CmsMediaPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this media item?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the file from your media library and from Cloudflare R2.
-              Any pages or blocks that reference this URL will show a broken file link or missing
-              image.
+              This will permanently remove the file from your media library and local upload
+              storage. Any pages or blocks that reference this URL will show a broken file link or
+              missing image.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

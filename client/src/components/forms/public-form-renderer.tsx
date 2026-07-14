@@ -63,7 +63,10 @@ function buildInitialValues(fields: CmsFormField[]) {
               : { fullName: "" },
           ];
         case "address":
-          return [field.key, { street: "", street2: "", city: "", state: "", postalCode: "", country: "" }];
+          return [
+            field.key,
+            { street: "", street2: "", city: "", state: "", postalCode: "", country: "" },
+          ];
         case "list":
           return [field.key, []];
         case "hidden":
@@ -71,7 +74,7 @@ function buildInitialValues(fields: CmsFormField[]) {
         default:
           return [field.key, ""];
       }
-    })
+    }),
   ) as FormValues;
 }
 
@@ -87,7 +90,9 @@ function fieldSpanClass(field: CmsFormField, compact: boolean) {
   if (
     compact ||
     field.width !== "half" ||
-    ["textarea", "address", "consent", "list", "html", "section", "page", "image-choice"].includes(field.type)
+    ["textarea", "address", "consent", "list", "html", "section", "page", "image-choice"].includes(
+      field.type,
+    )
   ) {
     return "md:col-span-2";
   }
@@ -149,7 +154,13 @@ function validatePageFields(fields: CmsFormField[], values: FormValues) {
 
     if (field.type === "address") {
       const record = objectValue(value);
-      if (!text(record.street) && !text(record.city) && !text(record.state) && !text(record.postalCode) && !text(record.country)) {
+      if (
+        !text(record.street) &&
+        !text(record.city) &&
+        !text(record.state) &&
+        !text(record.postalCode) &&
+        !text(record.country)
+      ) {
         return `${field.label} is required`;
       }
       continue;
@@ -177,25 +188,33 @@ function ChoiceGroup({
   field,
   value,
   onChange,
+  appearance = "default",
 }: {
   field: CmsFormField;
   value: unknown;
   onChange: (next: unknown) => void;
+  appearance?: "default" | "quote";
 }) {
-  const choiceLayout = field.config?.choiceLayout === "grid"
-    ? "grid gap-3 sm:grid-cols-2"
-    : field.config?.choiceLayout === "inline"
-      ? "flex flex-wrap gap-4"
-      : "space-y-3";
+  const choiceLayout =
+    field.config?.choiceLayout === "grid"
+      ? "grid gap-3 sm:grid-cols-2"
+      : field.config?.choiceLayout === "inline"
+        ? "flex flex-wrap gap-4"
+        : "space-y-3";
   const unframedGridChoices = field.config?.choiceLayout === "grid";
-  const multiple = field.type === "checkbox" || field.type === "multiselect" || (field.type === "image-choice" && field.config?.selectionMode === "multiple");
+  const multiple =
+    field.type === "checkbox" ||
+    field.type === "multiselect" ||
+    (field.type === "image-choice" && field.config?.selectionMode === "multiple");
   const selectedValues = multiple ? arrayValue(value).map((item) => text(item)) : [];
   const selectedValue = multiple ? "" : text(value);
 
   return (
     <div className={choiceLayout}>
       {(field.options ?? []).map((option) => {
-        const checked = multiple ? selectedValues.includes(option.value) : selectedValue === option.value;
+        const checked = multiple
+          ? selectedValues.includes(option.value)
+          : selectedValue === option.value;
         const toggle = (nextChecked: boolean) => {
           if (multiple) {
             const nextValues = nextChecked
@@ -214,11 +233,15 @@ function ChoiceGroup({
               onClick={() => toggle(!checked)}
               className={cn(
                 "cursor-pointer rounded-xl border p-3 text-left transition-colors",
-                checked ? "border-primary ring-2 ring-primary/10" : "hover:border-primary/50"
+                checked ? "border-primary ring-2 ring-primary/10" : "hover:border-primary/50",
               )}
             >
               {option.imageUrl ? (
-                <img src={option.imageUrl} alt={option.label} className="mb-3 h-32 w-full rounded-lg object-cover" />
+                <img
+                  src={option.imageUrl}
+                  alt={option.label}
+                  className="mb-3 h-32 w-full rounded-lg object-cover"
+                />
               ) : null}
               <div className="flex items-center gap-3">
                 <Checkbox checked={checked} className="pointer-events-none" />
@@ -244,12 +267,18 @@ function ChoiceGroup({
         }
 
         return (
-          <label key={option.value} className="flex items-start gap-3 rounded-lg border px-3 py-2">
+          <label
+            key={option.value}
+            className={cn(
+              "flex items-start gap-3",
+              appearance === "quote" ? "py-1" : "rounded-lg border px-3 py-2",
+            )}
+          >
             <input
               type="radio"
               checked={checked}
               onChange={() => onChange(option.value)}
-              className="mt-1 h-4 w-4"
+              className="mt-0.5 h-4 w-4 accent-[hsl(var(--primary))]"
             />
             <span className="text-sm">{option.label}</span>
           </label>
@@ -268,9 +297,10 @@ function ListField({
   value: unknown;
   onChange: (next: unknown) => void;
 }) {
-  const columns = Array.isArray(field.config?.listColumns) && field.config.listColumns.length > 0
-    ? field.config.listColumns
-    : [{ id: "item", label: "Item", placeholder: "" } satisfies CmsFormListColumn];
+  const columns =
+    Array.isArray(field.config?.listColumns) && field.config.listColumns.length > 0
+      ? field.config.listColumns
+      : [{ id: "item", label: "Item", placeholder: "" } satisfies CmsFormListColumn];
   const rows = arrayValue(value).map((row) => objectValue(row));
   const maxRows = typeof field.config?.maxRows === "number" ? field.config.maxRows : 10;
 
@@ -307,13 +337,25 @@ function ListField({
               </div>
             ))}
           </div>
-          <Button type="button" variant="ghost" size="sm" className="mt-3 text-destructive" onClick={() => removeRow(index)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-3 text-destructive"
+            onClick={() => removeRow(index)}
+          >
             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             Remove Row
           </Button>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={addRow} disabled={rows.length >= maxRows}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={addRow}
+        disabled={rows.length >= maxRows}
+      >
         <Plus className="mr-1.5 h-3.5 w-3.5" />
         Add Row
       </Button>
@@ -340,10 +382,17 @@ function renderFieldInput(
   if (field.type === "section") {
     return (
       <div className="space-y-3 rounded-xl border bg-muted/10 p-4">
-        {text(field.config?.sectionTitle) ? <h4 className="text-lg font-semibold">{text(field.config?.sectionTitle)}</h4> : null}
-        {text(field.config?.sectionSubtitle) ? <p className="text-sm text-muted-foreground">{text(field.config?.sectionSubtitle)}</p> : null}
+        {text(field.config?.sectionTitle) ? (
+          <h4 className="text-lg font-semibold">{text(field.config?.sectionTitle)}</h4>
+        ) : null}
+        {text(field.config?.sectionSubtitle) ? (
+          <p className="text-sm text-muted-foreground">{text(field.config?.sectionSubtitle)}</p>
+        ) : null}
         {field.config?.showDivider !== false ? (
-          <div className="h-px w-full" style={{ backgroundColor: text(field.config?.dividerColor) || "#e2e8f0" }} />
+          <div
+            className="h-px w-full"
+            style={{ backgroundColor: text(field.config?.dividerColor) || "#e2e8f0" }}
+          />
         ) : null}
       </div>
     );
@@ -380,7 +429,9 @@ function renderFieldInput(
 
   if (field.type === "multiselect") {
     if (field.config?.selectionMode === "multiple" && field.config?.choiceLayout === "grid") {
-      return <ChoiceGroup field={field} value={value} onChange={setValue} />;
+      return (
+        <ChoiceGroup field={field} value={value} onChange={setValue} appearance={appearance} />
+      );
     }
 
     const current = arrayValue(value).map((item) => text(item));
@@ -403,7 +454,7 @@ function renderFieldInput(
   }
 
   if (supportsChoices(field.type)) {
-    return <ChoiceGroup field={field} value={value} onChange={setValue} />;
+    return <ChoiceGroup field={field} value={value} onChange={setValue} appearance={appearance} />;
   }
 
   if (field.type === "consent") {
@@ -456,15 +507,39 @@ function renderFieldInput(
     const compactLayout = field.config?.addressLayout === "compact";
     return (
       <div className={cn("grid gap-4", compactLayout ? "md:grid-cols-2" : "grid-cols-1")}>
-        <Input value={text(record.street)} onChange={(event) => setValue({ ...record, street: event.target.value })} placeholder="Street address" />
+        <Input
+          value={text(record.street)}
+          onChange={(event) => setValue({ ...record, street: event.target.value })}
+          placeholder="Street address"
+        />
         {field.config?.showStreet2 ? (
-          <Input value={text(record.street2)} onChange={(event) => setValue({ ...record, street2: event.target.value })} placeholder="Address line 2" />
+          <Input
+            value={text(record.street2)}
+            onChange={(event) => setValue({ ...record, street2: event.target.value })}
+            placeholder="Address line 2"
+          />
         ) : null}
-        <Input value={text(record.city)} onChange={(event) => setValue({ ...record, city: event.target.value })} placeholder="City" />
-        <Input value={text(record.state)} onChange={(event) => setValue({ ...record, state: event.target.value })} placeholder="State / Province" />
-        <Input value={text(record.postalCode)} onChange={(event) => setValue({ ...record, postalCode: event.target.value })} placeholder="Postal code" />
+        <Input
+          value={text(record.city)}
+          onChange={(event) => setValue({ ...record, city: event.target.value })}
+          placeholder="City"
+        />
+        <Input
+          value={text(record.state)}
+          onChange={(event) => setValue({ ...record, state: event.target.value })}
+          placeholder="State / Province"
+        />
+        <Input
+          value={text(record.postalCode)}
+          onChange={(event) => setValue({ ...record, postalCode: event.target.value })}
+          placeholder="Postal code"
+        />
         {field.config?.showCountry !== false ? (
-          <Input value={text(record.country)} onChange={(event) => setValue({ ...record, country: event.target.value })} placeholder="Country" />
+          <Input
+            value={text(record.country)}
+            onChange={(event) => setValue({ ...record, country: event.target.value })}
+            placeholder="Country"
+          />
         ) : null}
       </div>
     );
@@ -475,13 +550,19 @@ function renderFieldInput(
   }
 
   const inputType =
-    field.type === "email" ? "email" :
-    field.type === "tel" ? "tel" :
-    field.type === "website" ? "url" :
-    field.type === "number" ? "number" :
-    field.type === "date" ? "date" :
-    field.type === "time" ? "time" :
-    "text";
+    field.type === "email"
+      ? "email"
+      : field.type === "tel"
+        ? "tel"
+        : field.type === "website"
+          ? "url"
+          : field.type === "number"
+            ? "number"
+            : field.type === "date"
+              ? "date"
+              : field.type === "time"
+                ? "time"
+                : "text";
 
   return (
     <Input
@@ -506,13 +587,14 @@ export function PublicFormRenderer({
   onSubmitSuccess,
 }: PublicFormRendererProps) {
   const { toast } = useToast();
+  const [activeSlug, setActiveSlug] = useState(slug);
   const [values, setValues] = useState<FormValues>({});
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   const { data: form, isLoading } = useQuery<CmsForm>({
-    queryKey: ["/api/forms", slug],
+    queryKey: ["/api/forms", activeSlug],
     queryFn: async () => {
-      const response = await fetch(`/api/forms/${slug}`, { credentials: "include" });
+      const response = await fetch(`/api/forms/${activeSlug}`, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Form not found");
       }
@@ -527,9 +609,13 @@ export function PublicFormRenderer({
   const visibleFields = currentPageFields(activePage);
 
   useEffect(() => {
+    setActiveSlug(slug);
+  }, [slug]);
+
+  useEffect(() => {
     setValues(buildInitialValues(fields));
     setCurrentPageIndex(0);
-  }, [fields, slug]);
+  }, [fields, activeSlug]);
 
   const description =
     descriptionOverride ??
@@ -545,13 +631,16 @@ export function PublicFormRenderer({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/forms/${slug}/submit`, {
+      const response = await fetch(`/api/forms/${activeSlug}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(values),
       });
-      const payload = (await response.json().catch(() => ({}))) as { message?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        error?: string;
+      };
 
       if (!response.ok) {
         throw new Error(payload.message || payload.error || "Failed to submit form.");
@@ -590,7 +679,12 @@ export function PublicFormRenderer({
 
   if (!form) {
     return (
-      <div className={cn("rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground", className)}>
+      <div
+        className={cn(
+          "rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground",
+          className,
+        )}
+      >
         This form is unavailable right now.
       </div>
     );
@@ -601,22 +695,56 @@ export function PublicFormRenderer({
   const pageDescription = text(activePage.meta?.config?.pageDescription);
   const nextButtonText = text(activePage.meta?.config?.nextButtonText) || "Next";
   const previousButtonText = text(activePage.meta?.config?.previousButtonText) || "Previous";
+  const isQuoteForm = activeSlug === "residential-quote" || activeSlug === "commercial-quote";
 
   return (
-    <div className={cn(appearance === "quote" ? "space-y-6" : "space-y-4", className)} data-testid={`public-form-${slug}`}>
+    <div
+      className={cn(appearance === "quote" ? "space-y-6" : "space-y-4", className)}
+      data-testid={`public-form-${slug}`}
+    >
+      {isQuoteForm ? (
+        <div className="space-y-2" data-testid="quote-type-selector">
+          <Label className="font-bold text-foreground">What kind of quote do you need?</Label>
+          <div className="grid grid-cols-2 rounded-lg border bg-muted/30 p-1">
+            {(
+              [
+                { slug: "residential-quote", label: "Residential" },
+                { slug: "commercial-quote", label: "Commercial" },
+              ] as const
+            ).map((option) => (
+              <Button
+                key={option.slug}
+                type="button"
+                variant={activeSlug === option.slug ? "default" : "ghost"}
+                className="w-full"
+                aria-pressed={activeSlug === option.slug}
+                onClick={() => setActiveSlug(option.slug)}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {showHeader && (
         <div className="space-y-1">
           <h3 className="font-semibold public-heading-3">{form.name}</h3>
           {description ? <p className="text-sm public-supporting-copy">{description}</p> : null}
         </div>
       )}
-      {!showHeader && description ? <p className="text-sm public-supporting-copy">{description}</p> : null}
+      {!showHeader && description ? (
+        <p className="text-sm public-supporting-copy">{description}</p>
+      ) : null}
 
       {pages.length > 1 ? (
         <div className="space-y-3 rounded-xl border bg-muted/10 p-4">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="font-medium">Step {currentPageIndex + 1} of {pages.length}</span>
-            <span className="text-muted-foreground">{Math.round(((currentPageIndex + 1) / pages.length) * 100)}%</span>
+            <span className="font-medium">
+              Step {currentPageIndex + 1} of {pages.length}
+            </span>
+            <span className="text-muted-foreground">
+              {Math.round(((currentPageIndex + 1) / pages.length) * 100)}%
+            </span>
           </div>
           <div className="h-2 rounded-full bg-muted">
             <div
@@ -625,7 +753,9 @@ export function PublicFormRenderer({
             />
           </div>
           {pageTitle ? <h4 className="text-base font-semibold">{pageTitle}</h4> : null}
-          {pageDescription ? <p className="text-sm text-muted-foreground">{pageDescription}</p> : null}
+          {pageDescription ? (
+            <p className="text-sm text-muted-foreground">{pageDescription}</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -636,18 +766,21 @@ export function PublicFormRenderer({
           mutation.mutate();
         }}
       >
-        <div className={cn("grid", appearance === "quote" ? "gap-6" : "gap-4", compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+        <div
+          className={cn(
+            "grid",
+            appearance === "quote" ? "gap-6" : "gap-4",
+            compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2",
+          )}
+        >
           {visibleFields.map((field) => {
             if (field.type === "hidden") return null;
             const structural = isStructuralField(field.type);
             return (
-              <div
-                key={field.id}
-                className={cn("space-y-1.5", fieldSpanClass(field, compact))}
-              >
+              <div key={field.id} className={cn("space-y-1.5", fieldSpanClass(field, compact))}>
                 {!["html", "section"].includes(field.type) ? (
                   <Label
-                    htmlFor={`${slug}-${field.key}`}
+                    htmlFor={`${activeSlug}-${field.key}`}
                     className={appearance === "quote" ? "font-bold text-foreground" : undefined}
                   >
                     {field.label}
@@ -663,7 +796,9 @@ export function PublicFormRenderer({
                   compact,
                   appearance,
                 )}
-                {!structural && field.helpText ? <p className="text-xs public-helper-text">{field.helpText}</p> : null}
+                {!structural && field.helpText ? (
+                  <p className="text-xs public-helper-text">{field.helpText}</p>
+                ) : null}
               </div>
             );
           })}
@@ -671,7 +806,11 @@ export function PublicFormRenderer({
 
         <div className="flex flex-wrap items-center gap-3">
           {pages.length > 1 && currentPageIndex > 0 ? (
-            <Button type="button" variant="outline" onClick={() => setCurrentPageIndex((current) => Math.max(0, current - 1))}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCurrentPageIndex((current) => Math.max(0, current - 1))}
+            >
               {previousButtonText}
             </Button>
           ) : null}
@@ -682,7 +821,11 @@ export function PublicFormRenderer({
               onClick={() => {
                 const error = validatePageFields(visibleFields, values);
                 if (error) {
-                  toast({ title: "Complete this step", description: error, variant: "destructive" });
+                  toast({
+                    title: "Complete this step",
+                    description: error,
+                    variant: "destructive",
+                  });
                   return;
                 }
                 setCurrentPageIndex((current) => Math.min(pages.length - 1, current + 1));
@@ -696,7 +839,9 @@ export function PublicFormRenderer({
               disabled={mutation.isPending}
               className={cn(
                 compact ? "w-full" : undefined,
-                appearance === "quote" ? "h-12 w-full text-base font-bold uppercase tracking-wide" : undefined,
+                appearance === "quote"
+                  ? "h-12 w-full text-base font-bold uppercase tracking-wide"
+                  : undefined,
               )}
             >
               {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

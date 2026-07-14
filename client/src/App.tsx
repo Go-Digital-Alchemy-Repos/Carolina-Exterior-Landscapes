@@ -11,11 +11,10 @@ import { ProtectedRoute } from "@/components/shared/protected-route";
 import { PublicAdminEditButton } from "@/components/shared/public-admin-edit-button";
 import { loadGa4IfConsented } from "@/lib/analytics-runtime";
 import { subscribeToCookieConsent } from "@/lib/cookie-consent";
-import NotFound from "@/pages/not-found";
 
-const CmsHybridPage = lazy(() =>
+const CmsPublicPage = lazy(() =>
   import("@/features/public/cms-hybrid-page").then((module) => ({
-    default: module.CmsHybridPage,
+    default: module.CmsPublicPage,
   })),
 );
 const CmsPreviewPage = lazy(() => import("@/features/public/cms-preview-page"));
@@ -58,19 +57,19 @@ function PageLoader() {
 }
 
 function ContactCmsRoute() {
-  return <CmsHybridPage slug="contact" fallback={<NotFound />} />;
+  return <CmsPublicPage slug="contact" />;
 }
 
 function CmsNotFoundRoute() {
-  return <CmsHybridPage slug="404" fallback={<NotFound />} />;
+  return <CmsPublicPage slug="404" />;
 }
 
 function CmsSlugRoute({ params }: { params: { slug?: string } }) {
-  return <CmsHybridPage slug={params.slug ?? ""} fallback={<CmsNotFoundRoute />} />;
+  return <CmsPublicPage slug={params.slug ?? ""} />;
 }
 
 function LandscapeCmsRoute({ slug }: { slug: string }) {
-  return <CmsHybridPage slug={slug} fallback={<CmsNotFoundRoute />} />;
+  return <CmsPublicPage slug={slug} />;
 }
 
 function LandscapeLocationCmsRoute({ params }: { params: { slug?: string } }) {
@@ -247,26 +246,52 @@ function Router() {
         <Route path="/">{() => <LandscapeCmsRoute slug="home" />}</Route>
         <Route path="/about">{() => <LandscapeCmsRoute slug="about" />}</Route>
         <Route path="/get-a-quote">{() => <LandscapeCmsRoute slug="get-a-quote" />}</Route>
-        <Route path="/commercial-quote">{() => <LandscapeCmsRoute slug="commercial-quote" />}</Route>
-        <Route path="/residential-lawn-maintenance">{() => <LandscapeCmsRoute slug="residential-lawn-maintenance" />}</Route>
-        <Route path="/residential-landscaping">{() => <LandscapeCmsRoute slug="residential-landscaping" />}</Route>
-        <Route path="/residential-hardscape">{() => <LandscapeCmsRoute slug="residential-hardscape" />}</Route>
-        <Route path="/residential-pressure-washing">{() => <LandscapeCmsRoute slug="residential-pressure-washing" />}</Route>
-        <Route path="/mulching-and-planting">{() => <LandscapeCmsRoute slug="mulching-and-planting" />}</Route>
-        <Route path="/drainage-solutions">{() => <LandscapeCmsRoute slug="drainage-solutions" />}</Route>
+        <Route path="/commercial-quote">
+          {() => <LandscapeCmsRoute slug="commercial-quote" />}
+        </Route>
+        <Route path="/residential-lawn-maintenance">
+          {() => <LandscapeCmsRoute slug="residential-lawn-maintenance" />}
+        </Route>
+        <Route path="/residential-landscaping">
+          {() => <LandscapeCmsRoute slug="residential-landscaping" />}
+        </Route>
+        <Route path="/residential-hardscape">
+          {() => <LandscapeCmsRoute slug="residential-hardscape" />}
+        </Route>
+        <Route path="/residential-pressure-washing">
+          {() => <LandscapeCmsRoute slug="residential-pressure-washing" />}
+        </Route>
+        <Route path="/mulching-and-planting">
+          {() => <LandscapeCmsRoute slug="mulching-and-planting" />}
+        </Route>
+        <Route path="/drainage-solutions">
+          {() => <LandscapeCmsRoute slug="drainage-solutions" />}
+        </Route>
         <Route path="/commercial">{() => <LandscapeCmsRoute slug="commercial" />}</Route>
-        <Route path="/commercial-grounds-maintenance">{() => <LandscapeCmsRoute slug="commercial-grounds-maintenance" />}</Route>
-        <Route path="/commercial-landscaping">{() => <LandscapeCmsRoute slug="commercial-landscaping" />}</Route>
-        <Route path="/commercial-hardscape">{() => <LandscapeCmsRoute slug="commercial-hardscape" />}</Route>
-        <Route path="/commercial-drainage">{() => <LandscapeCmsRoute slug="commercial-drainage" />}</Route>
-        <Route path="/commercial-pressure-washing">{() => <LandscapeCmsRoute slug="commercial-pressure-washing" />}</Route>
+        <Route path="/commercial-grounds-maintenance">
+          {() => <LandscapeCmsRoute slug="commercial-grounds-maintenance" />}
+        </Route>
+        <Route path="/commercial-landscaping">
+          {() => <LandscapeCmsRoute slug="commercial-landscaping" />}
+        </Route>
+        <Route path="/commercial-hardscape">
+          {() => <LandscapeCmsRoute slug="commercial-hardscape" />}
+        </Route>
+        <Route path="/commercial-drainage">
+          {() => <LandscapeCmsRoute slug="commercial-drainage" />}
+        </Route>
+        <Route path="/commercial-pressure-washing">
+          {() => <LandscapeCmsRoute slug="commercial-pressure-washing" />}
+        </Route>
         <Route path="/hoa-services">{() => <LandscapeCmsRoute slug="hoa-services" />}</Route>
         <Route path="/service-areas">{() => <LandscapeCmsRoute slug="service-areas" />}</Route>
         <Route path="/service-areas/:slug" component={LandscapeLocationCmsRoute} />
         <Route path="/blog">{() => <LandscapeCmsRoute slug="blog" />}</Route>
         <Route path="/blog/:slug" component={LandscapeBlogPostCmsRoute} />
         <Route path="/gallery">{() => <LandscapeCmsRoute slug="gallery" />}</Route>
-        <Route path="/commercial-portfolio">{() => <LandscapeCmsRoute slug="commercial-portfolio" />}</Route>
+        <Route path="/commercial-portfolio">
+          {() => <LandscapeCmsRoute slug="commercial-portfolio" />}
+        </Route>
         <Route path="/faq">{() => <LandscapeCmsRoute slug="faq" />}</Route>
         <Route path="/commercial-faq">{() => <LandscapeCmsRoute slug="commercial-faq" />}</Route>
 
@@ -283,7 +308,11 @@ function Router() {
 
 function SetupGuard({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { data: setupStatus, isLoading, isError } = useQuery<{ needsSetup: boolean }>({
+  const {
+    data: setupStatus,
+    isLoading,
+    isError,
+  } = useQuery<{ needsSetup: boolean }>({
     queryKey: ["/api/setup/status"],
     staleTime: 60_000,
     retry: 2,
@@ -299,7 +328,10 @@ function SetupGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" data-testid="setup-guard-loading">
+      <div
+        className="flex items-center justify-center min-h-screen"
+        data-testid="setup-guard-loading"
+      >
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -345,7 +377,8 @@ function RouteAdminModeManager() {
       const link = document.createElement("link");
       link.id = "admin-fonts";
       link.rel = "stylesheet";
-      link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap";
+      link.href =
+        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap";
       document.head.appendChild(link);
     }
     return () => document.documentElement.classList.remove("admin-mode");

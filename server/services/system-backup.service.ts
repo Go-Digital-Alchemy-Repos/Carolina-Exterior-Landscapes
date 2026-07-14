@@ -37,7 +37,7 @@ interface BackupManifest {
   railwayEnvironment: string | null;
   railwayProjectId: string | null;
   railwayServiceId: string | null;
-  storageSource: "env" | "settings";
+  storageSource: "local";
   bucketName: string;
   bucketPrefix: string;
   tableCount: number;
@@ -369,9 +369,9 @@ export async function listRecentBackupManifests(limit = 10): Promise<BackupManif
 
 export async function getBackupStatus(): Promise<BackupStatus> {
   const configured = await isBackupStorageConfigured();
-  const storage = configured ? await getBackupStorageInfo() : null;
-  const latest = configured ? await listRecentBackupManifests(1).then((items) => items[0] ?? null) : null;
-  const recent = configured ? await listRecentBackupManifests(10) : [];
+  const storage = await getBackupStorageInfo();
+  const latest = await listRecentBackupManifests(1).then((items) => items[0] ?? null);
+  const recent = await listRecentBackupManifests(10);
 
   return {
     enabled: shouldEnableBackups(),

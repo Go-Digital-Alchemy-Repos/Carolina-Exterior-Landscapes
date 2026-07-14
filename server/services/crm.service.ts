@@ -1,4 +1,9 @@
-import { crmLeadInputSchema, type CrmClient, type CrmLead, type InsertCrmLead } from "@shared/schema";
+import {
+  crmLeadInputSchema,
+  type CrmClient,
+  type CrmLead,
+  type InsertCrmLead,
+} from "@shared/schema";
 import { storage } from "../storage";
 
 function text(value: unknown) {
@@ -6,7 +11,9 @@ function text(value: unknown) {
 }
 
 function object(value: unknown) {
-  return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function nullish(value: unknown) {
@@ -14,20 +21,40 @@ function nullish(value: unknown) {
   return normalized || null;
 }
 
+function leadTypeFromFormName(formName: string) {
+  const normalized = formName.toLowerCase();
+  if (normalized.includes("commercial") && normalized.includes("quote")) return "commercial";
+  if (normalized.includes("residential") && normalized.includes("quote")) return "residential";
+  return "contact";
+}
+
 export function inferCrmLeadFromFormData(data: Record<string, unknown>) {
   const nameObject = object(data.name);
-  const objectName = [text(nameObject.firstName), text(nameObject.lastName)].filter(Boolean).join(" ");
+  const objectName = [text(nameObject.firstName), text(nameObject.lastName)]
+    .filter(Boolean)
+    .join(" ");
   const fullNameObject = object(data.fullName);
-  const objectFullName = [text(fullNameObject.firstName), text(fullNameObject.lastName)].filter(Boolean).join(" ") || text(fullNameObject.fullName);
+  const objectFullName =
+    [text(fullNameObject.firstName), text(fullNameObject.lastName)].filter(Boolean).join(" ") ||
+    text(fullNameObject.fullName);
   const splitName = [text(data.firstName), text(data.lastName)].filter(Boolean).join(" ");
   const email = text(data.email) || text(data.contactEmail);
 
   return {
-    name: text(data.name) || text(data.fullName) || text(data.contactName) || objectName || objectFullName || splitName || email || "Website Lead",
+    name:
+      text(data.name) ||
+      text(data.fullName) ||
+      text(data.contactName) ||
+      objectName ||
+      objectFullName ||
+      splitName ||
+      email ||
+      "Website Lead",
     email: email || null,
     phone: text(data.phone) || text(data.tel) || text(data.contactPhone) || null,
     company: text(data.company) || text(data.companyName) || text(data.organization) || null,
-    message: text(data.message) || text(data.notes) || text(data.comments) || text(data.details) || null,
+    message:
+      text(data.message) || text(data.notes) || text(data.comments) || text(data.details) || null,
   };
 }
 
@@ -47,7 +74,10 @@ export async function createOrUpdateCrmLead(input: Partial<InsertCrmLead>, creat
     metadata: object(input.metadata),
   });
 
-  const duplicate = await storage.crm.findDuplicateLead({ email: parsed.email, phone: parsed.phone });
+  const duplicate = await storage.crm.findDuplicateLead({
+    email: parsed.email,
+    phone: parsed.phone,
+  });
   if (duplicate) {
     const lead = await storage.crm.updateLead(duplicate.id, {
       name: parsed.name || duplicate.name,
@@ -79,23 +109,32 @@ export async function createCrmLeadFromFormSubmission({
   formName,
   formSubmissionId,
   data,
+  clientIp,
 }: {
   formName: string;
   formSubmissionId: string;
   data: Record<string, unknown>;
+  clientIp?: string;
 }) {
   const parsed = crmLeadInputSchema.parse({
     ...inferCrmLeadFromFormData(data),
     source: "website_form",
     formSubmissionId,
     formData: data,
-    metadata: { formName },
+    metadata: {
+      formName,
+      leadType: leadTypeFromFormName(formName),
+      ...(clientIp ? { clientIp } : {}),
+    },
   });
   const lead = await storage.crm.createLead(parsed);
   return { lead, duplicate: false };
 }
 
-export async function ensureClientForWonLead(lead: CrmLead, createdById?: string): Promise<CrmClient> {
+export async function ensureClientForWonLead(
+  lead: CrmLead,
+  createdById?: string,
+): Promise<CrmClient> {
   const existing = await storage.crm.getClientBySourceLeadId(lead.id);
   if (existing) return existing;
 
@@ -116,12 +155,24 @@ export async function ensureClientForWonLead(lead: CrmLead, createdById?: string
     status: "onboarding",
     source: lead.source,
     formData: lead.formData ?? {},
-    metadata: { ...(lead.metadata ?? {}), convertedFromLeadId: lead.id, convertedAt: now.toISOString() },
+    metadata: {
+      ...(lead.metadata ?? {}),
+      convertedFromLeadId: lead.id,
+      convertedAt: now.toISOString(),
+    },
     ownerId: lead.ownerId,
     nextFollowUpAt: lead.nextFollowUpAt,
   });
 
-  await storage.crm.createNote({ leadId: lead.id, body: "Lead converted to client after moving to Won.", createdById });
-  await storage.crm.createClientNote({ clientId: client.id, body: "Client created from won lead.", createdById });
+  await storage.crm.createNote({
+    leadId: lead.id,
+    body: "Lead converted to client after moving to Won.",
+    createdById,
+  });
+  await storage.crm.createClientNote({
+    clientId: client.id,
+    body: "Client created from won lead.",
+    createdById,
+  });
   return client;
 }

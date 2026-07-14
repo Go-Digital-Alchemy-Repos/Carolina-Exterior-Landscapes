@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { AdminSidebar } from "./admin-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,16 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, Loader2 } from "lucide-react";
-import type { CmsForm, User } from "@shared/schema";
+import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, Loader2, Mail } from "lucide-react";
+import type { CmsForm, EmailTemplate, User } from "@shared/schema";
 
 type SettingsResponse = Record<string, Record<string, { value: string; isSecret: boolean }>>;
 const SECRET_FIELD_MASK = "*****";
-type IntegrationKey = "google_reviews";
+type IntegrationKey = "mailgun" | "google_reviews";
+export type SettingsSubview = "email" | "code-snippets" | "integrations";
 type ConnectionTestResult = { success: boolean; message: string };
 type NotificationUser = Omit<User, "password">;
 
@@ -195,14 +197,23 @@ function GoogleReviewsVerificationHelp({ message }: { message: string }) {
   );
 }
 
-export default function AdminSettingsPage() {
+export default function AdminSettingsPage({
+  initialSubview = "email",
+}: {
+  initialSubview?: SettingsSubview;
+}) {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: settings = {} } = useQuery<SettingsResponse>({ queryKey: ["/api/admin/settings"] });
   const { data: notificationUsers = [] } = useQuery<NotificationUser[]>({
     queryKey: ["/api/admin/users"],
+    enabled: initialSubview === "email",
   });
-  const { data: forms = [] } = useQuery<CmsForm[]>({ queryKey: ["/api/admin/forms"] });
+  const { data: forms = [] } = useQuery<CmsForm[]>({
+    queryKey: ["/api/admin/forms"],
+    enabled: initialSubview === "email",
+  });
   const activeForms = forms.filter((form) => form.isActive);
 
   const updateFormRecipient = useMutation({
@@ -247,12 +258,19 @@ export default function AdminSettingsPage() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
-      if (variables.category === "google_reviews") {
+      if (variables.category === "google_reviews" || variables.category === "mailgun") {
         queryClient.invalidateQueries({
-          queryKey: ["/api/admin/settings/test-connection", "google_reviews"],
+          queryKey: ["/api/admin/settings/test-connection", variables.category],
         });
       }
       toast({ title: "Setting saved" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Setting not saved",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -261,9 +279,9 @@ export default function AdminSettingsPage() {
       const res = await apiRequest("POST", "/api/admin/settings/test-connection", { integration });
       return res.json() as Promise<{ success: boolean; message: string }>;
     },
-    onSuccess: (result) => {
+    onSuccess: (result, integration) => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/admin/settings/test-connection", "google_reviews"],
+        queryKey: ["/api/admin/settings/test-connection", integration],
       });
       toast({
         title: result.success ? "Integration connected" : "Integration needs attention",
@@ -307,9 +325,13 @@ export default function AdminSettingsPage() {
   });
 
   const mailgun = settings.mailgun ?? {};
+  const emailNotifications = settings.email_notifications ?? {};
   const analytics = settings.google_analytics ?? {};
   const googleReviews = settings.google_reviews ?? {};
   const codeSnippets = settings.code_snippets ?? {};
+  const mailgunDomain = mailgun.mailgun_domain?.value?.trim() || "";
+  const mailgunApiKeyStored = Boolean(mailgun.mailgun_api_key?.value);
+  const canValidateMailgun = Boolean(mailgunDomain && mailgunApiKeyStored);
   const googleReviewsEnabled = googleReviews.google_reviews_enabled?.value === "true";
   const googleReviewsPlaceId = googleReviews.google_reviews_place_id?.value?.trim() || "";
   const googleReviewsApiKeyStored = Boolean(googleReviews.google_reviews_api_key?.value);
@@ -334,6 +356,43 @@ export default function AdminSettingsPage() {
     staleTime: 60_000,
     retry: false,
   });
+
+  const mailgunStatus = useQuery<ConnectionTestResult>({
+    queryKey: [
+      "/api/admin/settings/test-connection",
+      "mailgun",
+      mailgunDomain,
+      mailgunApiKeyStored,
+    ],
+    queryFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/settings/test-connection", {
+        integration: "mailgun",
+      });
+      return res.json() as Promise<ConnectionTestResult>;
+    },
+    enabled: canValidateMailgun,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const { data: emailTemplates = [] } = useQuery<EmailTemplate[]>({
+    queryKey: ["/api/admin/email-templates"],
+    enabled: initialSubview === "email",
+  });
+
+  const mailgunConnectionStatus = !canValidateMailgun
+    ? "missing"
+    : mailgunStatus.isFetching
+      ? "checking"
+      : mailgunStatus.data?.success
+        ? "verified"
+        : "failed";
+  const mailgunConnectionMessage = !canValidateMailgun
+    ? "Add a Mailgun domain and API key to verify delivery."
+    : mailgunStatus.data?.message ||
+      (mailgunStatus.error instanceof Error
+        ? mailgunStatus.error.message
+        : "Connection has not been verified yet.");
 
   const googleReviewsConnectionStatus = !googleReviewsEnabled
     ? "disabled"
@@ -363,86 +422,34 @@ export default function AdminSettingsPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="flex h-auto flex-wrap gap-1">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="email-settings">Email Settings</TabsTrigger>
+        <Tabs
+          value={initialSubview}
+          onValueChange={(value) => navigate(`/admin/settings/${value}`)}
+          className="space-y-6"
+        >
+          <TabsList className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto">
+            <TabsTrigger value="email">Email Settings</TabsTrigger>
             <TabsTrigger value="code-snippets">Code Snippets</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
           </TabsList>
+        </Tabs>
 
-          <TabsContent value="email-settings" className="mt-0 space-y-6">
+        {initialSubview === "email" ? (
+          <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Form Submission Recipients</CardTitle>
-                <CardDescription>
-                  Choose which system users receive an email when each active form is submitted.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {activeForms.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No active forms are available.</p>
-                ) : notificationUsers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No system users are available.</p>
-                ) : (
-                  activeForms.map((form) => (
-                    <div
-                      key={form.id}
-                      className="rounded-lg border p-4"
-                      data-testid={`form-recipients-${form.slug}`}
-                    >
-                      <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <h3 className="font-medium">{form.name}</h3>
-                        {form.isSystem ? <Badge variant="outline">System</Badge> : null}
-                        <span className="text-xs text-muted-foreground">/{form.slug}</span>
-                      </div>
-                      <div className="grid gap-2 md:grid-cols-2">
-                        {notificationUsers.map((user) => {
-                          const checked =
-                            Array.isArray(user.formNotificationFormIds) &&
-                            user.formNotificationFormIds.includes(form.id);
-                          const name =
-                            [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
-                          return (
-                            <label
-                              key={user.id}
-                              className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/30"
-                            >
-                              <Checkbox
-                                checked={checked}
-                                disabled={updateFormRecipient.isPending}
-                                onCheckedChange={(value) =>
-                                  updateFormRecipient.mutate({
-                                    user,
-                                    formId: form.id,
-                                    enabled: Boolean(value),
-                                  })
-                                }
-                                data-testid={`checkbox-recipient-${form.slug}-${user.id}`}
-                              />
-                              <span className="min-w-0">
-                                <span className="block text-sm font-medium">{name}</span>
-                                <span className="block truncate text-xs text-muted-foreground">
-                                  {user.email}
-                                </span>
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="general" className="mt-0 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Delivery</CardTitle>
-                <CardDescription>
-                  Configure Mailgun delivery for admin notifications and password resets.
-                </CardDescription>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle>Email Delivery</CardTitle>
+                    <CardDescription className="mt-1">
+                      Configure Mailgun delivery for admin notifications and password resets.
+                    </CardDescription>
+                  </div>
+                  <IntegrationStatusBadge
+                    status={mailgunConnectionStatus}
+                    message={mailgunConnectionMessage}
+                  />
+                </div>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2">
                 <SetupInstructions
@@ -506,12 +513,172 @@ export default function AdminSettingsPage() {
                     )}
                   />
                 </div>
+                <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => testIntegration.mutate("mailgun")}
+                    disabled={!canValidateMailgun || testIntegration.isPending}
+                  >
+                    {testIntegration.isPending ? "Verifying..." : "Verify Connection"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Checks the saved API key against the configured Mailgun sending domain.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Analytics</CardTitle>
+                <CardTitle>Form Submission Recipients</CardTitle>
+                <CardDescription>
+                  Choose override inboxes for contact and quote forms, then assign system users per
+                  active form.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-form-recipient">Contact Form Recipient</Label>
+                    <Input
+                      id="contact-form-recipient"
+                      type="email"
+                      defaultValue={emailNotifications.contact_form_recipient_email?.value ?? ""}
+                      placeholder="contact@example.com"
+                      onBlur={(event) =>
+                        saveSetting.mutate({
+                          category: "email_notifications",
+                          key: "contact_form_recipient_email",
+                          value: event.currentTarget.value.trim(),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Overrides assigned users for website contact form submissions.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quote-form-recipient">Quote Form Recipient</Label>
+                    <Input
+                      id="quote-form-recipient"
+                      type="email"
+                      defaultValue={emailNotifications.quote_form_recipient_email?.value ?? ""}
+                      placeholder="quotes@example.com"
+                      onBlur={(event) =>
+                        saveSetting.mutate({
+                          category: "email_notifications",
+                          key: "quote_form_recipient_email",
+                          value: event.currentTarget.value.trim(),
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Overrides assigned users for residential and commercial quote requests.
+                    </p>
+                  </div>
+                </div>
+                {activeForms.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No active forms are available.</p>
+                ) : notificationUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No system users are available.</p>
+                ) : (
+                  activeForms.map((form) => (
+                    <div
+                      key={form.id}
+                      className="rounded-lg border p-4"
+                      data-testid={`form-recipients-${form.slug}`}
+                    >
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <h3 className="font-medium">{form.name}</h3>
+                        {form.isSystem ? <Badge variant="outline">System</Badge> : null}
+                        <span className="text-xs text-muted-foreground">/{form.slug}</span>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {notificationUsers.map((user) => {
+                          const checked =
+                            Array.isArray(user.formNotificationFormIds) &&
+                            user.formNotificationFormIds.includes(form.id);
+                          const name =
+                            [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+                          return (
+                            <label
+                              key={user.id}
+                              className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/30"
+                            >
+                              <Checkbox
+                                checked={checked}
+                                disabled={updateFormRecipient.isPending}
+                                onCheckedChange={(value) =>
+                                  updateFormRecipient.mutate({
+                                    user,
+                                    formId: form.id,
+                                    enabled: Boolean(value),
+                                  })
+                                }
+                                data-testid={`checkbox-recipient-${form.slug}-${user.id}`}
+                              />
+                              <span className="min-w-0">
+                                <span className="block text-sm font-medium">{name}</span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {user.email}
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Templates</CardTitle>
+                <CardDescription>
+                  Manage the transactional messages sent by website and administrator workflows.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {emailTemplates.map((template) => (
+                  <button
+                    key={template.slug}
+                    type="button"
+                    onClick={() => navigate(`/admin/system/emails?template=${template.slug}`)}
+                    className="flex w-full items-center justify-between gap-4 rounded-md border p-3 text-left transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <p className="font-medium">{template.name}</p>
+                        <p className="line-clamp-1 text-sm text-muted-foreground">
+                          {template.description}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                      {template.isActive ? "Active" : "Paused"}
+                    </span>
+                  </button>
+                ))}
+                {emailTemplates.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No managed email templates found.</p>
+                ) : null}
+                <Button variant="outline" onClick={() => navigate("/admin/system/emails")}>
+                  Manage Email Templates
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
+        {initialSubview === "integrations" ? (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Google Analytics</CardTitle>
                 <CardDescription>Optional public runtime analytics setting.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -551,7 +718,7 @@ export default function AdminSettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Integrations</CardTitle>
+                <CardTitle>Google Reviews</CardTitle>
                 <CardDescription>
                   Configure third-party services used by dynamic website blocks.
                 </CardDescription>
@@ -709,84 +876,84 @@ export default function AdminSettingsPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        ) : null}
 
-          <TabsContent value="code-snippets" className="mt-0" forceMount>
-            <Card>
-              <CardHeader>
-                <CardTitle>Code Snippets</CardTitle>
-                <CardDescription>
-                  Add verification tags, analytics pixels, and trusted third-party snippets to
-                  public site pages.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form
-                  className="space-y-5"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    const formData = new FormData(event.currentTarget);
-                    saveCodeSnippets.mutate({
-                      headSnippets: String(formData.get("headSnippets") ?? ""),
-                      headerSnippets: String(formData.get("headerSnippets") ?? ""),
-                      footerSnippets: String(formData.get("footerSnippets") ?? ""),
-                    });
-                  }}
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="head-snippets">Head Tags</Label>
-                    <Textarea
-                      id="head-snippets"
-                      name="headSnippets"
-                      defaultValue={codeSnippets.head_snippets?.value ?? ""}
-                      className="min-h-40 font-mono text-xs"
-                      spellCheck={false}
-                      placeholder={'<meta name="google-site-verification" content="..." />'}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Injected before the closing head tag on public pages.
-                    </p>
-                  </div>
+        {initialSubview === "code-snippets" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Code Snippets</CardTitle>
+              <CardDescription>
+                Add verification tags, analytics pixels, and trusted third-party snippets to public
+                site pages.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="space-y-5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  saveCodeSnippets.mutate({
+                    headSnippets: String(formData.get("headSnippets") ?? ""),
+                    headerSnippets: String(formData.get("headerSnippets") ?? ""),
+                    footerSnippets: String(formData.get("footerSnippets") ?? ""),
+                  });
+                }}
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="head-snippets">Head Tags</Label>
+                  <Textarea
+                    id="head-snippets"
+                    name="headSnippets"
+                    defaultValue={codeSnippets.head_snippets?.value ?? ""}
+                    className="min-h-40 font-mono text-xs"
+                    spellCheck={false}
+                    placeholder={'<meta name="google-site-verification" content="..." />'}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Injected before the closing head tag on public pages.
+                  </p>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="header-snippets">Body Start Tags</Label>
-                    <Textarea
-                      id="header-snippets"
-                      name="headerSnippets"
-                      defaultValue={codeSnippets.header_snippets?.value ?? ""}
-                      className="min-h-40 font-mono text-xs"
-                      spellCheck={false}
-                      placeholder="<!-- Tag manager noscript or body-start snippet -->"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Injected immediately after the opening body tag on public pages. Search
-                      Console meta tags belong in Head Tags.
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="header-snippets">Body Start Tags</Label>
+                  <Textarea
+                    id="header-snippets"
+                    name="headerSnippets"
+                    defaultValue={codeSnippets.header_snippets?.value ?? ""}
+                    className="min-h-40 font-mono text-xs"
+                    spellCheck={false}
+                    placeholder="<!-- Tag manager noscript or body-start snippet -->"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Injected immediately after the opening body tag on public pages. Search Console
+                    meta tags belong in Head Tags.
+                  </p>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-snippets">Footer Tags</Label>
-                    <Textarea
-                      id="footer-snippets"
-                      name="footerSnippets"
-                      defaultValue={codeSnippets.footer_snippets?.value ?? ""}
-                      className="min-h-40 font-mono text-xs"
-                      spellCheck={false}
-                      placeholder="<!-- Chat widgets, pixels, or body-end snippets -->"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Injected before the closing body tag on public pages.
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="footer-snippets">Footer Tags</Label>
+                  <Textarea
+                    id="footer-snippets"
+                    name="footerSnippets"
+                    defaultValue={codeSnippets.footer_snippets?.value ?? ""}
+                    className="min-h-40 font-mono text-xs"
+                    spellCheck={false}
+                    placeholder="<!-- Chat widgets, pixels, or body-end snippets -->"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Injected before the closing body tag on public pages.
+                  </p>
+                </div>
 
-                  <Button type="submit" disabled={saveCodeSnippets.isPending}>
-                    {saveCodeSnippets.isPending ? "Saving..." : "Save Code Snippets"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <Button type="submit" disabled={saveCodeSnippets.isPending}>
+                  {saveCodeSnippets.isPending ? "Saving..." : "Save Code Snippets"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </AdminSidebar>
   );

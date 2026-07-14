@@ -51,7 +51,7 @@ interface BackupManifest {
   railwayEnvironment: string | null;
   railwayProjectId: string | null;
   railwayServiceId: string | null;
-  storageSource: "env" | "settings";
+  storageSource: "local";
   bucketName: string;
   bucketPrefix: string;
   tableCount: number;
@@ -69,7 +69,7 @@ interface BackupStatusResponse {
   storage: {
     bucketName: string;
     prefix: string;
-    source: "env" | "settings";
+    source: "local";
   } | null;
   latest: BackupManifest | null;
   recent: BackupManifest[];
@@ -107,7 +107,7 @@ export default function SystemBackupsPage() {
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/system/backups/status"] });
       toast({
         title: "Backup started successfully",
-        description: "A fresh system snapshot was created and stored in R2.",
+        description: "A fresh system snapshot was created in local upload storage.",
       });
     },
     onError: (error: Error) => {
@@ -204,8 +204,7 @@ export default function SystemBackupsPage() {
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Backup storage is not configured yet</AlertTitle>
             <AlertDescription>
-              Add the backup R2 environment variables in Railway, or keep the existing Cloudflare R2
-              integration configured so the backup service has a place to write snapshots.
+              Make sure the application can write to the local /uploads/system-backups directory.
             </AlertDescription>
           </Alert>
         )}
@@ -215,10 +214,9 @@ export default function SystemBackupsPage() {
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>Backups are ready</AlertTitle>
             <AlertDescription>
-              Snapshots are stored in <strong>{data.storage?.bucketName}</strong> at prefix{" "}
-              <strong>{data.storage?.prefix}</strong>. The system keeps the newest{" "}
-              <strong>{data.maxSnapshots}</strong> backups and also prunes anything older than{" "}
-              <strong>{data.retentionDays}</strong> days.
+              Snapshots are stored locally at <strong>{data.storage?.prefix}</strong>. The system
+              keeps the newest <strong>{data.maxSnapshots}</strong> backups and also prunes anything
+              older than <strong>{data.retentionDays}</strong> days.
             </AlertDescription>
           </Alert>
         )}
@@ -406,13 +404,13 @@ export default function SystemBackupsPage() {
                 <>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Bucket
+                      Storage
                     </p>
                     <p className="mt-1 text-sm">{data?.storage?.bucketName || "Not configured"}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Prefix
+                      Directory
                     </p>
                     <p className="mt-1 break-all rounded-lg bg-muted/40 px-3 py-2 font-mono text-xs">
                       {data?.storage?.prefix || "Not configured"}
@@ -456,101 +454,59 @@ export default function SystemBackupsPage() {
                 ))}
               </div>
             ) : recent.length > 0 ? (
-              <>
-                <div className="space-y-3 md:hidden">
-                  {recent.map((backup) => (
-                    <article key={backup.key} className="rounded-xl border p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{formatDateTime(backup.createdAt)}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(backup.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <Badge variant="outline">{reasonLabel(backup.reason)}</Badge>
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                        <p>
-                          <span className="text-muted-foreground">Rows:</span>{" "}
-                          {backup.totalRowCount.toLocaleString()}
-                        </p>
-                        <p>
-                          <span className="text-muted-foreground">Version:</span>{" "}
-                          {backup.appVersion}
-                        </p>
-                      </div>
-                      <p className="mt-3 break-all font-mono text-xs text-muted-foreground">
-                        {backup.key}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-4 min-h-11 w-full"
-                        onClick={() => setRestoreTarget(backup)}
-                        disabled={restoreBackupMutation.isPending || runBackupMutation.isPending}
-                      >
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Restore this backup
-                      </Button>
-                    </article>
-                  ))}
-                </div>
-                <ScrollArea className="hidden w-full md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Rows</TableHead>
-                        <TableHead>Version</TableHead>
-                        <TableHead>Key</TableHead>
-                        <TableHead className="w-[120px] text-right">Action</TableHead>
+              <ScrollArea className="w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Rows</TableHead>
+                      <TableHead>Version</TableHead>
+                      <TableHead>Key</TableHead>
+                      <TableHead className="w-[120px] text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recent.map((backup) => (
+                      <TableRow key={backup.key} data-testid={`row-backup-${backup.createdAt}`}>
+                        <TableCell>
+                          <div className="min-w-[180px]">
+                            <p className="font-medium">{formatDateTime(backup.createdAt)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(backup.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{reasonLabel(backup.reason)}</Badge>
+                        </TableCell>
+                        <TableCell>{backup.totalRowCount.toLocaleString()}</TableCell>
+                        <TableCell>{backup.appVersion}</TableCell>
+                        <TableCell className="max-w-[320px]">
+                          <span className="block truncate font-mono text-xs text-muted-foreground">
+                            {backup.key}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setRestoreTarget(backup)}
+                            disabled={
+                              restoreBackupMutation.isPending || runBackupMutation.isPending
+                            }
+                            data-testid={`button-restore-backup-${backup.createdAt}`}
+                          >
+                            <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                            Restore
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recent.map((backup) => (
-                        <TableRow key={backup.key} data-testid={`row-backup-${backup.createdAt}`}>
-                          <TableCell>
-                            <div className="min-w-[180px]">
-                              <p className="font-medium">{formatDateTime(backup.createdAt)}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(backup.createdAt), {
-                                  addSuffix: true,
-                                })}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{reasonLabel(backup.reason)}</Badge>
-                          </TableCell>
-                          <TableCell>{backup.totalRowCount.toLocaleString()}</TableCell>
-                          <TableCell>{backup.appVersion}</TableCell>
-                          <TableCell className="max-w-[320px]">
-                            <span className="block truncate font-mono text-xs text-muted-foreground">
-                              {backup.key}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setRestoreTarget(backup)}
-                              disabled={
-                                restoreBackupMutation.isPending || runBackupMutation.isPending
-                              }
-                              data-testid={`button-restore-backup-${backup.createdAt}`}
-                            >
-                              <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                              Restore
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              </>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             ) : (
               <div className="flex items-center gap-3 rounded-lg border border-dashed p-4 text-muted-foreground">
                 <AlertCircle className="h-4 w-4" />

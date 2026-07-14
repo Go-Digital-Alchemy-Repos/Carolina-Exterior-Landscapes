@@ -12,8 +12,12 @@ describe("PublicFormRenderer", () => {
   let root: Root;
 
   beforeEach(() => {
-    (globalThis as typeof globalThis & { React?: typeof React; IS_REACT_ACT_ENVIRONMENT?: boolean }).React = React;
-    (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    (
+      globalThis as typeof globalThis & { React?: typeof React; IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).React = React;
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
     class MockResizeObserver {
       observe() {}
       unobserve() {}
@@ -73,5 +77,66 @@ describe("PublicFormRenderer", () => {
     expect(container.querySelectorAll('[role="checkbox"]')).toHaveLength(2);
     expect(container.textContent).toContain("Services Needed (Select all that apply)");
     expect(container.querySelector('button[type="submit"]')?.className).toContain("w-full");
+    expect(container.textContent).toContain("What kind of quote do you need?");
+    expect(container.textContent).toContain("Residential");
+    expect(container.textContent).toContain("Commercial");
+  });
+
+  it("switches from residential to commercial quote fields", async () => {
+    const residential = {
+      id: "residential-id",
+      name: "Residential Quote Form",
+      slug: "residential-quote",
+      fields: [
+        {
+          id: "name",
+          key: "name",
+          label: "Full Name",
+          type: "text",
+          required: true,
+          width: "full",
+          options: [],
+          config: {},
+        },
+      ],
+      settings: {},
+    } as unknown as CmsForm;
+    const commercial = {
+      id: "commercial-id",
+      name: "Commercial Quote Form",
+      slug: "commercial-quote",
+      fields: [
+        {
+          id: "company",
+          key: "companyName",
+          label: "Company / HOA Name",
+          type: "text",
+          required: true,
+          width: "full",
+          options: [],
+          config: {},
+        },
+      ],
+      settings: {},
+    } as unknown as CmsForm;
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["/api/forms", "residential-quote"], residential);
+    queryClient.setQueryData(["/api/forms", "commercial-quote"], commercial);
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <PublicFormRenderer slug="residential-quote" appearance="quote" />
+        </QueryClientProvider>,
+      );
+    });
+
+    const commercialButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Commercial",
+    );
+    await act(async () => commercialButton?.click());
+
+    expect(container.textContent).toContain("Company / HOA Name");
+    expect(container.textContent).not.toContain("Full Name");
   });
 });
