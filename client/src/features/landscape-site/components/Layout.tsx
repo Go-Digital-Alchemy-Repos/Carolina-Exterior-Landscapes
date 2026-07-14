@@ -191,6 +191,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {BRAND.email}
               </a>
             </span>
+            <a
+              href={`tel:${BRAND.phoneTel}`}
+              className="flex items-center gap-2 text-primary-foreground/90 transition-colors hover:text-white"
+            >
+              <Phone className="h-4 w-4 text-primary-foreground/70" />
+              {BRAND.phoneDisplay}
+            </a>
           </div>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-2 text-primary-foreground/90">
@@ -292,13 +299,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden lg:flex items-center gap-6">
-            <a
-              href={`tel:${BRAND.phoneTel}`}
-              className="flex items-center gap-2 font-extrabold text-foreground hover:text-primary transition-colors"
-            >
-              <Phone className="h-5 w-5 text-primary" />
-              {BRAND.phoneDisplay}
-            </a>
             <Button
               asChild
               className="font-extrabold tracking-wide rounded-full px-6 h-11 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all"
