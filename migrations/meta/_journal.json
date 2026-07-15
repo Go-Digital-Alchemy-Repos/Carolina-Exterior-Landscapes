@@ -162,6 +162,13 @@
       "when": 1776079800000,
       "tag": "0020_event_slugs",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1784131200000,
+      "tag": "0026_security_session_version",
+      "breakpoints": true
     }
   ]
 }

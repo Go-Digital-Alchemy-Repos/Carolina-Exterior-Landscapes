@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
+import tls from "node:tls";
 import * as schema from "@shared/schema";
 import { recordDbQuery } from "./utils/metrics";
 
@@ -13,11 +14,34 @@ if (!process.env.DATABASE_URL) {
 
 const isProduction = process.env.NODE_ENV === "production";
 
+function databaseSslConfig(): pg.PoolConfig["ssl"] {
+  if (isProduction) {
+    if (process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === "false") {
+      throw new Error("DATABASE_SSL_REJECT_UNAUTHORIZED=false is not allowed in production");
+    }
+    const ca = process.env.DATABASE_SSL_CA?.replace(/\\n/g, "\n");
+    const expectedName = process.env.DATABASE_SSL_EXPECTED_NAME;
+    return {
+      rejectUnauthorized: true,
+      ...(ca ? { ca } : {}),
+      ...(expectedName
+        ? {
+            checkServerIdentity: (_hostname: string, certificate: tls.PeerCertificate) =>
+              tls.checkServerIdentity(expectedName, certificate),
+          }
+        : {}),
+    };
+  }
+  if (process.env.DATABASE_SSL === "true") {
+    const ca = process.env.DATABASE_SSL_CA?.replace(/\\n/g, "\n");
+    return { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false", ...(ca ? { ca } : {}) };
+  }
+  return undefined;
+}
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ...(isProduction && !process.env.DATABASE_URL.includes("sslmode=")
-    ? { ssl: { rejectUnauthorized: false } }
-    : {}),
+  ssl: databaseSslConfig(),
 });
 
 const origPoolQuery = Pool.prototype.query;

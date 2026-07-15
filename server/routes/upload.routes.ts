@@ -6,6 +6,7 @@ import { authenticateToken } from "../middleware/auth";
 import { asyncHandler } from "../middleware/error-handler";
 import { storage } from "../storage/index";
 import { optimizeImage, isImageMime, AVATAR_OPTIONS, ATTACHMENT_OPTIONS } from "../services/image-optimizer";
+import { avatarUploadLimiter } from "../middleware/security";
 
 const router = Router();
 const upload = multer({
@@ -33,6 +34,7 @@ router.use(authenticateToken);
 
 router.post(
   "/avatar",
+  avatarUploadLimiter,
   upload.single("avatar"),
   asyncHandler(async (req, res) => {
     if (!req.file) {

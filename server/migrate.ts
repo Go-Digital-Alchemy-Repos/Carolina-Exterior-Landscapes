@@ -289,6 +289,13 @@ async function ensureCrmTables() {
   await db.execute(sql`CREATE INDEX IF NOT EXISTS "idx_crm_client_tasks_completed" ON "crm_client_tasks" ("completed")`);
 }
 
+async function ensureSecurityColumns() {
+  await db.execute(sql`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS session_version integer NOT NULL DEFAULT 0
+  `);
+}
+
 export async function runMigrations() {
   const migrationsFolder = path.resolve(
     process.env.NODE_ENV === "production" ? __dirname : process.cwd(),
@@ -299,6 +306,7 @@ export async function runMigrations() {
   if (bootstrapState.publicTableCount > 0) {
     await ensureEventSlugs();
     await ensureCrmTables();
+    await ensureSecurityColumns();
   }
 
   if (!bootstrapState.hasJournal && bootstrapState.publicTableCount > 0) {
@@ -313,6 +321,7 @@ export async function runMigrations() {
     await migrate(db, { migrationsFolder });
     await ensureEventSlugs();
     await ensureCrmTables();
+    await ensureSecurityColumns();
     logger.app.info("Database migrations completed successfully");
   } catch (err) {
     logger.app.error("Database migration failed", err);

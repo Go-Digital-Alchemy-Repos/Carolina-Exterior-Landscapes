@@ -11,6 +11,7 @@ export function enforceRequiredSecrets() {
   const required: Record<string, string | undefined> = {
     SESSION_SECRET: process.env.SESSION_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    APP_URL: process.env.APP_URL,
   };
 
   const missing = Object.entries(required)
@@ -114,6 +115,24 @@ export const guestMessageLimiter = rateLimit({
   skip: () => isDev,
 });
 
+export const publicFormSubmissionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many form submissions. Please try again later." },
+  skip: () => isDev,
+});
+
+export const avatarUploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many image uploads. Please try again later." },
+  skip: () => isDev,
+});
+
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -177,11 +196,6 @@ export const originCheck: RequestHandler = (req: Request, res: Response, next: N
   }
 
   const trusted = getTrustedOrigins();
-  const host = req.get("host");
-  if (host) {
-    trusted.add(`https://${host}`);
-  }
-
   if (trusted.has(source)) {
     return next();
   }

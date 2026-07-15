@@ -1,5 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { hashPassword, comparePassword, generateToken, requireAdminPermission, requireRole } from "./auth";
+import {
+  authenticateToken,
+  hashPassword,
+  comparePassword,
+  generateToken,
+  isUserSessionValid,
+  requireAdminPermission,
+  requireRole,
+} from "./auth";
 import type { Request, Response, NextFunction } from "express";
 import type { User } from "@shared/schema";
 
@@ -13,6 +21,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     role: "editor",
     profileImageUrl: null,
     isSuspended: false,
+    sessionVersion: 0,
     lastLoginAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -43,15 +52,44 @@ describe("generateToken", () => {
     expect(parts).toHaveLength(3);
   });
 
-  it("encodes the correct payload (userId, email, role)", () => {
-    const user = makeUser({ id: "u42", email: "a@b.com", role: "admin" });
+  it("encodes the correct payload and revocation version", () => {
+    const user = makeUser({ id: "u42", email: "a@b.com", role: "admin", sessionVersion: 7 });
     const token = generateToken(user);
     const payloadB64 = token.split(".")[1];
     const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString());
     expect(payload.userId).toBe("u42");
     expect(payload.email).toBe("a@b.com");
     expect(payload.role).toBe("admin");
+    expect(payload.sessionVersion).toBe(7);
     expect(payload.exp).toBeGreaterThan(Math.floor(Date.now() / 1000));
+  });
+});
+
+describe("isUserSessionValid", () => {
+  const payload = { userId: "usr_1", email: "test@example.com", role: "admin", sessionVersion: 2 };
+
+  it("rejects suspended users and revoked token versions", () => {
+    expect(isUserSessionValid(makeUser({ isSuspended: true, sessionVersion: 2 }), payload)).toBe(false);
+    expect(isUserSessionValid(makeUser({ sessionVersion: 3 }), payload)).toBe(false);
+  });
+
+  it("allows an active user with the current token version", () => {
+    expect(isUserSessionValid(makeUser({ sessionVersion: 2 }), payload)).toBe(true);
+  });
+});
+
+describe("authenticateToken", () => {
+  it("rejects anonymous requests before any admin authorization can run", async () => {
+    const req = { cookies: {} } as Request;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    } as unknown as Response;
+    const next = vi.fn() as NextFunction;
+
+    await authenticateToken(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
   });
 });
 

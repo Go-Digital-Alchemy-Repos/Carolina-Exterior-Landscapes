@@ -35,6 +35,7 @@ async function ensureUsersTable(): Promise<void> {
         role TEXT NOT NULL DEFAULT 'editor',
         profile_image_url TEXT,
         is_suspended BOOLEAN NOT NULL DEFAULT false,
+        session_version INTEGER NOT NULL DEFAULT 0,
         last_login_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT now(),
         updated_at TIMESTAMP DEFAULT now()
@@ -68,13 +69,16 @@ router.post(
     const hashedPassword = await hashPassword(password);
 
     try {
-      const result = await db.execute(sql`
-        INSERT INTO users (id, email, password, first_name, last_name, role)
-        SELECT gen_random_uuid(), ${email}, ${hashedPassword}, ${firstName}, ${lastName}, 'admin'
-        WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'admin')
-        AND NOT EXISTS (SELECT 1 FROM users WHERE email = ${email})
-        RETURNING id, email, first_name, last_name, role
-      `);
+      const result = await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('initial-admin-setup'))`);
+        return tx.execute(sql`
+          INSERT INTO users (id, email, password, first_name, last_name, role)
+          SELECT gen_random_uuid(), ${email}, ${hashedPassword}, ${firstName}, ${lastName}, 'admin'
+          WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'admin')
+          AND NOT EXISTS (SELECT 1 FROM users WHERE email = ${email})
+          RETURNING id, email, first_name, last_name, role
+        `);
+      });
 
       if (result.rows.length === 0) {
         const adminExists = await hasAdminUser();

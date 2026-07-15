@@ -3,6 +3,8 @@ import { asyncHandler } from "../middleware/error-handler";
 import { storage } from "../storage";
 import { submitManagedFormBySlug } from "../services/forms.service";
 import { paramString } from "../utils/params";
+import { publicFormSubmissionLimiter } from "../middleware/security";
+import { getBaseUrl } from "../utils/route-helpers";
 
 const router = Router();
 
@@ -35,8 +37,9 @@ router.get(
 
 router.post(
   "/:slug/submit",
+  publicFormSubmissionLimiter,
   asyncHandler(async (req, res) => {
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const baseUrl = getBaseUrl(req);
     const result = await submitManagedFormBySlug(paramString(req.params.slug), req.body, {
       baseUrl,
       source: "public",

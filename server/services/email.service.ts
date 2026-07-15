@@ -238,21 +238,19 @@ export async function sendPasswordResetEmail(
 export async function sendWelcomeEmail(
   email: string,
   firstName: string | null,
-  loginUrl: string,
-  tempPassword?: string,
+  activationUrl: string,
 ): Promise<boolean> {
   const vars = {
     firstName: firstName || "there",
-    loginUrl,
-    tempPassword: tempPassword || "",
+    loginUrl: activationUrl,
+    activationUrl,
+    tempPassword: "",
   };
   const template = await getTemplateHtml(
     "welcome-admin-user",
     vars,
     "Your website admin account is ready",
-    `<p>Hi ${vars.firstName},</p><p>An admin account has been created for you.</p><p><a href="${loginUrl}">Sign in</a></p>${
-      tempPassword ? `<p>Temporary password: <strong>${tempPassword}</strong></p>` : ""
-    }`,
+    `<p>Hi ${vars.firstName},</p><p>An admin account has been created for you.</p><p><a href="${activationUrl}">Set your password and activate your account</a></p><p>This one-time link expires in 24 hours.</p>`,
   );
   if (!template.isActive) return false;
   return sendEmail(email, template.subject, template.html);

@@ -13,6 +13,16 @@ export interface JwtPayload {
   userId: string;
   email: string;
   role: string;
+  sessionVersion: number;
+}
+
+export function isUserSessionValid(user: User | undefined, payload: JwtPayload): user is User {
+  return Boolean(
+    user &&
+    !user.isSuspended &&
+    Number.isInteger(payload.sessionVersion) &&
+    payload.sessionVersion === user.sessionVersion,
+  );
 }
 
 function normalizePermissions(user: User | undefined): AdminPermissionType[] {
@@ -58,6 +68,7 @@ export function generateToken(user: User): string {
     userId: user.id,
     email: user.email,
     role: user.role,
+    sessionVersion: user.sessionVersion,
   };
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 }
@@ -87,7 +98,8 @@ export const authenticateToken: RequestHandler = async (req: Request, res: Respo
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     const { storage } = await import("../storage/index");
     const user = await storage.users.getUser(decoded.userId);
-    if (!user) {
+    if (!isUserSessionValid(user, decoded)) {
+      clearTokenCookie(res);
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
@@ -108,7 +120,7 @@ export const optionalAuth: RequestHandler = async (req: Request, _res: Response,
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     const { storage } = await import("../storage/index");
     const user = await storage.users.getUser(decoded.userId);
-    if (user) {
+    if (isUserSessionValid(user, decoded)) {
       req.user = user;
     }
   } catch {

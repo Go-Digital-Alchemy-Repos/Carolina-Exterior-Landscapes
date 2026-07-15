@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetPage = vi.fn();
 const mockGetPageBySlug = vi.fn();
+const mockGetPublishedSidebarById = vi.fn();
 
 vi.mock("../storage", () => ({
   storage: {
@@ -19,8 +20,8 @@ vi.mock("../storage", () => ({
       getPageBySlug: mockGetPageBySlug,
     },
     cmsSidebars: {
-      getDefault: vi.fn(),
-      getById: vi.fn(),
+      getPublishedDefault: vi.fn(),
+      getPublishedById: mockGetPublishedSidebarById,
     },
   },
 }));
@@ -55,6 +56,22 @@ describe("public CMS routes", () => {
     expect(mockGetPageBySlug).toHaveBeenCalledWith("contact");
     expect(mockGetPage).toHaveBeenCalledWith("66e31a59-5278-4708-bcba-0da6cb06e154");
     expect(body.id).toBe("66e31a59-5278-4708-bcba-0da6cb06e154");
+
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  });
+
+  it("uses the published-only sidebar lookup on the anonymous route", async () => {
+    mockGetPublishedSidebarById.mockResolvedValue(undefined);
+    const { default: cmsPublicRoutes } = await import("./cms-public.routes");
+    const app = express();
+    app.use("/api/cms", cmsPublicRoutes);
+    const server = app.listen(0);
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Test server did not start");
+
+    const res = await fetch(`http://127.0.0.1:${address.port}/api/cms/sidebars/draft-sidebar`);
+    expect(res.status).toBe(404);
+    expect(mockGetPublishedSidebarById).toHaveBeenCalledWith("draft-sidebar");
 
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });

@@ -6,6 +6,8 @@ interface OptimizeOptions {
   maxHeight?: number;
   quality?: number;
   format?: "webp" | "preserve";
+  maxInputPixels?: number;
+  maxFrames?: number;
 }
 
 const IMAGE_MIMES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -15,7 +17,19 @@ const DEFAULTS: Required<OptimizeOptions> = {
   maxHeight: 1920,
   quality: 80,
   format: "webp",
+  maxInputPixels: 20_000_000,
+  maxFrames: 10,
 };
+
+let activeOptimizations = 0;
+const MAX_CONCURRENT_OPTIMIZATIONS = 4;
+
+export class ImageProcessingError extends Error {
+  constructor(message: string, public statusCode: number) {
+    super(message);
+    this.name = "ImageProcessingError";
+  }
+}
 
 export interface OptimizedImage {
   buffer: Buffer;
@@ -44,13 +58,25 @@ export async function optimizeImage(
   inputMime: string,
   opts: OptimizeOptions = {}
 ): Promise<OptimizedImage> {
-  const { maxWidth, maxHeight, quality, format } = { ...DEFAULTS, ...opts };
+  const { maxWidth, maxHeight, quality, format, maxInputPixels, maxFrames } = { ...DEFAULTS, ...opts };
   const originalSize = inputBuffer.length;
 
+  if (activeOptimizations >= MAX_CONCURRENT_OPTIMIZATIONS) {
+    throw new ImageProcessingError("Image processing is temporarily busy", 503);
+  }
+  activeOptimizations += 1;
+
   try {
-    let pipeline = sharp(inputBuffer, { animated: inputMime === "image/gif" });
+    let pipeline = sharp(inputBuffer, {
+      animated: inputMime === "image/gif",
+      limitInputPixels: maxInputPixels,
+    });
 
     const metadata = await pipeline.metadata();
+    const pixels = (metadata.width ?? 0) * (metadata.pageHeight ?? metadata.height ?? 0);
+    if (!metadata.width || !metadata.height || pixels > maxInputPixels || (metadata.pages ?? 1) > maxFrames) {
+      throw new Error("Image dimensions or frame count exceed the allowed limit");
+    }
 
     if (
       metadata.width &&
@@ -99,16 +125,12 @@ export async function optimizeImage(
       optimizedSize: outputBuffer.length,
     };
   } catch (err) {
-    logger.app.warn("Image optimization failed, using original", {
+    logger.app.warn("Image optimization rejected", {
       error: err instanceof Error ? err.message : String(err),
     });
-    return {
-      buffer: inputBuffer,
-      mimeType: inputMime,
-      extension: mimeToExtension(inputMime),
-      originalSize,
-      optimizedSize: originalSize,
-    };
+    throw new ImageProcessingError("Invalid or unsupported image", 400);
+  } finally {
+    activeOptimizations -= 1;
   }
 }
 
@@ -116,6 +138,8 @@ export const AVATAR_OPTIONS: OptimizeOptions = {
   maxWidth: 400,
   maxHeight: 400,
   quality: 80,
+  maxInputPixels: 4_000_000,
+  maxFrames: 1,
 };
 
 export const CMS_OPTIONS: OptimizeOptions = {
@@ -135,4 +159,6 @@ export const ATTACHMENT_OPTIONS: OptimizeOptions = {
   maxWidth: 1600,
   maxHeight: 1600,
   quality: 80,
+  maxInputPixels: 20_000_000,
+  maxFrames: 10,
 };

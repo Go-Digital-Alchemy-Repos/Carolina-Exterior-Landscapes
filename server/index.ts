@@ -114,6 +114,10 @@ app.get("/api/health/metrics", (req, res) => {
 app.use("/api", apiLimiter);
 app.use(originCheck);
 
+app.use("/uploads/system-backups", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.status(404).json({ message: "Not found" });
+});
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 const REDACTED_KEYS = [

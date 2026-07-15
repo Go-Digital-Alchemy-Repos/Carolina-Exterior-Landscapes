@@ -103,7 +103,8 @@ router.get(
 router.get(
   "/sidebars/default",
   asyncHandler(async (_req, res) => {
-    const sidebar = await storage.cmsSidebars.getDefault();
+    res.set("Cache-Control", "no-store");
+    const sidebar = await storage.cmsSidebars.getPublishedDefault();
     if (!sidebar) {
       return res.status(404).json({ error: "No default sidebar configured" });
     }
@@ -114,8 +115,9 @@ router.get(
 router.get(
   "/sidebars/:id",
   asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "no-store");
     const id = paramString(req.params.id);
-    const sidebar = await storage.cmsSidebars.getById(id);
+    const sidebar = await storage.cmsSidebars.getPublishedById(id);
     if (!sidebar) {
       return res.status(404).json({ error: "Sidebar not found" });
     }

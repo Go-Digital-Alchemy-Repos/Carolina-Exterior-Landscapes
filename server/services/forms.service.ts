@@ -8,6 +8,13 @@ import { createCrmLeadFromFormSubmission } from "./crm.service";
 const CONTACT_FORM_OWNER_EMAIL = "van@carolinaexteriorlandscapes.com";
 const QUOTE_FORM_SLUGS = new Set(["residential-quote", "commercial-quote"]);
 const CRM_PIPELINE_FORM_SLUGS = new Set(["contact-form", "residential-quote", "commercial-quote"]);
+const MAX_SUBMISSION_BYTES = 64 * 1024;
+const MAX_INPUT_FIELDS = 50;
+const MAX_STRING_LENGTH = 5_000;
+const MAX_ARRAY_ITEMS = 25;
+const MAX_LIST_ROWS = 20;
+const MAX_LIST_COLUMNS = 20;
+const MAX_NOTIFICATION_RECIPIENTS = 10;
 
 function validRecipientEmail(value: unknown): string {
   const email = typeof value === "string" ? value.trim() : "";
@@ -109,6 +116,9 @@ function validateField(field: CmsFormField, raw: unknown) {
     field.type === "multiselect" ||
     (field.type === "image-choice" && selectionMode === "multiple")
   ) {
+    if (Array.isArray(raw) && raw.length > MAX_ARRAY_ITEMS) {
+      return { error: `${field.label} has too many values` };
+    }
     const values = stringArrayValue(raw);
     if (field.required && values.length === 0) return { error: `${field.label} is required` };
     if (Array.isArray(field.options) && field.options.length > 0) {
@@ -163,12 +173,18 @@ function validateField(field: CmsFormField, raw: unknown) {
   }
 
   if (field.type === "list") {
+    if (Array.isArray(raw) && raw.length > MAX_LIST_ROWS) {
+      return { error: `${field.label} has too many rows` };
+    }
+    if (Array.isArray(raw) && raw.some((row) => Object.keys(objectValue(row)).length > MAX_LIST_COLUMNS)) {
+      return { error: `${field.label} has too many columns` };
+    }
     const rows = Array.isArray(raw)
       ? raw
           .map((row) => {
             const record = objectValue(row);
             return Object.fromEntries(
-              Object.entries(record).map(([key, value]) => [key, stringValue(value)]),
+              Object.entries(record).map(([key, value]) => [key, stringValue(value).slice(0, MAX_STRING_LENGTH)]),
             );
           })
           .filter((row) => Object.values(row).some(Boolean))
@@ -186,6 +202,7 @@ function validateField(field: CmsFormField, raw: unknown) {
   }
 
   let value = stringValue(raw);
+  if (value.length > MAX_STRING_LENGTH) return { error: `${field.label} is too long` };
   if (field.required && !value) return { error: `${field.label} is required` };
   if (!value) return { value: "" };
 
@@ -205,12 +222,31 @@ function validateField(field: CmsFormField, raw: unknown) {
   return { value };
 }
 
+function assertSubmissionShape(value: unknown, depth = 0): void {
+  if (depth > 4) throw new AppError("Form submission is too deeply nested", 400);
+  if (typeof value === "string" && value.length > MAX_STRING_LENGTH) {
+    throw new AppError("Form submission contains a value that is too long", 413);
+  }
+  if (Array.isArray(value)) {
+    if (value.length > MAX_ARRAY_ITEMS) throw new AppError("Form submission contains too many values", 413);
+    value.forEach((item) => assertSubmissionShape(item, depth + 1));
+  } else if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length > MAX_INPUT_FIELDS) throw new AppError("Form submission contains too many fields", 413);
+    entries.forEach(([, item]) => assertSubmissionShape(item, depth + 1));
+  }
+}
+
 function validateSubmissionData(form: CmsForm, data: unknown) {
   if (typeof data !== "object" || data === null || Array.isArray(data)) {
     throw new AppError("Form submission must be an object", 400);
   }
 
   const input = data as Record<string, unknown>;
+  if (Object.keys(input).length > MAX_INPUT_FIELDS || Buffer.byteLength(JSON.stringify(input), "utf8") > MAX_SUBMISSION_BYTES) {
+    throw new AppError("Form submission is too large", 413);
+  }
+  assertSubmissionShape(input);
   const validated: Record<string, unknown> = {};
 
   for (const field of Array.isArray(form.fields) ? form.fields : []) {
@@ -261,11 +297,15 @@ async function handleContactFormEffects(
   const adminEmails =
     recipientEmails.length > 0
       ? recipientEmails
-      : (await storage.users.getUsersByRole("admin")).map((admin) => admin.email).filter(Boolean);
-  if (adminEmails.length === 0) return;
+      : (await storage.users.getUsersByRole("admin"))
+          .filter((admin) => !admin.isSuspended)
+          .map((admin) => admin.email)
+          .filter(Boolean);
+  const boundedAdminEmails = Array.from(new Set(adminEmails)).slice(0, MAX_NOTIFICATION_RECIPIENTS);
+  if (boundedAdminEmails.length === 0) return;
 
   sendContactFormEmail(
-    adminEmails,
+    boundedAdminEmails,
     name,
     email,
     message,
@@ -314,7 +354,8 @@ async function notifyAssignedUsers(form: CmsForm, data: Record<string, unknown>,
   if (!settings.notifyAdmins || settings.storeAsContactMessage) return;
 
   const recipients = await storage.users.getFormNotificationUsers(form.id);
-  const recipientEmails = recipients.map((user) => user.email).filter(Boolean);
+  const recipientEmails = Array.from(new Set(recipients.map((user) => user.email).filter(Boolean)))
+    .slice(0, MAX_NOTIFICATION_RECIPIENTS);
   if (recipientEmails.length === 0) return;
 
   sendManagedFormSubmissionEmail(

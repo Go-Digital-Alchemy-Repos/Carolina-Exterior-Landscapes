@@ -1,6 +1,6 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
-import { users, type User, type InsertUser } from "@shared/schema";
+import { passwordResetTokens, users, type User, type InsertUser } from "@shared/schema";
 import type { UserRole } from "@shared/types";
 
 type UserInsertData = typeof users.$inferInsert;
@@ -25,6 +25,38 @@ export class UserStorage {
     const [user] = await db
       .update(users)
       .set({ ...(data as Partial<UserInsertData>), updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updatePasswordAndRevokeSessions(id: string, password: string): Promise<User | undefined> {
+    return db.transaction(async (tx) => {
+      const [user] = await tx
+        .update(users)
+        .set({
+          password,
+          sessionVersion: sql`${users.sessionVersion} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, id))
+        .returning();
+      await tx
+        .update(passwordResetTokens)
+        .set({ usedAt: new Date() })
+        .where(and(eq(passwordResetTokens.userId, id), isNull(passwordResetTokens.usedAt)));
+      return user;
+    });
+  }
+
+  async setSuspendedAndRevokeSessions(id: string, isSuspended: boolean): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        isSuspended,
+        sessionVersion: sql`${users.sessionVersion} + 1`,
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, id))
       .returning();
     return user;

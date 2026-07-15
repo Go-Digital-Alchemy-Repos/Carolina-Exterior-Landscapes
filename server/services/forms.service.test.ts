@@ -334,6 +334,60 @@ describe("submitManagedFormBySlug", () => {
     expect(mockCreateCrmLeadFromFormSubmission).not.toHaveBeenCalled();
   });
 
+  it("rejects oversized attacker-controlled values before persistence or side effects", async () => {
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "form-1",
+      name: "Contact Form",
+      slug: "contact-form",
+      fields: [contactField("message", "Message")],
+      settings: { notifyAdmins: true, storeAsContactMessage: true },
+    });
+    const { submitManagedFormBySlug } = await import("./forms.service");
+
+    await expect(submitManagedFormBySlug("contact-form", { message: "x".repeat(5_001) }))
+      .rejects.toMatchObject({ statusCode: 413 });
+    expect(mockCreateSubmission).not.toHaveBeenCalled();
+    expect(mockSendContactFormEmail).not.toHaveBeenCalled();
+    expect(mockCreateCrmLeadFromFormSubmission).not.toHaveBeenCalled();
+  });
+
+  it("excludes suspended administrators from fallback notifications", async () => {
+    mockGetFormNotificationUsers.mockResolvedValue([]);
+    mockGetUsersByRole.mockResolvedValue([
+      { email: "suspended@example.com", isSuspended: true },
+      { email: "active@example.com", isSuspended: false },
+    ]);
+    mockGetPublicBySlug.mockResolvedValue({
+      id: "custom-contact-id",
+      name: "Custom Contact Form",
+      slug: "custom-contact",
+      fields: [
+        contactField("name", "Name"),
+        contactField("email", "Email", "email"),
+        contactField("subject", "Subject"),
+        contactField("message", "Message"),
+      ],
+      settings: { notifyAdmins: true, storeAsContactMessage: true },
+    });
+    const { submitManagedFormBySlug } = await import("./forms.service");
+
+    await submitManagedFormBySlug("custom-contact", {
+      name: "Jane",
+      email: "jane@example.com",
+      subject: "Question",
+      message: "Hello",
+    });
+
+    expect(mockSendContactFormEmail).toHaveBeenCalledWith(
+      ["active@example.com"],
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it.each(["residential-quote", "commercial-quote"])(
     "always sends %s submissions to the CRM pipeline",
     async (slug) => {

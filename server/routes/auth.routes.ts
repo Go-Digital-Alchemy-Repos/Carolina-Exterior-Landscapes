@@ -17,6 +17,7 @@ import {
   resetPasswordLimiter,
 } from "../middleware/security";
 import { logger } from "../utils/logger";
+import { getBaseUrl } from "../utils/route-helpers";
 
 const router = Router();
 
@@ -94,7 +95,7 @@ router.post(
     const user = await storage.users.getUserByEmail(email);
     if (user) {
       const resetToken = await storage.passwordResets.createToken(user.id);
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const baseUrl = getBaseUrl(req);
       const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken.token}`;
       const { sendPasswordResetEmail } = await import("../services/email.service");
       sendPasswordResetEmail(user.email, user.firstName, resetUrl).catch((err) => logger.email.warn("Failed to send password reset email", { error: err.message }));
@@ -114,15 +115,12 @@ router.post(
   validateBody(resetPasswordSchema),
   asyncHandler(async (req, res) => {
     const { token, password } = req.body;
-    const resetToken = await storage.passwordResets.getValidToken(token);
-    if (!resetToken) {
+    const hashed = await hashPassword(password);
+    const consumed = await storage.passwordResets.consumeAndResetPassword(token, hashed);
+    if (!consumed) {
       res.status(400).json({ message: "Invalid or expired reset link" });
       return;
     }
-
-    const hashed = await hashPassword(password);
-    await storage.users.updateUser(resetToken.userId, { password: hashed });
-    await storage.passwordResets.markUsed(resetToken.id);
 
     res.json({ message: "Password reset successfully. You can now log in." });
   })
@@ -185,7 +183,8 @@ router.put(
     }
 
     const hashed = await hashPassword(newPassword);
-    await storage.users.updateUser(req.user!.id, { password: hashed });
+    await storage.users.updatePasswordAndRevokeSessions(req.user!.id, hashed);
+    clearTokenCookie(res);
 
     res.json({ message: "Password changed successfully" });
   })

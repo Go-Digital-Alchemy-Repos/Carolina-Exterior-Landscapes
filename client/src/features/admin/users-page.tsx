@@ -592,7 +592,7 @@ export function CreateUserSheet({
               />
             </div>
 
-            <div className="space-y-2">
+            {!sendWelcome && <div className="space-y-2">
               <Label htmlFor="create-password">Password</Label>
               <div className="relative">
                 <Input
@@ -615,7 +615,7 @@ export function CreateUserSheet({
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-            </div>
+            </div>}
 
             <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
               <div>
@@ -663,7 +663,7 @@ export function CreateUserSheet({
                     Send welcome email
                   </Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Email the new user their login details and a quick start link.
+                    Send a one-time, 24-hour activation link so the user sets their own password.
                   </p>
                 </div>
                 <Switch

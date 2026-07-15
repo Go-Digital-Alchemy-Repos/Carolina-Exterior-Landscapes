@@ -116,4 +116,23 @@ describe("Email service", () => {
     const result = await mod.sendEmail("user@test.com", "Test", "<p>Hello</p>");
     expect(result).toBe(false);
   });
+
+  it("sends welcome emails with a one-time activation link and no password", async () => {
+    mockGetDecryptedCategory.mockResolvedValue({
+      mailgun_api_key: "key-123",
+      mailgun_domain: "mg.example.com",
+      mailgun_from_address: "noreply@example.com",
+    });
+    mockGetTemplate.mockResolvedValue(undefined);
+    mockCreate.mockResolvedValue({});
+    const activationUrl = "https://example.com/auth/reset-password?token=one-time-token";
+
+    const mod = await import("../services/email.service");
+    expect(await mod.sendWelcomeEmail("user@test.com", "Jane", activationUrl)).toBe(true);
+
+    const message = mockCreate.mock.calls[0][1];
+    expect(message.html).toContain(activationUrl);
+    expect(message.html).not.toContain("Temporary password");
+    expect(message.html).not.toContain("one-time-password");
+  });
 });

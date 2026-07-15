@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, index, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, index, boolean, jsonb, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   formNotificationFormIds: jsonb("form_notification_form_ids").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
   profileImageUrl: text("profile_image_url"),
   isSuspended: boolean("is_suspended").notNull().default(false),
+  sessionVersion: integer("session_version").notNull().default(0),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

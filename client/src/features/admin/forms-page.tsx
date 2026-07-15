@@ -18,6 +18,7 @@ import { AdminSidebar } from "./admin-sidebar";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { encodeCsv } from "@/lib/csv";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -530,7 +531,6 @@ function buildSubmissionCsv(submissions: CmsFormSubmission[]) {
     ),
   );
   const headers = ["Submission ID", "Submitted At", "Source", ...fieldKeys];
-  const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
   const rows = submissions.map((submission) => {
     const values = [
       submission.id,
@@ -538,9 +538,9 @@ function buildSubmissionCsv(submissions: CmsFormSubmission[]) {
       submission.source ?? "",
       ...fieldKeys.map((key) => stringifySubmissionValue((submission.data ?? {})[key])),
     ];
-    return values.map((value) => escapeCsv(String(value))).join(",");
+    return values;
   });
-  return [headers.map(escapeCsv).join(","), ...rows].join("\n");
+  return encodeCsv([headers, ...rows]);
 }
 
 function findSubmissionValue(

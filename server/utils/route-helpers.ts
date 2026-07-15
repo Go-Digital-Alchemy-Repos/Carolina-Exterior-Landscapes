@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
 export function getBaseUrl(req: Request): string {
-  return `${req.protocol}://${req.get("host")}`;
+  return process.env.APP_URL?.replace(/\/+$/, "") || `${req.protocol}://${req.get("host")}`;
 }
 
 export function notFound(res: Response, entity: string): void {

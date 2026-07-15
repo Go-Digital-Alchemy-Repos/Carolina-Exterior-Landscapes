@@ -2,6 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      if (window.location.pathname === "/auth/reset-password") {
+        const resetUrl = new URL(window.location.href);
+        const resetToken = resetUrl.searchParams.get("token");
+        if (resetToken) {
+          window.__resetPasswordToken = resetToken;
+          resetUrl.searchParams.delete("token");
+          history.replaceState(history.state, "", resetUrl.pathname + resetUrl.search + resetUrl.hash);
+        }
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lawn Care & Landscaping Waxhaw NC | Carolina Exterior Landscapes</title>
     <meta name="description" content="Carolina Exterior Landscapes designs, builds, and maintains premium outdoor spaces for homes, HOAs, and commercial properties across Union County and the greater Charlotte region." />

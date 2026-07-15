@@ -7,7 +7,15 @@ interface BackupObjectSummary {
   lastModified: string | null;
 }
 
-const BACKUP_ROOT = path.resolve(process.cwd(), "uploads", "system-backups");
+const PUBLIC_UPLOAD_ROOT = path.resolve(process.cwd(), "uploads");
+const LEGACY_BACKUP_ROOT = path.join(PUBLIC_UPLOAD_ROOT, "system-backups");
+const BACKUP_ROOT = path.resolve(
+  process.env.BACKUP_STORAGE_DIR || path.join(process.cwd(), ".private", "system-backups"),
+);
+
+if (BACKUP_ROOT === PUBLIC_UPLOAD_ROOT || BACKUP_ROOT.startsWith(`${PUBLIC_UPLOAD_ROOT}${path.sep}`)) {
+  throw new Error("BACKUP_STORAGE_DIR must be outside the public uploads directory");
+}
 
 function normalizeKey(key: string) {
   const normalized = key.replace(/\\/g, "/").replace(/^\/+/, "");
@@ -28,6 +36,13 @@ function resolveBackupPath(key: string) {
 
 async function ensureBackupRoot() {
   await fs.mkdir(BACKUP_ROOT, { recursive: true });
+  if (LEGACY_BACKUP_ROOT !== BACKUP_ROOT) {
+    const legacyExists = await fs.stat(LEGACY_BACKUP_ROOT).then(() => true).catch(() => false);
+    if (legacyExists) {
+      await fs.cp(LEGACY_BACKUP_ROOT, BACKUP_ROOT, { recursive: true, force: false, errorOnExist: false });
+      await fs.rm(LEGACY_BACKUP_ROOT, { recursive: true, force: true });
+    }
+  }
 }
 
 async function walkFiles(directory: string): Promise<string[]> {
@@ -52,8 +67,8 @@ export async function isBackupStorageConfigured(): Promise<boolean> {
 export async function getBackupStorageInfo() {
   await ensureBackupRoot();
   return {
-    bucketName: "Local uploads",
-    prefix: "/uploads/system-backups",
+    bucketName: "Private local storage",
+    prefix: "system-backups",
     source: "local" as const,
   };
 }
@@ -64,6 +79,7 @@ export async function uploadBackupObject(
   _contentType: string,
   _options?: { contentEncoding?: string; metadata?: Record<string, string> }
 ): Promise<{ key: string }> {
+  await ensureBackupRoot();
   const { normalized, filePath } = resolveBackupPath(key);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, body);
@@ -71,6 +87,7 @@ export async function uploadBackupObject(
 }
 
 export async function downloadBackupObject(key: string): Promise<Buffer | null> {
+  await ensureBackupRoot();
   const { filePath } = resolveBackupPath(key);
   return fs.readFile(filePath).catch((error: NodeJS.ErrnoException) => {
     if (error.code === "ENOENT") return null;

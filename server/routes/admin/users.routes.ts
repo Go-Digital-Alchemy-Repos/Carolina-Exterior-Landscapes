@@ -11,6 +11,7 @@ import { sendPasswordResetEmail, sendWelcomeEmail } from "../../services/email.s
 import { paramString } from "../../utils/params";
 import { getBaseUrl, notFound, conflict } from "../../utils/route-helpers";
 import { logger } from "../../utils/logger";
+import crypto from "node:crypto";
 
 const router = Router();
 const permissionSchema = z.enum([
@@ -141,13 +142,17 @@ router.get(
 
 const createUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(6).optional(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   role: z.enum(["admin", "editor"]).default("editor"),
   adminPermissions: z.array(permissionSchema).optional().default([]),
   formNotificationFormIds: z.array(z.string().min(1)).optional().default([]),
-  sendWelcomeEmail: z.boolean().optional(),
+  sendWelcomeEmail: z.boolean().optional().default(false),
+}).superRefine((value, ctx) => {
+  if (!value.sendWelcomeEmail && !value.password) {
+    ctx.addIssue({ code: "custom", path: ["password"], message: "Password is required" });
+  }
 });
 
 router.post(
@@ -163,7 +168,10 @@ router.post(
     }
 
     const validFormIds = await normalizeActiveFormNotificationIds(data.formNotificationFormIds);
-    const hashedPassword = await hashPassword(data.password);
+    const initialPassword = data.sendWelcomeEmail
+      ? crypto.randomBytes(32).toString("base64url")
+      : data.password!;
+    const hashedPassword = await hashPassword(initialPassword);
     const user = await storage.users.createUser({
       email: data.email,
       password: hashedPassword,
@@ -176,7 +184,9 @@ router.post(
 
     if (data.sendWelcomeEmail) {
       const baseUrl = getBaseUrl(req);
-      sendWelcomeEmail(user.email, user.firstName, `${baseUrl}/auth/login`, data.password).catch((err) =>
+      const activationToken = await storage.passwordResets.createToken(user.id);
+      const activationUrl = `${baseUrl}/auth/reset-password?token=${activationToken.token}`;
+      sendWelcomeEmail(user.email, user.firstName, activationUrl).catch((err) =>
         logger.email.warn("Failed to send welcome email", { error: err.message })
       );
     }
@@ -283,7 +293,7 @@ router.patch(
     }
 
     await ensureAdminGuardrails({ targetUserId: userId, suspend: !user.isSuspended });
-    const updated = await storage.users.updateUser(userId, { isSuspended: !user.isSuspended } as any);
+    const updated = await storage.users.setSuspendedAndRevokeSessions(userId, !user.isSuspended);
     res.json(await toSafeUser(updated!));
   })
 );
@@ -305,7 +315,7 @@ router.post(
 
     if (newPassword) {
       const hashed = await hashPassword(newPassword);
-      await storage.users.updateUser(user.id, { password: hashed });
+      await storage.users.updatePasswordAndRevokeSessions(user.id, hashed);
       res.json({ message: "Password reset successfully" });
       return;
     }

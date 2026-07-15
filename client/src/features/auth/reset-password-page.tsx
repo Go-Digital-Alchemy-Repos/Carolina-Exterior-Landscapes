@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/page-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,9 +11,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { CheckCircle, KeyRound } from "lucide-react";
 
 export default function ResetPasswordPage() {
-  const search = useSearch();
-  const params = new URLSearchParams(search);
-  const token = params.get("token");
+  const [token] = useState(() => {
+    const value = window.__resetPasswordToken ?? null;
+    window.__resetPasswordToken = undefined;
+    return value;
+  });
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [password, setPassword] = useState("");

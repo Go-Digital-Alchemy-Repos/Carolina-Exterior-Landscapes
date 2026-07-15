@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { cmsSidebars, type CmsSidebar, type InsertCmsSidebar } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { cmsPages, cmsSidebars, type CmsSidebar, type InsertCmsSidebar } from "@shared/schema";
+import { and, eq, desc } from "drizzle-orm";
 
 export class CmsSidebarsStorage {
   async getAll(): Promise<CmsSidebar[]> {
@@ -20,6 +20,27 @@ export class CmsSidebarsStorage {
       .orderBy(desc(cmsSidebars.updatedAt))
       .limit(1);
     return sidebar;
+  }
+
+  async getPublishedById(id: string): Promise<CmsSidebar | undefined> {
+    const [result] = await db
+      .select({ sidebar: cmsSidebars })
+      .from(cmsSidebars)
+      .innerJoin(cmsPages, eq(cmsPages.sidebarId, cmsSidebars.id))
+      .where(and(eq(cmsSidebars.id, id), eq(cmsPages.status, "published")))
+      .limit(1);
+    return result?.sidebar;
+  }
+
+  async getPublishedDefault(): Promise<CmsSidebar | undefined> {
+    const [result] = await db
+      .select({ sidebar: cmsSidebars })
+      .from(cmsSidebars)
+      .innerJoin(cmsPages, eq(cmsPages.sidebarId, cmsSidebars.id))
+      .where(and(eq(cmsSidebars.isDefault, true), eq(cmsPages.status, "published")))
+      .orderBy(desc(cmsSidebars.updatedAt))
+      .limit(1);
+    return result?.sidebar;
   }
 
   async create(data: InsertCmsSidebar): Promise<CmsSidebar> {
