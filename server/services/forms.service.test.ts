@@ -1,3 +1,4 @@
+import type { CmsForm, CmsFormSubmission } from "@shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetPublicBySlug = vi.fn();
@@ -144,8 +145,72 @@ describe("submitManagedFormBySlug", () => {
         city: "Fort Mill",
         message: "Need cameras for a warehouse.",
       },
-    });
   });
+});
+
+describe("resendFormSubmissionNotification", () => {
+  it("recreates a stored quote notification for only the requested recipient", async () => {
+    mockSendContactFormEmail.mockResolvedValue(true);
+    const form = {
+      id: "residential-quote-id",
+      name: "Residential Quote Form",
+      slug: "residential-quote",
+      description: null,
+      kind: "contact",
+      isSystem: true,
+      isActive: true,
+      fields: [
+        contactField("name", "Name"),
+        contactField("email", "Email Address", "email"),
+        contactField("phone", "Phone", "tel", false),
+        contactField("servicesInterested", "Services Interested", "select", false),
+        contactField("city", "City", "text", false),
+      ],
+      settings: {
+        notifyAdmins: true,
+        storeAsContactMessage: true,
+      },
+      createdAt: null,
+      updatedAt: null,
+    } as CmsForm;
+    const submission = {
+      id: "submission-1",
+      formId: form.id,
+      data: {
+        name: "Jane Homeowner",
+        email: "jane@example.com",
+        phone: "704-555-0100",
+        servicesInterested: "Drainage",
+        city: "Waxhaw",
+      },
+      source: "public",
+      createdAt: new Date("2026-07-28T20:37:34Z"),
+    } as CmsFormSubmission;
+
+    const { resendFormSubmissionNotification } = await import("./forms.service");
+    const sent = await resendFormSubmissionNotification(
+      form,
+      submission,
+      "admin@example.com",
+      "https://carolinaexteriorlandscapes.com",
+    );
+
+    expect(sent).toBe(true);
+    expect(mockSendContactFormEmail).toHaveBeenCalledWith(
+      ["admin@example.com"],
+      "Jane Homeowner",
+      "jane@example.com",
+      expect.stringContaining("Services Interested: Drainage"),
+      "https://carolinaexteriorlandscapes.com/admin/forms",
+      {
+        formName: "Residential Quote Form",
+        phone: "704-555-0100",
+        subject: "Drainage - Waxhaw",
+        sourcePage: "residential-quote",
+      },
+    );
+  });
+});
 
   it("falls back to the contact form owner when no user is assigned", async () => {
     mockGetFormNotificationUsers.mockResolvedValue([]);

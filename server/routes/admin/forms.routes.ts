@@ -3,6 +3,8 @@ import { insertCmsFormSchema } from "@shared/schema";
 import { asyncHandler } from "../../middleware/error-handler";
 import { storage } from "../../storage";
 import { paramString } from "../../utils/params";
+import { getBaseUrl } from "../../utils/route-helpers";
+import { resendFormSubmissionNotification } from "../../services/forms.service";
 
 const router = Router();
 
@@ -54,6 +56,42 @@ router.delete(
 
     res.json({ success: true });
   })
+);
+
+router.post(
+  "/forms/:id/submissions/:submissionId/resend-notification",
+  asyncHandler(async (req, res) => {
+    const id = paramString(req.params.id);
+    const submissionId = paramString(req.params.submissionId);
+    const form = await storage.forms.getById(id);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+
+    const submission = await storage.forms.getSubmission(id, submissionId);
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    const recipient = req.user!.email;
+    const sent = await resendFormSubmissionNotification(
+      form,
+      submission,
+      recipient,
+      getBaseUrl(req),
+    );
+    if (!sent) {
+      return res.status(502).json({
+        message: "Notification could not be sent. Check the email provider and template settings.",
+      });
+    }
+
+    res.json({
+      success: true,
+      recipient,
+      message: `Notification sent to ${recipient}`,
+    });
+  }),
 );
 
 router.post(

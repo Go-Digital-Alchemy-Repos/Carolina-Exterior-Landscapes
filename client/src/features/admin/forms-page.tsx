@@ -872,6 +872,35 @@ function FormsPageContent() {
     },
   });
 
+  const resendNotificationMutation = useMutation({
+    mutationFn: async ({
+      formId,
+      submissionId,
+    }: {
+      formId: string;
+      submissionId: string;
+    }) => {
+      const response = await apiRequest(
+        "POST",
+        `/api/admin/forms/${formId}/submissions/${submissionId}/resend-notification`,
+      );
+      return (await response.json()) as { recipient: string; message: string };
+    },
+    onSuccess: ({ recipient }) => {
+      toast({
+        title: "Notification resent",
+        description: `The original notification was sent to ${recipient}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to resend notification",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const selectedField = useMemo(
     () => draft?.fields.find((field) => field.id === selectedFieldId) ?? null,
     [draft?.fields, selectedFieldId],
@@ -2478,23 +2507,43 @@ function FormsPageContent() {
                           {getSubmissionEmail(selectedSubmission)}
                         </p>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() =>
-                          deleteSubmissionMutation.mutate({
-                            formId: selectedEntriesFormId,
-                            submissionId: selectedSubmission.id,
-                          })
-                        }
-                        disabled={deleteSubmissionMutation.isPending}
-                        data-testid={`button-delete-form-entry-${selectedSubmission.id}`}
-                      >
-                        <Trash2 className="mr-1.5 h-4 w-4" />
-                        Delete
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            resendNotificationMutation.mutate({
+                              formId: selectedEntriesFormId,
+                              submissionId: selectedSubmission.id,
+                            })
+                          }
+                          disabled={resendNotificationMutation.isPending}
+                          data-testid={`button-resend-form-entry-${selectedSubmission.id}`}
+                        >
+                          <Mail className="mr-1.5 h-4 w-4" />
+                          {resendNotificationMutation.isPending
+                            ? "Sending..."
+                            : "Resend Notification"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() =>
+                            deleteSubmissionMutation.mutate({
+                              formId: selectedEntriesFormId,
+                              submissionId: selectedSubmission.id,
+                            })
+                          }
+                          disabled={deleteSubmissionMutation.isPending}
+                          data-testid={`button-delete-form-entry-${selectedSubmission.id}`}
+                        >
+                          <Trash2 className="mr-1.5 h-4 w-4" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">

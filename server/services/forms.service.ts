@@ -1,4 +1,9 @@
-import type { CmsForm, CmsFormField, InsertCmsFormSubmission } from "@shared/schema";
+import type {
+  CmsForm,
+  CmsFormField,
+  CmsFormSubmission,
+  InsertCmsFormSubmission,
+} from "@shared/schema";
 import { storage } from "../storage";
 import { logger } from "../utils/logger";
 import { sendContactFormEmail, sendManagedFormSubmissionEmail } from "./email.service";
@@ -268,7 +273,6 @@ async function handleContactFormEffects(
 
   const name = firstStringValue(data, ["name", "fullName", "contactName"]);
   const email = firstStringValue(data, ["email", "senderEmail", "contactEmail"]);
-  const phone = firstStringValue(data, ["phone", "contactPhone", "primaryPhone"]);
   const service = firstStringValue(data, ["service", "servicesInterested", "servicesNeeded"]);
   const city = stringValue(data.city);
   const legacySubject = stringValue(data.subject);
@@ -304,18 +308,11 @@ async function handleContactFormEffects(
   const boundedAdminEmails = Array.from(new Set(adminEmails)).slice(0, MAX_NOTIFICATION_RECIPIENTS);
   if (boundedAdminEmails.length === 0) return;
 
-  sendContactFormEmail(
+  sendStoredSubmissionNotification(
     boundedAdminEmails,
-    name,
-    email,
-    message,
-    `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`,
-    {
-      formName: form.name,
-      phone,
-      subject,
-      sourcePage: stringValue(data.sourcePage) || form.slug,
-    },
+    form,
+    data,
+    baseUrl,
   ).catch((err) => {
     logger.email.warn("Failed to send contact form notification", {
       formSlug: form.slug,
@@ -349,6 +346,70 @@ function buildSubmissionSummary(form: CmsForm, data: Record<string, unknown>) {
     .join("\n");
 }
 
+async function sendStoredSubmissionNotification(
+  recipients: string[],
+  form: CmsForm,
+  data: Record<string, unknown>,
+  baseUrl?: string,
+): Promise<boolean> {
+  const adminUrl = `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`;
+  const settings = normalizeFormSettings(form);
+
+  if (settings.storeAsContactMessage) {
+    const name = firstStringValue(data, ["name", "fullName", "contactName"]);
+    const email = firstStringValue(data, ["email", "senderEmail", "contactEmail"]);
+    const phone = firstStringValue(data, ["phone", "contactPhone", "primaryPhone"]);
+    const service = firstStringValue(data, ["service", "servicesInterested", "servicesNeeded"]);
+    const city = stringValue(data.city);
+    const legacySubject = stringValue(data.subject);
+    const subject =
+      legacySubject || [service, city].filter(Boolean).join(" - ") || "Contact form submission";
+    const message = legacySubject ? stringValue(data.message) : buildSubmissionSummary(form, data);
+
+    if (!name || !email || !subject || !message) {
+      throw new AppError("This entry does not contain enough information to resend", 422);
+    }
+
+    return sendContactFormEmail(recipients, name, email, message, adminUrl, {
+      formName: form.name,
+      phone,
+      subject,
+      sourcePage: stringValue(data.sourcePage) || form.slug,
+    });
+  }
+
+  return sendManagedFormSubmissionEmail(
+    recipients,
+    form.name,
+    buildSubmissionSummary(form, data),
+    adminUrl,
+    {
+      senderName: firstStringValue(data, ["name", "fullName", "contactName"]),
+      senderEmail: firstStringValue(data, ["email", "senderEmail", "contactEmail"]),
+      senderPhone: firstStringValue(data, ["phone", "contactPhone", "primaryPhone"]),
+      subject: stringValue(data.subject) || "Form submission",
+      sourcePage: stringValue(data.sourcePage) || form.slug,
+    },
+  );
+}
+
+export async function resendFormSubmissionNotification(
+  form: CmsForm,
+  submission: CmsFormSubmission,
+  recipientEmail: string,
+  baseUrl?: string,
+): Promise<boolean> {
+  const recipient = validRecipientEmail(recipientEmail);
+  if (!recipient) throw new AppError("Your account does not have a valid email address", 422);
+
+  return sendStoredSubmissionNotification(
+    [recipient],
+    form,
+    (submission.data ?? {}) as Record<string, unknown>,
+    baseUrl,
+  );
+}
+
 async function notifyAssignedUsers(form: CmsForm, data: Record<string, unknown>, baseUrl?: string) {
   const settings = normalizeFormSettings(form);
   if (!settings.notifyAdmins || settings.storeAsContactMessage) return;
@@ -358,18 +419,11 @@ async function notifyAssignedUsers(form: CmsForm, data: Record<string, unknown>,
     .slice(0, MAX_NOTIFICATION_RECIPIENTS);
   if (recipientEmails.length === 0) return;
 
-  sendManagedFormSubmissionEmail(
+  sendStoredSubmissionNotification(
     recipientEmails,
-    form.name,
-    buildSubmissionSummary(form, data),
-    `${baseUrl ?? process.env.APP_URL ?? ""}/admin/forms`,
-    {
-      senderName: firstStringValue(data, ["name", "fullName", "contactName"]),
-      senderEmail: firstStringValue(data, ["email", "senderEmail", "contactEmail"]),
-      senderPhone: firstStringValue(data, ["phone", "contactPhone", "primaryPhone"]),
-      subject: stringValue(data.subject) || "Form submission",
-      sourcePage: stringValue(data.sourcePage) || form.slug,
-    },
+    form,
+    data,
+    baseUrl,
   ).catch((err) => {
     logger.email.warn("Failed to send managed form notification", {
       formSlug: form.slug,

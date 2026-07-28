@@ -268,7 +268,7 @@ export async function sendContactFormEmail(
     subject?: string;
     sourcePage?: string;
   } = {},
-): Promise<void> {
+): Promise<boolean> {
   const formName = options.formName || "Contact Form";
   const vars = {
     formName,
@@ -287,8 +287,11 @@ export async function sendContactFormEmail(
     fallbackSubject,
     `<p>A new <strong>${escapeHtml(formName)}</strong> submission was received.</p><p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(message)}</pre><p><a href="${escapeHtml(adminUrl)}">View submissions</a></p>`,
   );
-  if (!template.isActive) return;
-  await Promise.all(to.map((recipient) => sendEmail(recipient, template.subject, template.html)));
+  if (!template.isActive) return false;
+  const results = await Promise.all(
+    to.map((recipient) => sendEmail(recipient, template.subject, template.html)),
+  );
+  return results.every(Boolean);
 }
 
 export async function sendManagedFormSubmissionEmail(
@@ -303,7 +306,7 @@ export async function sendManagedFormSubmissionEmail(
     subject?: string;
     sourcePage?: string;
   } = {},
-): Promise<void> {
+): Promise<boolean> {
   const vars = {
     formName,
     senderName: options.senderName || "Website visitor",
@@ -321,8 +324,11 @@ export async function sendManagedFormSubmissionEmail(
     fallbackSubject,
     `<p>A new submission was received for <strong>${escapeHtml(formName)}</strong>.</p><pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(submissionSummary)}</pre><p><a href="${escapeHtml(adminUrl)}">View submissions</a></p>`,
   );
-  if (!template.isActive) return;
-  await Promise.all(to.map((recipient) => sendEmail(recipient, template.subject, template.html)));
+  if (!template.isActive) return false;
+  const results = await Promise.all(
+    to.map((recipient) => sendEmail(recipient, template.subject, template.html)),
+  );
+  return results.every(Boolean);
 }
 
 export async function testMailgunConnection(): Promise<{ success: boolean; message: string }> {

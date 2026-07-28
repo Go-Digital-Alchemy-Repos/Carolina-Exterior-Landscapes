@@ -25,6 +25,7 @@ let mutationStates: Array<{
   mutateAsync: ReturnType<typeof vi.fn>;
   isPending: boolean;
 }> = [];
+let mockSubmissions: Array<Record<string, unknown>> = [];
 
 const mockForms = [
   {
@@ -89,13 +90,14 @@ describe("AdminFormsPage", () => {
     lockGuardMock.mockReset();
     editorLockState.isReadOnly = true;
     mutationStates = [];
+    mockSubmissions = [];
     useQueryMock.mockImplementation(({ queryKey }: { queryKey: unknown[] }) => {
-      if (queryKey[0] === "/api/admin/forms") {
-        return { data: mockForms, isLoading: false };
+      if (queryKey[0] === "/api/admin/forms" && queryKey[2] === "submissions") {
+        return { data: mockSubmissions, isLoading: false };
       }
 
-      if (queryKey[0] === "/api/admin/forms" && queryKey[2] === "submissions") {
-        return { data: [], isLoading: false };
+      if (queryKey[0] === "/api/admin/forms") {
+        return { data: mockForms, isLoading: false };
       }
 
       return { data: [], isLoading: false };
@@ -192,5 +194,58 @@ describe("AdminFormsPage", () => {
         slug: "contact-form",
       })
     );
+  });
+
+  it("offers to resend the selected entry notification", async () => {
+    mockSubmissions = [
+      {
+        id: "submission-1",
+        formId: "form-1",
+        data: {
+          name: "Jane Homeowner",
+          email: "jane@example.com",
+          message: "Need drainage help",
+        },
+        source: "public",
+        createdAt: "2026-07-28T20:37:34Z",
+      },
+    ];
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(React.createElement(AdminFormsPage));
+    });
+
+    const guardArgs = lockGuardMock.mock.calls.at(-1)?.[0] as { onConflict: () => void };
+
+    await act(async () => {
+      guardArgs.onConflict();
+    });
+
+    const entryCard = document.querySelector(
+      '[data-testid="card-form-entry-submission-1"]',
+    ) as HTMLButtonElement | null;
+    expect(entryCard).toBeTruthy();
+
+    await act(async () => {
+      entryCard?.click();
+    });
+
+    const resendButton = document.querySelector(
+      '[data-testid="button-resend-form-entry-submission-1"]',
+    ) as HTMLButtonElement | null;
+    expect(resendButton?.textContent).toContain("Resend Notification");
+
+    await act(async () => {
+      resendButton?.click();
+    });
+
+    expect(
+      mutationStates.some((state) =>
+        state.mutate.mock.calls.some(([payload]) =>
+          payload?.formId === "form-1" && payload?.submissionId === "submission-1"
+        )
+      )
+    ).toBe(true);
   });
 });
