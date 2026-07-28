@@ -396,14 +396,18 @@ async function sendStoredSubmissionNotification(
 export async function resendFormSubmissionNotification(
   form: CmsForm,
   submission: CmsFormSubmission,
-  recipientEmail: string,
+  recipientEmails: string[],
   baseUrl?: string,
 ): Promise<boolean> {
-  const recipient = validRecipientEmail(recipientEmail);
-  if (!recipient) throw new AppError("Your account does not have a valid email address", 422);
+  const recipients = Array.from(
+    new Set(recipientEmails.map((email) => validRecipientEmail(email)).filter(Boolean)),
+  ).slice(0, MAX_NOTIFICATION_RECIPIENTS);
+  if (recipients.length === 0) {
+    throw new AppError("Select at least one valid notification recipient", 422);
+  }
 
   return sendStoredSubmissionNotification(
-    [recipient],
+    recipients,
     form,
     (submission.data ?? {}) as Record<string, unknown>,
     baseUrl,

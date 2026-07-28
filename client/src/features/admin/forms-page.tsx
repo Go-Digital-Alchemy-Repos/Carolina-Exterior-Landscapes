@@ -27,6 +27,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -68,7 +76,6 @@ import {
   ArrowLeft,
   Download,
   Inbox,
-  FileText,
 } from "lucide-react";
 import { useEditorLock } from "@/hooks/use-editor-lock";
 import { useLockConflictGuard } from "@/hooks/use-lock-conflict-guard";
@@ -76,6 +83,13 @@ import { useEditorSaveState } from "@/hooks/use-editor-save-state";
 import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type EditableForm = Omit<CmsForm, "createdAt" | "updatedAt">;
+type FormNotificationRecipient = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+};
 
 type FieldLibraryItem = {
   type: CmsFormFieldType;
@@ -696,6 +710,8 @@ function FormsPageContent() {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [selectedEntriesFormId, setSelectedEntriesFormId] = useState<string | null>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [resendDialogOpen, setResendDialogOpen] = useState(false);
+  const [selectedResendRecipientIds, setSelectedResendRecipientIds] = useState<string[]>([]);
   const [draft, setDraft] = useState<EditableForm | null>(null);
   const [savedDraftSnapshot, setSavedDraftSnapshot] = useState("");
   const saveFeedbackRef = useRef({
@@ -735,6 +751,25 @@ function FormsPageContent() {
       },
     },
   );
+  const {
+    data: notificationRecipients = [],
+    isLoading: areNotificationRecipientsLoading,
+    isError: notificationRecipientsError,
+  } = useQuery<FormNotificationRecipient[]>({
+    queryKey: [
+      "/api/admin/forms",
+      selectedEntriesFormId,
+      "notification-recipients",
+    ],
+    enabled: Boolean(selectedEntriesFormId),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        `/api/admin/forms/${selectedEntriesFormId}/notification-recipients`,
+      );
+      return response.json();
+    },
+  });
 
   useEffect(() => {
     if (draft) return;
@@ -772,6 +807,8 @@ function FormsPageContent() {
 
   useEffect(() => {
     setSelectedEntryId(null);
+    setResendDialogOpen(false);
+    setSelectedResendRecipientIds([]);
   }, [selectedEntriesFormId]);
 
   useEffect(() => {
@@ -876,20 +913,25 @@ function FormsPageContent() {
     mutationFn: async ({
       formId,
       submissionId,
+      recipientUserIds,
     }: {
       formId: string;
       submissionId: string;
+      recipientUserIds: string[];
     }) => {
       const response = await apiRequest(
         "POST",
         `/api/admin/forms/${formId}/submissions/${submissionId}/resend-notification`,
+        { recipientUserIds },
       );
-      return (await response.json()) as { recipient: string; message: string };
+      return (await response.json()) as { recipients: string[]; message: string };
     },
-    onSuccess: ({ recipient }) => {
+    onSuccess: ({ recipients }) => {
+      setResendDialogOpen(false);
+      setSelectedResendRecipientIds([]);
       toast({
-        title: "Notification resent",
-        description: `The original notification was sent to ${recipient}.`,
+        title: "Notification accepted",
+        description: `The email provider accepted the notification for ${recipients.join(", ")}.`,
       });
     },
     onError: (error: Error) => {
@@ -2512,19 +2554,20 @@ function FormsPageContent() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            resendNotificationMutation.mutate({
-                              formId: selectedEntriesFormId,
-                              submissionId: selectedSubmission.id,
-                            })
+                          onClick={() => {
+                            setSelectedResendRecipientIds(
+                              notificationRecipients.map((recipient) => recipient.id),
+                            );
+                            setResendDialogOpen(true);
+                          }}
+                          disabled={
+                            resendNotificationMutation.isPending ||
+                            areNotificationRecipientsLoading
                           }
-                          disabled={resendNotificationMutation.isPending}
                           data-testid={`button-resend-form-entry-${selectedSubmission.id}`}
                         >
                           <Mail className="mr-1.5 h-4 w-4" />
-                          {resendNotificationMutation.isPending
-                            ? "Sending..."
-                            : "Resend Notification"}
+                          Resend Notification
                         </Button>
                         <Button
                           type="button"
@@ -2600,6 +2643,109 @@ function FormsPageContent() {
           </div>
         </TabsContent>
       </Tabs>
+      <Dialog
+        open={resendDialogOpen}
+        onOpenChange={(open) => {
+          if (resendNotificationMutation.isPending) return;
+          setResendDialogOpen(open);
+          if (!open) setSelectedResendRecipientIds([]);
+        }}
+      >
+        <DialogContent className="max-w-lg" data-testid="dialog-resend-form-notification">
+          <DialogHeader>
+            <DialogTitle>Choose notification recipients</DialogTitle>
+            <DialogDescription>
+              Select which users assigned to this form should receive this resend. Your saved
+              recipient settings will not change.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-2">
+            {areNotificationRecipientsLoading ? (
+              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                Loading assigned recipients…
+              </p>
+            ) : notificationRecipientsError ? (
+              <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+                Assigned recipients could not be loaded. Close this dialog and try again.
+              </p>
+            ) : notificationRecipients.length === 0 ? (
+              <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                No users are assigned to receive notifications for this form. Assign recipients in
+                Email Settings before resending.
+              </p>
+            ) : (
+              notificationRecipients.map((recipient) => {
+                const checked = selectedResendRecipientIds.includes(recipient.id);
+                const name =
+                  [recipient.firstName, recipient.lastName].filter(Boolean).join(" ") ||
+                  recipient.email;
+                return (
+                  <label
+                    key={recipient.id}
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/30"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={resendNotificationMutation.isPending}
+                      onCheckedChange={(value) =>
+                        setSelectedResendRecipientIds((current) =>
+                          value
+                            ? Array.from(new Set([...current, recipient.id]))
+                            : current.filter((id) => id !== recipient.id),
+                        )
+                      }
+                      data-testid={`checkbox-resend-recipient-${recipient.id}`}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{name}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {recipient.email}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            A success message means the email provider accepted each notification. Final delivery
+            can still be affected by suppression lists, spam filtering, or the recipient mail
+            server.
+          </p>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setResendDialogOpen(false)}
+              disabled={resendNotificationMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!selectedEntriesFormId || !selectedSubmission) return;
+                resendNotificationMutation.mutate({
+                  formId: selectedEntriesFormId,
+                  submissionId: selectedSubmission.id,
+                  recipientUserIds: selectedResendRecipientIds,
+                });
+              }}
+              disabled={
+                resendNotificationMutation.isPending ||
+                selectedResendRecipientIds.length === 0
+              }
+              data-testid="button-confirm-resend-form-notification"
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              {resendNotificationMutation.isPending ? "Sending…" : "Send Notification"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {activeTab === "builder" && draft ? (
         <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur sm:hidden">
           <div className="mx-auto flex max-w-lg items-center gap-3">

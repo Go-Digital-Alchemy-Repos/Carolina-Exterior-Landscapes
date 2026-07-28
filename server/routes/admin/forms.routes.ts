@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { insertCmsFormSchema } from "@shared/schema";
+import { z } from "zod";
 import { asyncHandler } from "../../middleware/error-handler";
 import { storage } from "../../storage";
 import { paramString } from "../../utils/params";
@@ -7,6 +8,9 @@ import { getBaseUrl } from "../../utils/route-helpers";
 import { resendFormSubmissionNotification } from "../../services/forms.service";
 
 const router = Router();
+const resendNotificationSchema = z.object({
+  recipientUserIds: z.array(z.string().min(1)).min(1).max(10),
+});
 
 router.get(
   "/forms",
@@ -37,6 +41,28 @@ router.get(
     }
     res.json(await storage.forms.getSubmissionsByFormId(id));
   })
+);
+
+router.get(
+  "/forms/:id/notification-recipients",
+  asyncHandler(async (req, res) => {
+    const id = paramString(req.params.id);
+    const form = await storage.forms.getById(id);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+
+    const users = await storage.users.getFormNotificationUsers(id);
+    res.json(
+      users.map((user) => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      })),
+    );
+  }),
 );
 
 router.delete(
@@ -73,11 +99,32 @@ router.post(
       return res.status(404).json({ message: "Submission not found" });
     }
 
-    const recipient = req.user!.email;
+    const parsed = resendNotificationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: "Select at least one notification recipient",
+        errors: parsed.error.flatten(),
+      });
+    }
+
+    const assignedUsers = await storage.users.getFormNotificationUsers(id);
+    const assignedUsersById = new Map(assignedUsers.map((user) => [user.id, user]));
+    const requestedUserIds = Array.from(new Set(parsed.data.recipientUserIds));
+    const selectedUsers = requestedUserIds
+      .map((userId) => assignedUsersById.get(userId))
+      .filter((user) => user !== undefined);
+
+    if (selectedUsers.length !== requestedUserIds.length) {
+      return res.status(400).json({
+        message: "One or more selected users are not assigned to notifications for this form",
+      });
+    }
+
+    const recipients = selectedUsers.map((user) => user.email);
     const sent = await resendFormSubmissionNotification(
       form,
       submission,
-      recipient,
+      recipients,
       getBaseUrl(req),
     );
     if (!sent) {
@@ -88,8 +135,8 @@ router.post(
 
     res.json({
       success: true,
-      recipient,
-      message: `Notification sent to ${recipient}`,
+      recipients,
+      message: `Notification accepted for ${recipients.join(", ")}`,
     });
   }),
 );

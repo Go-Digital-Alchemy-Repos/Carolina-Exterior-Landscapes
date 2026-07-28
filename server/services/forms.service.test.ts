@@ -149,7 +149,7 @@ describe("submitManagedFormBySlug", () => {
 });
 
 describe("resendFormSubmissionNotification", () => {
-  it("recreates a stored quote notification for only the requested recipient", async () => {
+  it("recreates a stored quote notification for the requested recipients", async () => {
     mockSendContactFormEmail.mockResolvedValue(true);
     const form = {
       id: "residential-quote-id",
@@ -191,13 +191,13 @@ describe("resendFormSubmissionNotification", () => {
     const sent = await resendFormSubmissionNotification(
       form,
       submission,
-      "admin@example.com",
+      ["admin@example.com", "backup@example.com"],
       "https://carolinaexteriorlandscapes.com",
     );
 
     expect(sent).toBe(true);
     expect(mockSendContactFormEmail).toHaveBeenCalledWith(
-      ["admin@example.com"],
+      ["admin@example.com", "backup@example.com"],
       "Jane Homeowner",
       "jane@example.com",
       expect.stringContaining("Services Interested: Drainage"),

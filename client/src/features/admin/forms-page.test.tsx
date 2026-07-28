@@ -26,6 +26,7 @@ let mutationStates: Array<{
   isPending: boolean;
 }> = [];
 let mockSubmissions: Array<Record<string, unknown>> = [];
+let mockNotificationRecipients: Array<Record<string, unknown>> = [];
 
 const mockForms = [
   {
@@ -91,9 +92,33 @@ describe("AdminFormsPage", () => {
     editorLockState.isReadOnly = true;
     mutationStates = [];
     mockSubmissions = [];
+    mockNotificationRecipients = [
+      {
+        id: "user-1",
+        email: "mike@godigitalalchemy.com",
+        firstName: "Mike",
+        lastName: "Dickerman",
+        role: "admin",
+      },
+      {
+        id: "user-2",
+        email: "ian@carolinaexteriorlandscapes.com",
+        firstName: "Ian",
+        lastName: "McLaughlin",
+        role: "admin",
+      },
+    ];
     useQueryMock.mockImplementation(({ queryKey }: { queryKey: unknown[] }) => {
       if (queryKey[0] === "/api/admin/forms" && queryKey[2] === "submissions") {
         return { data: mockSubmissions, isLoading: false };
+      }
+
+      if (queryKey[0] === "/api/admin/forms" && queryKey[2] === "notification-recipients") {
+        return {
+          data: mockNotificationRecipients,
+          isLoading: false,
+          isError: false,
+        };
       }
 
       if (queryKey[0] === "/api/admin/forms") {
@@ -196,7 +221,7 @@ describe("AdminFormsPage", () => {
     );
   });
 
-  it("offers to resend the selected entry notification", async () => {
+  it("lets an admin deselect an assigned recipient before resending", async () => {
     mockSubmissions = [
       {
         id: "submission-1",
@@ -241,9 +266,39 @@ describe("AdminFormsPage", () => {
     });
 
     expect(
+      document.querySelector('[data-testid="dialog-resend-form-notification"]'),
+    ).toBeTruthy();
+    const mikeCheckbox = document.querySelector(
+      '[data-testid="checkbox-resend-recipient-user-1"]',
+    ) as HTMLButtonElement | null;
+    const ianCheckbox = document.querySelector(
+      '[data-testid="checkbox-resend-recipient-user-2"]',
+    ) as HTMLButtonElement | null;
+    expect(mikeCheckbox?.getAttribute("data-state")).toBe("checked");
+    expect(ianCheckbox?.getAttribute("data-state")).toBe("checked");
+
+    await act(async () => {
+      mikeCheckbox?.click();
+    });
+
+    expect(mikeCheckbox?.getAttribute("data-state")).toBe("unchecked");
+
+    const confirmButton = document.querySelector(
+      '[data-testid="button-confirm-resend-form-notification"]',
+    ) as HTMLButtonElement | null;
+    expect(confirmButton?.disabled).toBe(false);
+
+    await act(async () => {
+      confirmButton?.click();
+    });
+
+    expect(
       mutationStates.some((state) =>
         state.mutate.mock.calls.some(([payload]) =>
-          payload?.formId === "form-1" && payload?.submissionId === "submission-1"
+          payload?.formId === "form-1" &&
+          payload?.submissionId === "submission-1" &&
+          payload?.recipientUserIds?.length === 1 &&
+          payload.recipientUserIds[0] === "user-2"
         )
       )
     ).toBe(true);
